@@ -1,0 +1,13 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp, tituloPestana: "Página principal" }) %>
+
+    <div class="container">
+        <h1 class="text-primary">Inicio de sesión</h1>
+        <form action="/api/users/login" method="post">
+            <input type="email" value="ejemplo@ejemplo.com"><br>
+            <p>Contraseña</p>
+            <input type="password">
+            <button class="btn btn-primary" type="submit">Iniciar Sesión</button>
+        </form>
+    </div>
+
+<%- include('../templates/footer'); %>

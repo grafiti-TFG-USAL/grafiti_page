@@ -11,5 +11,8 @@
     </head>
 
 <body>
-
-    <%- include('navbar') %>
+<% if (tipoNavbar === "auth") { %>
+    <%- include('navbars/navbar-auth.ejs') %>
+<% }else{ %>
+    <%- include('navbars/navbar.ejs') %>
+<% } %>

@@ -25,7 +25,7 @@ const userSchema  = mongoose.Schema({
         min: 10,
         max: 50
     },
-    date: {
+    register_date: {
         type: Date,
         default: Date.now
     }

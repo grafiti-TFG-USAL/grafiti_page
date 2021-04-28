@@ -1,0 +1,82 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp: isSignUp, tituloPestana: "Página principal" }) %>
+    
+<div class="container">
+        <h1 class="text-primary">Registro</h1>
+        <div class="container">
+        <form id="reg-form">
+            <p class="my-3">Nombre</p>
+            <input type="text" id="name" placeholder="Name" value="Juan Carlos">
+            <p class="my-3">Apellidos</p>
+            <input type="text" id="surname" placeholder="Surname" value="Pérez Martín">
+            <p class="my-3">Email</p>
+            <input type="email" id="email" placeholder="Email" value="ejemplo@ejemplo.com">
+            <p class="my-3">Contraseña</p>
+            <input type="password" id="password" placeholder="Password" value="ejemploejemplo">
+            <p class="my-3">Repita la contraseña <label id="no_match">Error, las contraseñas no coinciden</label></p>
+            <input type="password" id="password2" placeholder="Password2" value="ejemploejemplo">
+            <br><br>
+            <button class="btn btn-primary" type="submit">Registrarse</button>
+        </form>
+    </div>
+    </div>
+
+    <script>
+        /*
+        const nomatch = document.getElementById("no_match");
+        if()
+        nomatch.nextElementSibling.style.display = "block";
+        */
+        const form = document.querySelector("#reg-form");
+
+        // Reemplazamos el recargas página del boton submit por otro comportamiento
+        form.addEventListener("submit", async (event) => {
+            // Anulamos el comportamiento por defecto (recargar página)
+            event.preventDefault();
+
+            // Recogemos los datos del formulario
+            const name = form.elements["name"].value;
+            console.log(name) //TODO: eliminar esto
+            const surname = form.elements["surname"].value;
+            console.log(surname) //TODO: eliminar esto
+            const email = form.elements["email"].value;
+            console.log(email) //TODO: eliminar esto
+            const password = form.elements["password"].value;
+            console.log(password) //TODO: eliminar esto
+
+            //TODO: comprobar que las contraseñas 1 y 2 sean equivalentes
+
+            try {
+                console.log("Hula") //TODO: eliminar esto
+                // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
+                const data = await fetch("/api/users/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                        name, surname, email, password
+                    })
+                });
+                console.log("1"); //TODO: eliminar esto
+                /*
+                const res = await data.json();
+                console.log("2"); //TODO: eliminar esto
+                console.log(res); //TODO: eliminar esto
+                if (res.estado) {
+                    // Si todo ha ido bien, vamos a la página de login
+                    window.location.href = "/login"
+                } else {
+                    // Si algo ha ido mal lo mostramos por consola
+                    console.log(res); //TODO: cambiar comportamiento
+                }
+                */
+            } catch (error) {
+                    // Si algo ha ido mal lo mostramos por consola
+                    console.log(error); //TODO: cambiar comportamiento
+            }
+
+        });
+
+    </script>
+
+<%- include('../templates/footer'); %>

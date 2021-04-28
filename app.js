@@ -1,6 +1,13 @@
 const express = require("express");
 const app = express();
 
+// Parseador de cuerpos de requests
+const bodyParser = require("body-parser");
+// Parsea application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+// Parsea application/json
+app.use(bodyParser.json())
+
 // Configuración de las variables de entorno
 require("dotenv").config();
 
@@ -25,8 +32,9 @@ app.set("views", __dirname + "/views");
 app.use(express.static(__dirname + "/public"));
 
 // Establecemos el motor de rutas
-app.use("/", require("./routes/RutasWeb"));
-//app.use("/grafitis", require("./router/Grafitis"));
+app.use("/", require("./routes/RutasWeb.js"));
+app.use("/api/users", require("./routes/GestionUsuarios.js"));
+//TODO: app.use("/grafitis", require("./router/Grafitis"));
 
 // Establecemos la página 404
 app.use((req, res, next) => {
