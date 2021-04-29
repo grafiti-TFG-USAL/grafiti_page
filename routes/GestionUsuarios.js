@@ -6,7 +6,6 @@ const router = require("express").Router();
 const User = require("../models/User.js");
 
 const Joi = require("@hapi/joi");
-const { json } = require("body-parser");
 
 // bcrypt para hashear la contraseña
 const bcrypt = require("bcrypt");
@@ -102,7 +101,7 @@ router.post("/register", async(req, res) => {
         name: req.body.name,
         surname: req.body.surname,
         email: req.body.email,
-        password: req.body.password
+        password: password
     });
     console.log("Usuario: ", user)
     try {
