@@ -2,8 +2,12 @@ const router = require("express").Router();
 
 // RUTA RAIZ "/api/users"
 
+// Cargamos la lógica del controlador de usuarios
+const UserController = require("../controllers/user.controller.js");
+
+/*
 // Cargamos el modelo de usuario de MongoDB
-const User = require("../models/User.js");
+const User = require("../models/user.js");
 
 const Joi = require("@hapi/joi");
 
@@ -12,7 +16,9 @@ const bcrypt = require("bcrypt");
 
 // jwt para generar el token de sesión
 const jwt = require("jsonwebtoken");
+*/
 
+/*
 // schemas para almacenar y comprobar los datos introducidos
 const schemaRegister = Joi.object({
     name: Joi.string().min(2).max(20).required(),
@@ -25,57 +31,11 @@ const schemaLogin = Joi.object({
     email: Joi.string().min(6).max(50).required().email(),
     password: Joi.string().min(10).max(50).required()
 });
-
-// LOGIN
-router.post("/login", async(req, res) => {
-    console.log(req.body); //TODO: eliminar esto
-    // Validamos la información recibida
-    const {error} = schemaLogin.validate(req.body);
-    console.log(req.body); //TODO: eliminar esto
-
-    if (error) {
-        return res.status(400).json({
-            error: error.details[0].message
-        });
-    }
-    console.log(req.body); //TODO: eliminar esto
-    // Comprobamos que el usuario exista en la base de datos
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user){
-        return res.status(400).json({
-            error: true, 
-            mensaje: "El -usuario introducido no existe o la contraseña no es correcta"
-        }); // TODO: el guion es para comprobar donde falla, por seguridad hay que poner el mismo mensaje
-    }
-
-    const validPassword = await bcrypt.compare(req.body.password, usuario.password);
-
-    if (!validPassword){
-        return res.status(400).json({
-            error: true,
-            mensaje: "El usuario introducido no existe o la -contraseña no es correcta"
-        }); // TODO: el guion es para comprobar donde falla, por seguridad hay que poner el mismo mensaje
-    }
-
-    // Si llega hasta aqui todo OK
-
-    // Creamos el token
-    const token = jwt.sign({
-        name: usuario.name,
-        id: usuario._id
-    }, process.env.TOKENSECRET)
-    
-    // Pasamos el token a la cabecera para almacenar la sesión iniciada
-    res.header("auth-token", token).json({
-        error: null,
-        data: token
-    });
-
-});
+*/
 
 // REGISTRO
-router.post("/register", async(req, res) => {
+router.post("/register", UserController.signUp);
+/*async(req, res) => {
     // Comprobamos los errores en la info de registro recibida con validate
     const {error} = schemaRegister.validate(req.body);
 
@@ -119,6 +79,57 @@ router.post("/register", async(req, res) => {
         res.status(400).json(error);
     }
 
+});*/
+
+// CONFIRMAR USUARIO
+router.get("/confirm/:token", UserController.confirmUser);
+
+// LOGIN
+router.post("/login", async(req, res) => {
+    /*console.log(req.body); //TODO: eliminar esto
+    // Validamos la información recibida
+    const {error} = schemaLogin.validate(req.body);
+    console.log(req.body); //TODO: eliminar esto
+
+    if (error) {
+        return res.status(400).json({
+            error: error.details[0].message
+        });
+    }
+    console.log(req.body); //TODO: eliminar esto
+    // Comprobamos que el usuario exista en la base de datos
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user){
+        return res.status(400).json({
+            error: true, 
+            mensaje: "El -usuario introducido no existe o la contraseña no es correcta"
+        }); // TODO: el guion es para comprobar donde falla, por seguridad hay que poner el mismo mensaje
+    }
+
+    const validPassword = await bcrypt.compare(req.body.password, usuario.password);
+
+    if (!validPassword){
+        return res.status(400).json({
+            error: true,
+            mensaje: "El usuario introducido no existe o la -contraseña no es correcta"
+        }); // TODO: el guion es para comprobar donde falla, por seguridad hay que poner el mismo mensaje
+    }
+
+    // Si llega hasta aqui todo OK
+
+    // Creamos el token
+    const token = jwt.sign({
+        name: usuario.name,
+        id: usuario._id
+    }, process.env.TOKENSECRET)
+    
+    // Pasamos el token a la cabecera para almacenar la sesión iniciada
+    res.header("auth-token", token).json({
+        error: null,
+        data: token
+    });
+*/
 });
 
 module.exports = router;
