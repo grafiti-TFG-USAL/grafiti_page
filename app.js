@@ -23,10 +23,10 @@ connectDB();
 
 // Motor de plantillas
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", __dirname + "/views");
 
 // Establecemos la ruta estática (middleware)
-app.use(express.static(path.join(__dirname, "public"))); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
+app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
 
 // Establecemos el motor de rutas
 app.use("/", require("./routes/RutasWeb.js"));
