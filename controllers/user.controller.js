@@ -15,7 +15,7 @@ const { getToken, getTokenData } = require("../config/jwt.config.js");
 const { sendEmail, getTemplate } = require("../config/mail.config");
 
 // Cargamos el modelo del usuario
-const User = require("./models/user.js");
+const User = require("../models/user.js");
 
 // schemas Joi para almacenar y comprobar los datos introducidos
 const schemaRegister = Joi.object({
