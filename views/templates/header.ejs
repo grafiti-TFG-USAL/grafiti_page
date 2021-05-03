@@ -11,8 +11,13 @@
     </head>
 
 <body>
-<% if (tipoNavbar === "auth") { %>
+<% switch (tipoNavbar) { 
+    case "auth": %>
     <%- include('navbars/navbar-auth.ejs') %>
-<% }else{ %>
-    <%- include('navbars/navbar.ejs') %>
-<% } %>
+<%  break;
+    case "logged": %>
+    <%- include('navbars/navbar-logged.ejs') %>
+<%  break;
+    default: %>
+    <%- include('navbars/navbar-index.ejs') %>
+<%  break; } %>

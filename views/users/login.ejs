@@ -1,13 +1,55 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp, tituloPestana: "Página principal" }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp, tituloPestana: "Iniciar sesión" }) %>
 
     <div class="container">
-        <h1 class="text-primary">Inicio de sesión</h1>
-        <form action="/api/users/login" method="post">
-            <input type="email" value="ejemplo@ejemplo.com"><br>
-            <p>Contraseña</p>
-            <input type="password">
-            <button class="btn btn-primary" type="submit">Iniciar Sesión</button>
-        </form>
+        <h1 class="text-primary mt-4">Inicio de sesión</h1>
+        <div class="container mt-4">
+            <form id="login-form">
+                <p>Email</p>
+                <input type="email" id="email" placeholder="Correo electrónico" value="gadog11460@sumwan.com"><br>
+                <p class="mt-2">Contraseña</p>
+                <input type="password" id="password" placeholder="Contraseña" value="ejemploejemplo"><br>
+                <button class="btn btn-primary mt-4 ms-4" type="submit">Iniciar Sesión</button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        
+        const form = document.querySelector("#login-form");
+
+        // Reemplazamos el recargas página del boton submit por otro comportamiento
+        form.addEventListener("submit", async (event) => {
+            // Anulamos el comportamiento por defecto (recargar página)
+            event.preventDefault();
+
+            // Recogemos los datos del formulario
+            const email = form.elements["email"].value;
+            const password = form.elements["password"].value;
+            
+            try {
+
+                // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
+                const data = await fetch("/api/users/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                        email, password
+                    })
+                });
+
+                console.log("Data retrieved: ", data);
+
+                window.location.href = "/usuario";
+
+            } catch (error) {
+                    // Si algo ha ido mal lo mostramos por consola
+                    console.log(error); //TODO: cambiar comportamiento
+            }
+
+        });
+
+    </script>
 
 <%- include('../templates/footer'); %>

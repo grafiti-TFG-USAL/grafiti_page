@@ -1,12 +1,13 @@
 // Aquí creamos dos funciones, una para poder serializar los datos en el json y para leer la info cuando la necesitemos
 const jwt = require("jsonwebtoken");
 
-const getToken = (payload) => {
+const getToken = (payload, expires = "1d") => {
     return jwt.sign({
-        data: payload
+        data: payload,
+        date: Date.now
     }, 
     process.env.TOKEN_SECRET,
-    { expiresIn: "1d"});
+    { expiresIn: expires});
 }
 
 const getTokenData = (token) => {

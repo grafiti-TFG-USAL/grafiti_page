@@ -7,6 +7,9 @@ const bcrypt = require("bcrypt");
 // uuid para generar un código aleatorio
 const { v4: uuidv4 } = require("uuid");
 
+// jwt para gestionar los tokens
+const jwt = require("jsonwebtoken");
+
 // Importamos la lógica del controlador
 const { getToken, getTokenData } = require("../config/jwt.config.js");
 const { sendEmail, getTemplate } = require("../config/mail.config");
@@ -22,6 +25,7 @@ const schemaRegister = Joi.object({
     password: Joi.string().min(10).max(50).required()
 });
 
+// Lógica del registro de usuarios
 const signUp = async (req, res) => {
     
     try {
@@ -91,14 +95,12 @@ const signUp = async (req, res) => {
             });
         }
 
-        console.log("Usuario ",user.name , " almacenado en la base");
+        console.log("Usuario ", user.name , " almacenado en la base");
 
-        res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: "Usuario registrado con éxito, pendiente verificación"
-        });
-
-        console.log("Usuario: ", user);
+            message: "Usuario almacenado en la base correctamente y pendiente de validación"
+        })
 
     } catch (error) {
         console.log(error);
@@ -110,6 +112,7 @@ const signUp = async (req, res) => {
 
 }
 
+// Lógica de la validación de los usuarios registrados
 const confirmUser = async (req, res) => {
 
     try{
@@ -147,6 +150,13 @@ const confirmUser = async (req, res) => {
             });
         }
 
+        // Comprobar el status actual
+        if(user.status === "VERIFIED")
+        {
+            console.log("El usuario ya estaba verificado");
+            return res.status(200).redirect("../../../login");
+        }
+
         // Actualizar usuario
         user.status = "VERIFIED";
         userDB = await user.save();
@@ -160,10 +170,7 @@ const confirmUser = async (req, res) => {
 
         // Redireccionar a la página de confirmación
         console.log("El usuario ha sido validado correctamente");
-        res.status(200).json({
-            success: true,
-            message: "El usuario ha sido validado correctamente"
-        });
+        res.status(200).redirect(`../../../user-confirmed/${email}`);
 
     }catch(error){
         console.log("Error al confirmar usuario => ", error);
@@ -171,7 +178,131 @@ const confirmUser = async (req, res) => {
 
 }
 
+// schema para la verificación de los datos de inicio de sesión
+const schemaLogin = Joi.object({
+    email: Joi.string().min(6).max(50).required().email(),
+    password: Joi.string().min(10).max(50).required()
+});
+
+// Lógica de los inicios de sesión
+const logIn = async (req, res) => {
+
+    try {
+
+        // Validar los datos recibidos
+        console.log("Datos recibidos: ", req.body)
+        const { error } = schemaLogin.validate(req.body);
+        if (error){
+            console.log("Error al validar los datos introducidos");
+            return res.status(400).json({ 
+                success: false,
+                message: error 
+            });
+        }
+        console.log("Formato adecudado de datos")
+
+        // Comprobar que el usuario exista
+        const user = await User.findOne({ email: req.body.email });
+        if (!user){
+            console.log("El usuario o la contraseña son incorrectos");
+            return res.status(400).json({ 
+                success: false,
+                message: "El usuario o la contraseña son incorrectos" 
+            });
+        }
+        console.log("Usuario esisten"); //TODO: BORRAR ESTO
+
+        // Comprobar que el usuario esté verificado
+        if(user.status !== "VERIFIED"){
+            console.log("Error: el usuario aún no ha verificado su correo electrónico");
+            return res.status(400).json({
+                success: false,
+                message: "Error: el usuario aún no ha verificado su email"
+            });
+        }
+    
+        // Comprobar la contraseña
+        const validPassword = await bcrypt.compare(req.body.password, user.password);
+        if (!validPassword){
+            console.log("El usuario o la contraseña son incorrectos");
+            return res.status(400).json({ 
+                success: false,
+                message: "El usuario o la contraseña son incorrectos" 
+            });
+        }
+        console.log("Contraseña correcta")
+
+        // Generamos el token
+        const token = getToken({ 
+            name: user.name,
+            email: user.email,
+            id: user._id
+        });
+        console.log("Token generado")
+
+        // Almacenamos el token en la cabecera
+        res.header("auth-token", token).json({
+            data: token,
+            success: true,
+            message: "Autenticación de usuario correcta"
+        });
+        console.log("Token almacenado en la cabecera")
+        console.log("En login todo OK")
+
+    } catch (error) {
+        console.log("Error en el inicio de sesión => ", error);
+        return res.status(400).json({
+            success: false,
+            message: error
+        });
+    }
+
+}
+
+// Validación del token del usuario
+const validateToken = (req, res, next) => {
+
+    try {
+
+        console.log("Entrando en la validacion del token")
+        // Obtenemos el token de la cabecera de la petición
+        const token = req.header("auth-token"); // Lo añadimos al header en el login
+        if(!token) {
+            // 401 -> Acceso denegado
+            console.log("ERROR: No hay token en la cabecera")
+            return res.status(401).json({ 
+                error: "Acceso denegado" 
+            });
+        }
+        console.log("Cabecera leida, token recibido")
+
+        // Verificamos que el token se corresponda a nuestra clave
+        const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
+        if(!tokenData){
+            console.log("Error: No se ha podido acceder a la información del token");
+            return res.status(400).json({
+                success: false,
+                message: "No se ha podido acceder a la información del token"
+            });
+        }
+        console.log("Token verificado")
+
+        req.user = tokenData;
+        next();
+        
+    } catch (error) {
+        return res.status(400).json({ 
+            success: false,
+            error,
+            message: "Ha habido un problema al verificar el token de usuario" 
+        });
+    }
+
+}
+
 module.exports = {
     signUp,
-    confirmUser
+    confirmUser,
+    logIn,
+    validateToken
 }

@@ -1,6 +1,11 @@
 const express = require("express");
 const app = express();
 
+// Gestión de directorios
+const path = require("path");
+
+//TODO: configurar cors
+
 // Parsea application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }))
 // Parsea application/json
@@ -18,18 +23,19 @@ connectDB();
 
 // Motor de plantillas
 app.set("view engine", "ejs");
-app.set("views", __dirname + "/views");
+app.set("views", path.join(__dirname, "views"));
 
 // Establecemos la ruta estática (middleware)
-app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
+app.use(express.static(path.join(__dirname, "public"))); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
 
 // Establecemos el motor de rutas
 app.use("/", require("./routes/RutasWeb.js"));
 app.use("/api/users", require("./routes/GestionUsuarios.js"));
+app.use("/usuario", require("./routes/UsuariosAutenticados.js"));
 //TODO: app.use("/grafitis", require("./router/Grafitis"));
 
 // Establecemos la página 404
-app.use((req, res, next) => {
+app.use((req, res) => {
     res.status(404).render("404", { titulo: "Error 404" });
 });
 

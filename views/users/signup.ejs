@@ -1,4 +1,4 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp: isSignUp, tituloPestana: "Página principal" }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp: isSignUp, tituloPestana: "Darse de alta" }) %>
     
 <div class="container">
         <h1 class="text-primary">Registro</h1>
@@ -21,11 +21,7 @@
     </div>
 
     <script>
-        /*
-        const nomatch = document.getElementById("no_match");
-        if()
-        nomatch.nextElementSibling.style.display = "block";
-        */
+        
         const form = document.querySelector("#reg-form");
 
         // Reemplazamos el recargas página del boton submit por otro comportamiento
@@ -35,18 +31,14 @@
 
             // Recogemos los datos del formulario
             const name = form.elements["name"].value;
-            console.log(name) //TODO: eliminar esto
             const surname = form.elements["surname"].value;
-            console.log(surname) //TODO: eliminar esto
             const email = form.elements["email"].value;
-            console.log(email) //TODO: eliminar esto
             const password = form.elements["password"].value;
-            console.log(password) //TODO: eliminar esto
 
             //TODO: comprobar que las contraseñas 1 y 2 sean equivalentes
 
             try {
-                console.log("Hula") //TODO: eliminar esto
+
                 // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
                 const data = await fetch("/api/users/register", {
                     method: "POST",
@@ -54,22 +46,14 @@
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                        name, surname, email, password
+                        name, surname, email, password //TODO: investigar si mandar por aqui la pass no supone un riesgo de seguridad
                     })
                 });
-                console.log("1"); //TODO: eliminar esto
-                /*
-                const res = await data.json();
-                console.log("2"); //TODO: eliminar esto
-                console.log(res); //TODO: eliminar esto
-                if (res.estado) {
-                    // Si todo ha ido bien, vamos a la página de login
-                    window.location.href = "/login"
-                } else {
-                    // Si algo ha ido mal lo mostramos por consola
-                    console.log(res); //TODO: cambiar comportamiento
-                }
-                */
+
+                console.log("Data retrieved: ", data);
+
+                window.location.href = "/login"; //TODO: Quitar esto de aqui. quizas se pueda usar next()
+
             } catch (error) {
                     // Si algo ha ido mal lo mostramos por consola
                     console.log(error); //TODO: cambiar comportamiento
