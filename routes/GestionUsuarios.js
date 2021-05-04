@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const passport = require('passport');
 
 // RUTA RAIZ "/api/users"
 
@@ -14,6 +15,9 @@ router.get("/confirm/:token", UserController.confirmUser);
 
 // LOGIN (<host>/api/users/login)
 router.post("/login", UserController.logIn);
+
+// LOGOUT (<host>/api/users/logout)
+router.get("/logout", UserController.logOut);
 
 
 module.exports = router;

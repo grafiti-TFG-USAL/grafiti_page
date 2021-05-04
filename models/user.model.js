@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const userSchema  = mongoose.Schema({
     name: {
@@ -41,6 +42,15 @@ const userSchema  = mongoose.Schema({
         required: true
     }
 });
+
+// Métodos del modelo
+userSchema.methods.encryptPassword = (password) => {
+    return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+};
+  
+userSchema.methods.comparePassword = (password) => {
+    return bcrypt.compareSync(password, this.password);
+};
 
 //mongoose.model() busca en la base la coleccion "usuarios" (automaticamente ya pone en lowercase y busca el plural)
 module.exports = mongoose.model("User", userSchema);

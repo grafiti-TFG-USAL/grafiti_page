@@ -1,16 +1,22 @@
 const express = require("express");
 const { validateToken } = require("../controllers/user.controller.js")
 
-const routerValidateMiddleware = express.Router();
-// TODO: probar a integrar el middleware validate token en todas las rutas hijas de usuario
-
 const router = express.Router();
+
+// Middleware de control de sesión
+router.use("/", validateToken); //Solo permite el paso de usuarios autenticados
 
 // RUTAS PARA USUARIOS AUTENTICADOS "/usuario"
 
 // Página de bienvenida al usuario (<host>/usuario)
-router.get("/", validateToken, (req, res) => {
-    res.render("./users/auth/user-index.ejs", { titulo: "Grafiti Page", user: req.user });
+router.get("/", (req, res) => {
+    res.render("./users/auth/user-index.ejs", { titulo: "Bienvenido", user: req.user });
 });
+
+// Perfil de usuario (<host>/usuario/perfil)
+router.get("/perfil", (req, res) => {
+    res.render("./users/auth/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });
+});
+
 
 module.exports = router;

@@ -15,7 +15,8 @@ const { getToken, getTokenData } = require("../config/jwt.config.js");
 const { sendEmail, getTemplate } = require("../config/mail.config");
 
 // Cargamos el modelo del usuario
-const User = require("../models/User.js");
+const User = require("../models/user.model.js");
+const { Mongoose } = require("mongoose");
 
 // schemas Joi para almacenar y comprobar los datos introducidos
 const schemaRegister = Joi.object({
@@ -32,16 +33,17 @@ const signUp = async (req, res) => {
 
         // Comprobamos los errores en la info de registro recibida con validate
         const {error} = schemaRegister.validate(req.body);
-
         if (error) {
+            req.flash('signupMessage', 'La información introducida no tiene el formato correcto.');
             return res.status(400).json({
                 error: error.details[0].message
             });
         }
 
-         // Verificamos que el email introducido no esté registrado ya en la BD
+        // Verificamos que el email introducido no esté registrado ya en la BD
         const emailExists = await User.findOne({ email: req.body.email })
         if(emailExists) {
+            req.flash('signupMessage', 'El email introducido ya existe.');
             return res.status(400).json({
                 success: false,
                 message: "El email introducido ya existe"
@@ -55,6 +57,7 @@ const signUp = async (req, res) => {
         const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
         const password = await bcrypt.hash(req.body.password, saltos);
         if(!saltos || !password){
+            req.flash('signupMessage', 'No se ha podido asegurar la contraseña. Operación abortada.');
             return res.status(400).json({
                 success: false,
                 message: "Operacion fallida: incapaz de asegurar la contraseña del usuario"
@@ -74,7 +77,7 @@ const signUp = async (req, res) => {
         const token = getToken({ 
             email: user.email, 
             code: user.code 
-        });
+        }, "1m");
 
         // Obtenemos el template
         const template = getTemplate(req.body.name, token, req.headers.host)
@@ -88,7 +91,7 @@ const signUp = async (req, res) => {
         // Almacenamos el usuario en la base de datos
         const userDB = await user.save();
         if(!userDB){
-            console.log("Ha habido un error al almacenar al usuario en la base de datos")
+            req.flash('signupMessage', "Ha habido un error al almacenar al usuario en la base de datos");
             return res.status(400).json({
                 success: false,
                 message: "Ha habido un error al almacenar al usuario en la base de datos"
@@ -97,6 +100,7 @@ const signUp = async (req, res) => {
 
         console.log("Usuario ", user.name , " almacenado en la base");
 
+        req.flash('loginMessage', "Valide su cuenta mediante el correo que le hemos enviado a su dirección de correo electrónico"); //TODO:Mover esto al siguiente middleware
         return res.status(200).json({
             success: true,
             message: "Usuario almacenado en la base correctamente y pendiente de validación"
@@ -104,9 +108,10 @@ const signUp = async (req, res) => {
 
     } catch (error) {
         console.log(error);
+        req.flash('signupMessage', "Error inesperado al registrar al usuario");
         return res.status(400).json({
             success: false,
-            message: "Error al registrar al usuario"
+            message: "Error inesperado al registrar al usuario"
         });
     }
 
@@ -194,6 +199,7 @@ const logIn = async (req, res) => {
         const { error } = schemaLogin.validate(req.body);
         if (error){
             console.log("Error al validar los datos introducidos");
+            req.flash('loginMessage', error);
             return res.status(400).json({ 
                 success: false,
                 message: error 
@@ -205,6 +211,10 @@ const logIn = async (req, res) => {
         const user = await User.findOne({ email: req.body.email });
         if (!user){
             console.log("El usuario o la contraseña son incorrectos");
+            req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
+            req.session.destroy();
+            req.session = null;
+            req.logout();
             return res.status(400).json({ 
                 success: false,
                 message: "El usuario o la contraseña son incorrectos" 
@@ -215,6 +225,7 @@ const logIn = async (req, res) => {
         // Comprobar que el usuario esté verificado
         if(user.status !== "VERIFIED"){
             console.log("Error: el usuario aún no ha verificado su correo electrónico");
+            req.flash('loginMessage', "Aún debe verificar su correo electrónico");
             return res.status(400).json({
                 success: false,
                 message: "Error: el usuario aún no ha verificado su email"
@@ -224,6 +235,7 @@ const logIn = async (req, res) => {
         // Comprobar la contraseña
         const validPassword = await bcrypt.compare(req.body.password, user.password);
         if (!validPassword){
+            req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
             console.log("El usuario o la contraseña son incorrectos");
             return res.status(400).json({ 
                 success: false,
@@ -234,20 +246,13 @@ const logIn = async (req, res) => {
 
         // Generamos el token
         const token = getToken({ 
-            name: user.name,
-            email: user.email,
-            id: user._id
+            id: user._id,
+            email: user.email
         });
-        console.log("Token generado")
 
-        // Almacenamos el token en la cabecera
-        res.header("auth-token", token).json({
-            data: token,
-            success: true,
-            message: "Autenticación de usuario correcta"
-        });
-        console.log("Token almacenado en la cabecera")
-        console.log("En login todo OK")
+        req.session.token = token;
+
+        res.redirect("./usuario")
 
     } catch (error) {
         console.log("Error en el inicio de sesión => ", error);
@@ -260,22 +265,22 @@ const logIn = async (req, res) => {
 }
 
 // Validación del token del usuario
-const validateToken = (req, res, next) => {
+const validateToken = async (req, res, next) => {
 
     try {
 
-        console.log("Entrando en la validacion del token")
         // Obtenemos el token de la cabecera de la petición
-        const token = req.header("auth-token"); // Lo añadimos al header en el login
+        console.log("Session: ", req.session);
+        const token = req.session.token;
         if(!token) {
             // 401 -> Acceso denegado
-            console.log("ERROR: No hay token en la cabecera")
+            console.log("ERROR: No hay token")
             return res.status(401).json({ 
                 error: "Acceso denegado" 
             });
         }
-        console.log("Cabecera leida, token recibido")
-
+        console.log("Sesión leida, token obtenido"); //TODO:BOrrar
+        
         // Verificamos que el token se corresponda a nuestra clave
         const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
         if(!tokenData){
@@ -285,9 +290,19 @@ const validateToken = (req, res, next) => {
                 message: "No se ha podido acceder a la información del token"
             });
         }
-        console.log("Token verificado")
+        console.log("Token verificado: ", tokenData); //TODO: borrar esto
+        
+        // Obtenemos el nombre de la BD
+        const user = await User.findOne({ email: tokenData.data.email });
+        if(!user) {
+            console.log("Error: No se encuentra el usuario");
+            return res.status(400).json({
+                success: false,
+                message: "No se ha podido encontrar al usuario"
+            });
+        }
 
-        req.user = tokenData;
+        req.user = user;
         next();
         
     } catch (error) {
@@ -300,9 +315,18 @@ const validateToken = (req, res, next) => {
 
 }
 
+// Finalizar la sesión
+const logOut = (req, res) => {
+    req.session.destroy();
+    req.session = null;
+    req.logout();
+    res.redirect('/');
+}
+
 module.exports = {
     signUp,
     confirmUser,
     logIn,
-    validateToken
+    validateToken,
+    logOut
 }

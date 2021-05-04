@@ -22,7 +22,7 @@ let transporter = nodemailer.createTransport({
 const sendEmail = async (email, subject, html) => {
     try {
         await transporter.sendMail({
-            from: `Grafiti Page <${mail.user}>`, // sender address
+            from: `Grafiti Page no-reply <${mail.user}>`, // sender address
             to: email, // list of receivers
             subject, // Subject line
             text: "Mensaje automático de la página Grafiti Page", // plain text body
