@@ -318,6 +318,48 @@ const validateToken = async (req, res, next) => {
 
 }
 
+// Validación de la sesión del usuario
+const validateSession = async (req, res, next) => {
+
+    try {
+        
+        // Obtenemos el token de la cabecera de la petición
+        console.log("Session: ", req.session);
+        const token = req.session.token;
+        if(!token) {
+            console.log("No hay token"); //TODO: borrar
+            req.user = null;
+            return next();
+        }
+        console.log("Token: ", token); //TODO: borrar
+        
+        // Verificamos que el token se corresponda a nuestra clave
+        const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
+        if(!tokenData){
+            req.user = null;
+            return next();
+        }
+        
+        // Obtenemos el nombre de la BD
+        const user = await User.findOne({ email: tokenData.data.email });
+        if(!user) {
+            req.user = null;
+            return next();
+        }
+
+        req.user = user;
+        return next();
+        
+    } catch (error) {
+        return res.status(400).json({ 
+            success: false,
+            error,
+            message: "Ha habido un problema al verificar el token de usuario" 
+        });
+    }
+
+}
+
 // Finalizar la sesión
 const logOut = (req, res) => {
     req.session.destroy();
@@ -330,5 +372,6 @@ module.exports = {
     confirmUser,
     logIn,
     validateToken,
+    validateSession,
     logOut
 }

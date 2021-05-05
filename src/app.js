@@ -27,7 +27,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }));
-
+// Usamos flash en el intercambio de mensajes
 app.use(flash());
 
 // Visualización de peticiones
@@ -39,7 +39,7 @@ app.use(morgan("dev"));
 app.use((req, res, next) => {
   app.locals.signupMessage = req.flash('signupMessage');
   app.locals.loginMessage = req.flash('loginMessage');
-  app.locals.user = req.user;
+  //app.locals.user = req.user;
   next();
 });
 
@@ -60,10 +60,14 @@ app.set("views", __dirname + "/views");
 // Establecemos la ruta estática (middleware) //TODO: si al final no lo uso, borrar
 app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
 
+// Comprobación de inicio de sesión
+const { validateSession } = require("./controllers/user.controller.js");
+app.use(validateSession);
+
 // Establecemos el motor de rutas
 app.use("/", require("./routes/RutasWeb.js")); // Paginación pública
 app.use("/api/users", require("./routes/GestionUsuarios.js")); // Api de gestión de usuarios
-app.use("/usuario", require("./routes/UsuariosAutenticados.js")); // Paginación de usuarios
+app.use("/usuario", require("./routes/Usuario.js")); // Paginación de usuarios
 //TODO: app.use("/grafitis", require("./router/Grafitis"));
 
 // Establecemos la página 404

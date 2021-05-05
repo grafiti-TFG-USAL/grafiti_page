@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 
 // Servicios (<host>/servicios)
 router.get("/servicios", (req, res) => {
-    res.render("servicios.ejs", { titulo: "Servicios" });
+    res.render("servicios.ejs", { titulo: "Servicios", user: req.user }); //TODO:quitar o hacer algo con user
 });
 
 

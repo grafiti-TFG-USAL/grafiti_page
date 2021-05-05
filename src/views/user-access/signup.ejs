@@ -1,8 +1,8 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp: isSignUp, tituloPestana: "Alta de usuario" }) %>
-    
-<div class="container">
-        <h1 class="text-primary">Registro</h1>
-        <div class="container">
+
+<div class="container my-4">
+    <h1 class="text-primary">Registro</h1>
+    <div class="container">
         <form id="reg-form">
             <p class="my-3">Nombre</p>
             <input type="text" name="name" id="name" placeholder="Name" value="Juan Carlos">
@@ -18,49 +18,49 @@
             <button class="btn btn-primary" type="submit">Registrarse</button>
         </form>
     </div>
-    </div>
+</div>
 
-    <script>
-        
-        const form = document.querySelector("#reg-form");
+<script>
+    
+    const form = document.querySelector("#reg-form");
 
-        // Reemplazamos el recargas página del boton submit por otro comportamiento
-        form.addEventListener("submit", async (event) => {
-            // Anulamos el comportamiento por defecto (recargar página)
-            event.preventDefault();
+    // Reemplazamos el recargas página del boton submit por otro comportamiento
+    form.addEventListener("submit", async (event) => {
+        // Anulamos el comportamiento por defecto (recargar página)
+        event.preventDefault();
 
-            // Recogemos los datos del formulario
-            const name = form.elements["name"].value;
-            const surname = form.elements["surname"].value;
-            const email = form.elements["email"].value;
-            const password = form.elements["password"].value;
+        // Recogemos los datos del formulario
+        const name = form.elements["name"].value;
+        const surname = form.elements["surname"].value;
+        const email = form.elements["email"].value;
+        const password = form.elements["password"].value;
 
-            //TODO: comprobar que las contraseñas 1 y 2 sean equivalentes
+        //TODO: comprobar que las contraseñas 1 y 2 sean equivalentes
 
-            try {
+        try {
 
-                // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
-                const data = await fetch("/api/users/register", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                        name, surname, email, password //TODO: investigar si mandar por aqui la pass no supone un riesgo de seguridad
-                    })
-                });
+            // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
+            const data = await fetch("/api/users/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                    name, surname, email, password //TODO: investigar si mandar por aqui la pass no supone un riesgo de seguridad
+                })
+            });
 
-                console.log("Data retrieved: ", data);
+            console.log("Data retrieved: ", data);
 
-                window.location.href = "/login"; //TODO: Quitar esto de aqui. quizas se pueda usar next()
+            window.location.href = "/login"; //TODO: Quitar esto de aqui. quizas se pueda usar next()
 
-            } catch (error) {
-                    // Si algo ha ido mal lo mostramos por consola
-                    console.log(error); //TODO: cambiar comportamiento
-            }
+        } catch (error) {
+            // Si algo ha ido mal lo mostramos por consola
+                console.log(error); //TODO: cambiar comportamiento
+        }
 
-        });
+    });
 
-    </script>
+</script>
 
 <%- include('../templates/footer'); %>

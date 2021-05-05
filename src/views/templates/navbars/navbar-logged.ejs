@@ -1,20 +1,14 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <div class="container-fluid">
     <%- include("./navbar-brand.ejs",  { href: "/usuario" }) %>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-  
-    <li class="nav-item active ms-auto">
-      <a href="/usuario/perfil">
-        <img src="/assets/images/user.png" alt="" width="35" height="35" class="d-inline-block align-text-center">
-      </a>
-    </li>
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto">
         <li class="nav-item active">
-          <a class="nav-link" href="/dashboard">Dashboard</a>
+          <a class="nav-link" href="/usuario">Dashboard</a>
         </li>
         <li class="nav-item active">
           <a class="btn btn-outline-danger" href="/api/users/logout">Log Out</a>
@@ -22,9 +16,14 @@
       </ul>
       <ul class="navbar-nav ms-auto">
         <!-- Meter icono usuario y desplegable de acciones de gestion de usuario -->>
+        <li class="nav-item active ms-auto">
+          <a href="/usuario/perfil">
+            <img src="/assets/images/user.png" alt="" width="35" height="35" class="d-inline-block align-text-center">
+          </a>
+        </li>
         <li class="nav-item active dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Usuario
+            <%= username %> 
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item inactive" href="#">Action</a></li>
