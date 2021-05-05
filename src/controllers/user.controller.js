@@ -194,6 +194,12 @@ const logIn = async (req, res) => {
 
     try {
 
+        //Si había una sesión iniciada la destruimos
+        console.log("Destruimos la sesion anterior de haberla"); //TODO: borrar dep
+        //req.session.destroy();
+        req.session.token = null;
+        console.log("Sesión destruida"); //TODO: borrar dep
+
         // Validar los datos recibidos
         console.log("Datos recibidos: ", req.body)
         const { error } = schemaLogin.validate(req.body);
@@ -205,15 +211,13 @@ const logIn = async (req, res) => {
                 message: error 
             });
         }
-        console.log("Formato adecudado de datos")
+        console.log("Formato adecudado de datos"); //TODO: borrar dep
 
         // Comprobar que el usuario exista
         const user = await User.findOne({ email: req.body.email });
         if (!user){
             console.log("El usuario o la contraseña son incorrectos");
             req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
-            req.session.destroy();
-            req.session = null;
             return res.status(400).json({ 
                 success: false,
                 message: "El usuario o la contraseña son incorrectos" 
@@ -247,7 +251,7 @@ const logIn = async (req, res) => {
         const token = getToken({ 
             id: user._id,
             email: user.email
-        });
+        }, "1d");
 
         req.session.token = token;
 

@@ -10,12 +10,12 @@ router.use("/", validateToken); //Solo permite el paso de usuarios autenticados
 
 // Página de bienvenida al usuario (<host>/usuario)
 router.get("/", (req, res) => {
-    res.render("./users/auth/user-index.ejs", { titulo: "Bienvenido", user: req.user });
+    res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user });
 });
 
 // Perfil de usuario (<host>/usuario/perfil)
 router.get("/perfil", (req, res) => {
-    res.render("./users/auth/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });
+    res.render("user/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });
 });
 
 

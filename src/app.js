@@ -40,7 +40,6 @@ app.use((req, res, next) => {
   app.locals.signupMessage = req.flash('signupMessage');
   app.locals.loginMessage = req.flash('loginMessage');
   app.locals.user = req.user;
-  //console.log(app.locals); //TODO: borrar
   next();
 });
 
@@ -62,14 +61,14 @@ app.set("views", __dirname + "/views");
 app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
 
 // Establecemos el motor de rutas
-app.use("/", require("./routes/RutasWeb.js"));
-app.use("/api/users", require("./routes/GestionUsuarios.js"));
-app.use("/usuario", require("./routes/UsuariosAutenticados.js"));
+app.use("/", require("./routes/RutasWeb.js")); // Paginación pública
+app.use("/api/users", require("./routes/GestionUsuarios.js")); // Api de gestión de usuarios
+app.use("/usuario", require("./routes/UsuariosAutenticados.js")); // Paginación de usuarios
 //TODO: app.use("/grafitis", require("./router/Grafitis"));
 
 // Establecemos la página 404
 app.use((req, res) => {
-    res.status(404).render("404", { titulo: "Error 404" });
+    res.status(404).render("404.ejs", { titulo: "Error 404" });
 });
 
 // Iniciamos la escucha del servidor en el puerto designado

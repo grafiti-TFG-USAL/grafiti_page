@@ -20,18 +20,18 @@ router.get("/servicios", (req, res) => {
 
 // Página de registro (<host>/registro)
 router.get("/registro", (req, res) => {
-    res.render("users/signup.ejs", { titulo: "Formulario de Registro", isSignUp: true });
+    res.render("user-access/signup.ejs", { titulo: "Formulario de Registro", isSignUp: true });
 });
 
 // Página de confirmación de cuenta (<host>/user-confirmed/:email)
 router.get("/user-confirmed/:email", (req, res) => {
     const { email } = req.params;
-    res.render("users/confirmed.ejs", { titulo: "Usuario confirmado", isSignUp: true, email });
+    res.render("user-access/confirmed.ejs", { titulo: "Usuario confirmado", isSignUp: true, email });
 });
 
 // Página de inicio de sesión (<host>/login)
 router.get("/login", (req, res) => {
-    res.render("users/login.ejs", { titulo: "Inicie Sesión", isSignUp: false });
+    res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false });
 });
 
 
