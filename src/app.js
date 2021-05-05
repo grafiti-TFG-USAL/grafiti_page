@@ -3,7 +3,6 @@ const app = express();
 
 // Gestión de sesiones
 const session = require('express-session');
-const passport = require('passport');
 
 // Gestión de directorios
 const path = require("path");
@@ -29,13 +28,12 @@ app.use(session({
   saveUninitialized: false
 }));
 
-// Iniciamos passport
 app.use(flash());
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Visualización de peticiones
 app.use(morgan("dev"));
+// log all requests to access.log //TODO: borrar morgan al final
+//app.use(morgan('common'));
 
 // Definimos middleware para gestión de usuarios
 app.use((req, res, next) => {

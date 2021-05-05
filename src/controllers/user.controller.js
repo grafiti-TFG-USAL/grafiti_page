@@ -214,7 +214,6 @@ const logIn = async (req, res) => {
             req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
             req.session.destroy();
             req.session = null;
-            req.logout();
             return res.status(400).json({ 
                 success: false,
                 message: "El usuario o la contraseña son incorrectos" 
@@ -319,7 +318,6 @@ const validateToken = async (req, res, next) => {
 const logOut = (req, res) => {
     req.session.destroy();
     req.session = null;
-    req.logout();
     res.redirect('/');
 }
 
