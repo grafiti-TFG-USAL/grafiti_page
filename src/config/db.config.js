@@ -1,6 +1,9 @@
 // Conexión con la base de datos MongoDB
 const mongoose = require("mongoose");
 
+const { scheduleUnverifiedUsersRemover } = require("./cron.config.js");
+const { eliminarUsuariosSinVerificar } = require("../controllers/user.controller.js");
+
 const DB_uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster.mfvvi.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const connectDB = async () => {
@@ -14,9 +17,10 @@ const connectDB = async () => {
             useCreateIndex: true
         });
 
-        if(connection.STATES.connected)
+        if(connection.STATES.connected){
             console.log("Base de Datos => OK");
-        else{
+            scheduleUnverifiedUsersRemover(eliminarUsuariosSinVerificar);
+        }else{
             console.log("Base de Datos => Error desconocido");
             process.exit(1);
         }

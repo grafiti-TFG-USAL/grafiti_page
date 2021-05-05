@@ -7,7 +7,16 @@ const router = express.Router();
 
 // Página principal (<host>/)
 router.get("/", (req, res) => {
-    res.render("index.ejs", { titulo: "Página principal" });
+    if(!req.user) {
+        res.render("index.ejs", { titulo: "Página principal" });
+    } else {
+        res.redirect("/usuario");
+    }
+});
+
+// Página de bienvenida (<host>/bienvenido)
+router.get("/bienvenido", (req, res) => {
+        res.render("index.ejs", { titulo: "Página principal" });
 });
 
 // Servicios (<host>/servicios)

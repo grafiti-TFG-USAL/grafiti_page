@@ -41,6 +41,8 @@ const getTemplate = (name, token, host) => {
             <p>Para confirmar tu cuenta, haz click en el siguiente enlace</p>
             <a href="http://${host}/api/users/confirm/${token}">
             Confirmar cuenta</a>
+            <br><br><br>
+            <p>Si no se responde a este antes de 2 días deberá volver a registrarse</p>
         </div>`;
 }
 

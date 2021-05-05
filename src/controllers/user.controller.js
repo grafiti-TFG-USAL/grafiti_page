@@ -115,7 +115,7 @@ const signUp = async (req, res) => {
         });
     }
 
-}
+};
 
 // Lógica de la validación de los usuarios registrados
 const confirmUser = async (req, res) => {
@@ -181,7 +181,7 @@ const confirmUser = async (req, res) => {
         console.log("Error al confirmar usuario => ", error);
     }
 
-}
+};
 
 // schema para la verificación de los datos de inicio de sesión
 const schemaLogin = Joi.object({
@@ -265,7 +265,7 @@ const logIn = async (req, res) => {
         });
     }
 
-}
+};
 
 // Validación del token del usuario
 const validateToken = async (req, res, next) => {
@@ -316,7 +316,7 @@ const validateToken = async (req, res, next) => {
         });
     }
 
-}
+};
 
 // Validación de la sesión del usuario
 const validateSession = async (req, res, next) => {
@@ -324,14 +324,12 @@ const validateSession = async (req, res, next) => {
     try {
         
         // Obtenemos el token de la cabecera de la petición
-        console.log("Session: ", req.session);
         const token = req.session.token;
         if(!token) {
-            console.log("No hay token"); //TODO: borrar
+            console.log("No hay token"); //TODO: borrar (o no, me gusta tenerlo ahi)
             req.user = null;
             return next();
         }
-        console.log("Token: ", token); //TODO: borrar
         
         // Verificamos que el token se corresponda a nuestra clave
         const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
@@ -347,6 +345,7 @@ const validateSession = async (req, res, next) => {
             return next();
         }
 
+        console.log("Sesion detectada de: ", user.name);
         req.user = user;
         return next();
         
@@ -358,14 +357,31 @@ const validateSession = async (req, res, next) => {
         });
     }
 
-}
+};
 
 // Finalizar la sesión
 const logOut = (req, res) => {
     req.session.destroy();
     req.session = null;
     res.redirect('/');
-}
+};
+
+// Elimina de la base de datos los usuarios que no se hayan registrado en el plazo especificado
+const eliminarUsuariosSinVerificar = async () => {
+
+    try {
+        
+        // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
+        const users = await User.deleteMany({ status: "UNVERIFIED", register_date: { 
+            $lte: Date.now() - 1000*60*60*24* 2 // 2 días en milisegundos
+        }});
+        if(users.n > 0) console.log("Usuarios borrados: ", users.n);
+
+    } catch (error) {
+        console.log("Error en la eliminación de usuarios sin verificar => ",error);
+        process.exit(1);
+    }
+};
 
 module.exports = {
     signUp,
@@ -373,5 +389,6 @@ module.exports = {
     logIn,
     validateToken,
     validateSession,
-    logOut
+    logOut,
+    eliminarUsuariosSinVerificar
 }
