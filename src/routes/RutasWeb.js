@@ -19,6 +19,11 @@ router.get("/bienvenido", (req, res) => {
         res.render("index.ejs", { titulo: "Página principal" });
 });
 
+// Página de prueba (<host>/prueba)
+router.get("/prueba", (req, res) => {
+        res.render("prueba.ejs");
+});
+
 // Servicios (<host>/servicios)
 router.get("/servicios", (req, res) => {
     res.render("servicios.ejs", { titulo: "Servicios", user: req.user }); //TODO:quitar o hacer algo con user

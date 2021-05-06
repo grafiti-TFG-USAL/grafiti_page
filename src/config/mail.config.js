@@ -42,7 +42,7 @@ const getTemplate = (name, token, host) => {
             <a href="http://${host}/api/users/confirm/${token}">
             Confirmar cuenta</a>
             <br><br><br>
-            <p>Si no se responde a este antes de 2 días deberá volver a registrarse</p>
+            <p>Si no valida su cuenta antes de 2 días deberá volver a registrarse</p>
         </div>`;
 }
 
