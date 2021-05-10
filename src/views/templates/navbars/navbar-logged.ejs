@@ -1,35 +1,43 @@
+<!-- Barra de navegación colapsable bajo sm con estilo dark -->
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <div class="container-fluid">
-    <%- include("./navbar-brand.ejs",  { href: "/usuario" }) %>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <!-- Logo con enlace al principio del navbar -->
+    <%- include("./navbar-brand.ejs",  { href: "/usuario" }) %> 
+    <!-- Botón para descolapsar la barra -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToCollapse">
       <span class="navbar-toggler-icon"></span>
     </button>
-
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item active">
+    <!-- Contenido que se descolapsará al darle al botón -->
+    <div class="collapse navbar-collapse justify-content-between" id="navbarToCollapse">
+      <!-- Paginación -->
+      <ul class="navbar-nav ml-4 ml-sm-0">
+        <li class="nav-item">
           <a class="nav-link" href="/usuario">Dashboard</a>
         </li>
-        <li class="nav-item active">
-          <a class="btn btn-outline-danger" href="/api/users/logout">Log Out</a>
+        <li class="nav-item">
+          <a class="nav-link" href="404">Grafiti DB</a>
         </li>
       </ul>
-      <ul class="navbar-nav ms-auto">
-        <!-- Meter icono usuario y desplegable de acciones de gestion de usuario -->>
-        <li class="nav-item active ms-auto">
+      <!-- Gestión de usuario -->
+      <ul class="navbar-nav clearfix float-right">
+        <!-- Meter icono usuario y desplegable de acciones de gestion de usuario -->
+        <li class="nav-item mx-sm-2 text-right">
           <a href="/usuario/perfil">
-            <img src="/images/user.png" alt="" width="35" height="35" class="d-inline-block align-text-center">
+            <img src="/images/user.png" alt="" width="35" height="35" class="rounded-circle img-thumbnail bg-dark">
           </a>
         </li>
-        <li class="nav-item active dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <li class="nav-item dropdown active text-right">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
             <%= username %> 
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item inactive" href="#">Action</a></li>
-            <li><a class="dropdown-item inactive" href="#">Another action</a></li>
+          <!-- Menú de opciones de usuario desplegable -->
+          <ul class="dropdown-menu dropdown-menu-right bg-light">
+            <li><a class="dropdown-item" href="/usuario/perfil">Mi perfil </a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item btn btn-outline-danger" href="/api/users/logout">Log Out</a></li>
+            <li><a class="dropdown-item" href="#">Mis Grafitis </a></li>
+            <li><a class="dropdown-item" href="#">Notificaciones <span class="badge badge-pill badge-warning ml-2">7</span></a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/api/users/logout"><button class="btn btn-danger btn-block">Log Out <span class="badge badge-danger badge-pill mb-1 ml-1">&times;</span></button></a></li>
           </ul>
         </li>
       </ul>

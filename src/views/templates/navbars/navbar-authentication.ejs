@@ -1,20 +1,25 @@
+<!-- Barra de navegación colapsable bajo sm con estilo dark -->
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <div class="container-fluid">
+    <!-- Logo con enlace al principio del navbar -->
     <%- include("./navbar-brand.ejs",  { href: "/" }) %>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <!-- Botón para descolapsar la barra -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToCollapse">
       <span class="navbar-toggler-icon"></span>
     </button>
-  
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item active">
+    <!-- Contenido que se descolapsará al darle al botón -->
+    <div class="collapse navbar-collapse justify-content-between" id="navbarToCollapse">
+      <!-- Paginación -->
+      <ul class="navbar-nav ml-4 ml-sm-0">
+        <li class="nav-item">
           <a class="nav-link" href="/">Inicio</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/servicios">Servicios</a>
         </li>
       </ul>
-      <ul class="navbar-nav ms-auto">
+      <!-- Botones de autenticación -->
+      <ul class="navbar-nav">
         <% if (!isSignUp) { %>
           <li class="nav-item">
             <span class="navbar-text">¿Aún no estás registrado?</span>
@@ -31,6 +36,8 @@
           </li>
         <% } %>
       </ul>
+      
     </div>
+
   </div>
 </nav>
