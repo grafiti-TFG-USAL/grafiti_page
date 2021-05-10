@@ -155,15 +155,15 @@ const confirmUser = async (req, res) => {
             });
         }
 
-        // Comprobar el status actual
-        if(user.status === "VERIFIED")
+        // Comprobar el status actual de la cuenta
+        if(user.account_status === "VERIFIED")
         {
             console.log("El usuario ya estaba verificado");
             return res.status(200).redirect("../../../login");
         }
 
         // Actualizar usuario
-        user.status = "VERIFIED";
+        user.account_status = "VERIFIED";
         userDB = await user.save();
         if(!userDB){
             console.log("El usuario no se ha podido verificar por un problema con la base de datos");
@@ -226,7 +226,7 @@ const logIn = async (req, res) => {
         console.log("Usuario esisten"); //TODO: BORRAR ESTO
 
         // Comprobar que el usuario esté verificado
-        if(user.status !== "VERIFIED"){
+        if(user.account_status !== "VERIFIED"){
             console.log("Error: el usuario aún no ha verificado su correo electrónico");
             req.flash('loginMessage', "Aún debe verificar su correo electrónico");
             return res.status(400).json({
@@ -372,7 +372,7 @@ const eliminarUsuariosSinVerificar = async () => {
     try {
         
         // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
-        const users = await User.deleteMany({ status: "UNVERIFIED", register_date: { 
+        const users = await User.deleteMany({ account_status: "UNVERIFIED", register_date: { 
             $lte: Date.now() - 1000*60*60*24* 2 // 2 días en milisegundos
         }});
         if(users.n > 0) console.log("Usuarios borrados: ", users.n);

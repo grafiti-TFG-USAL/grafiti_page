@@ -27,7 +27,7 @@ const userSchema  = mongoose.Schema({
         min: 10,
         max: 50
     },
-    status: {
+    account_status: {
         type: String,
         required: true,
         default: "UNVERIFIED"
