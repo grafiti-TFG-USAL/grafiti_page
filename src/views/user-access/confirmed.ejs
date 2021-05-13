@@ -1,9 +1,9 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp: true, tituloPestana: "¡Confirmado!" }) %>
     
 <div class="container">
-    <h2 class="text-primary">Usuario confirmado</h2>
-    <div class="container">
-        <h3 class="text-secondary">La cuenta <span class="text-success"><%= email %> </span> ha sido correctamente verificada</h3>
+    <h2 class="text-dark mt-4">Usuario confirmado</h2>
+    <div class="container mt-4">
+        <h3 class="text-secondary">La cuenta <span class="text-primary"><%= email %> </span> ha sido correctamente verificada</h3>
     </div>
     <h4 class="text-secondary my-4">Ya puede ingresar al sistema</h4>
     <a class="btn btn-outline-success col-3" href="/login">Iniciar sesión</a>

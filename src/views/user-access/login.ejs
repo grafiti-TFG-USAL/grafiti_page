@@ -1,21 +1,69 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp, tituloPestana: "Iniciar sesión" }) %>
 
     <div class="container">
-        <h1 class="text-primary mt-4">Inicio de sesión</h1>
-        <div class="container mt-4">
+
+        <h1 class="text-dark mt-4">Inicio de sesión</h1>
+
+        <div class="alert alert-warning alert-dismissible fade d-none mt-4" role="alert" id="alerta">
+            <h4 class="alert-heading">Aviso</h4> 
+            <p>Debes validar tu cuenta mediante el email que te hemos enviado para poder iniciar sesión.</p>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+
+        <div class="container mt-4" class="form">
             <form id="login-form">
-                <p>Email</p>
-                <input type="email" name="email" id="email" placeholder="Correo electrónico" value="lluquino@gmail.com"><br>
-                <p class="mt-2">Contraseña</p>
-                <input type="password" name="password" id="password" placeholder="Contraseña" value="ejemploejemplo"><br>
-                <button class="btn btn-primary mt-4 ms-4" type="submit">Iniciar Sesión</button>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input class="form-control col-md-6 col-lg-5" type="email" required="required" minlength="6" maxlength="50" name="email" id="email" placeholder="alguien@example.es" value="lluquino@gmail.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input class="form-control col-md-6 col-lg-5" type="password" required="required" maxlength="50" name="password" id="password" placeholder="contraseña" value="ejemploejemplo">
+                    <div id="error" class="invalid-feedback"></div>
+                </div>
+                
+                <div class="form-row my-3">
+                    <div class="col text-center text-md-left">
+                        <button class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary" type="submit">Iniciar Sesión   <i class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
+                    </div>
+                </div>
+
             </form>
         </div>
     </div>
 
     <script>
+
+        function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+        }
+
+        if("true" === getCookie("validationRequired")){
+            const alerta = document.getElementById("alerta");
+            alerta.classList.add("show");
+            alerta.classList.remove("d-none");
+        }
         
-        const form = document.querySelector("#login-form");
+        const form = document.getElementById("login-form");
+
+        const passwordInput = document.getElementById("password");
+        const emailInput = document.getElementById("email");
+        const errorfeedback = document.getElementById("error");
+        const spinner = document.getElementById("spinner");
 
         // Reemplazamos el recargas página del boton submit por otro comportamiento
         form.addEventListener("submit", async (event) => {
@@ -25,6 +73,11 @@
             // Recogemos los datos del formulario
             const email = form.elements["email"].value;
             const password = form.elements["password"].value;
+
+            //Efectos
+            spinner.classList.remove("d-none");
+            emailInput.classList.remove("is-invalid");
+            passwordInput.classList.remove("is-invalid");
             
             try {
 
@@ -39,9 +92,20 @@
                     })
                 });
 
-                console.log("Data retrieved: ", data);
-
-                window.location.href = "/usuario";
+                const respuesta = await data.json();
+                // Si ha habido algun fallo, lo mostramos
+                if(!respuesta.success){
+                    // TODO
+                    errorfeedback.innerText = respuesta.message;
+                    emailInput.classList.add("is-invalid");
+                    passwordInput.classList.add("is-invalid");
+                    spinner.classList.add("d-none");
+                }else{ 
+                    // Si todo sale bien vamos a la página de usuario
+                    console.log("ALLA VAMOS!"); //TODO: borrar logs
+                    window.location.href = "/usuario";
+                    console.log("Alla fuimos");
+                }
 
             } catch (error) {
                     // Si algo ha ido mal lo mostramos por consola

@@ -34,18 +34,19 @@ const signUp = async (req, res) => {
         // Comprobamos los errores en la info de registro recibida con validate
         const {error} = schemaRegister.validate(req.body);
         if (error) {
-            req.flash('signupMessage', 'La información introducida no tiene el formato correcto.');
             return res.status(400).json({
-                error: error.details[0].message
+                success: false,
+                errorOn: "general",
+                message: error.details[0].message
             });
         }
 
         // Verificamos que el email introducido no esté registrado ya en la BD
         const emailExists = await User.findOne({ email: req.body.email })
         if(emailExists) {
-            req.flash('signupMessage', 'El email introducido ya existe.');
             return res.status(400).json({
                 success: false,
+                errorOn: "email",
                 message: "El email introducido ya existe"
             });
         }
@@ -57,10 +58,10 @@ const signUp = async (req, res) => {
         const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
         const password = await bcrypt.hash(req.body.password, saltos);
         if(!saltos || !password){
-            req.flash('signupMessage', 'No se ha podido asegurar la contraseña. Operación abortada.');
             return res.status(400).json({
                 success: false,
-                message: "Operacion fallida: incapaz de asegurar la contraseña del usuario"
+                errorOn: "general",
+                message: "Error interno: incapaz de asegurar la contraseña del usuario, operación abortada por seguridad"
             });
         }
 
@@ -77,7 +78,7 @@ const signUp = async (req, res) => {
         const token = getToken({ 
             email: user.email, 
             code: user.code 
-        }, "1m");
+        }, "2d"); //Que dure dos días
 
         // Obtenemos el template
         const template = getTemplate(req.body.name, token, req.headers.host)
@@ -91,26 +92,28 @@ const signUp = async (req, res) => {
         // Almacenamos el usuario en la base de datos
         const userDB = await user.save();
         if(!userDB){
-            req.flash('signupMessage', "Ha habido un error al almacenar al usuario en la base de datos");
+            console.log("Ha habido un error al almacenar al usuario en la base de datos");
             return res.status(400).json({
                 success: false,
+                errorOn: "general",
                 message: "Ha habido un error al almacenar al usuario en la base de datos"
             });
         }
 
         console.log("Usuario ", user.name , " almacenado en la base");
 
-        req.flash('loginMessage', "Valide su cuenta mediante el correo que le hemos enviado a su dirección de correo electrónico"); //TODO:Mover esto al siguiente middleware
         return res.status(200).json({
             success: true,
-            message: "Usuario almacenado en la base correctamente y pendiente de validación"
-        })
+            validationPending: true,
+            message: "Valide su cuenta mediante el correo que le hemos enviado a su dirección de correo electrónico"
+        });
 
     } catch (error) {
         console.log(error);
         req.flash('signupMessage', "Error inesperado al registrar al usuario");
         return res.status(400).json({
             success: false,
+            errorOn: "general",
             message: "Error inesperado al registrar al usuario"
         });
     }
@@ -205,10 +208,9 @@ const logIn = async (req, res) => {
         const { error } = schemaLogin.validate(req.body);
         if (error){
             console.log("Error al validar los datos introducidos");
-            req.flash('loginMessage', error);
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: error 
+                message: "Error al validar los datos introducidos"
             });
         }
         console.log("Formato adecudado de datos"); //TODO: borrar dep
@@ -217,7 +219,6 @@ const logIn = async (req, res) => {
         const user = await User.findOne({ email: req.body.email });
         if (!user){
             console.log("El usuario o la contraseña son incorrectos");
-            req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
             return res.status(400).json({ 
                 success: false,
                 message: "El usuario o la contraseña son incorrectos" 
@@ -228,7 +229,6 @@ const logIn = async (req, res) => {
         // Comprobar que el usuario esté verificado
         if(user.account_status !== "VERIFIED"){
             console.log("Error: el usuario aún no ha verificado su correo electrónico");
-            req.flash('loginMessage', "Aún debe verificar su correo electrónico");
             return res.status(400).json({
                 success: false,
                 message: "Error: el usuario aún no ha verificado su email"
@@ -238,14 +238,13 @@ const logIn = async (req, res) => {
         // Comprobar la contraseña
         const validPassword = await bcrypt.compare(req.body.password, user.password);
         if (!validPassword){
-            req.flash('loginMessage', "El usuario o la contraseña son incorrectos");
             console.log("El usuario o la contraseña son incorrectos");
             return res.status(400).json({ 
                 success: false,
                 message: "El usuario o la contraseña son incorrectos" 
             });
         }
-        console.log("Contraseña correcta")
+        console.log("Contraseña correcta");
 
         // Generamos el token
         const token = getToken({ 
@@ -255,7 +254,10 @@ const logIn = async (req, res) => {
 
         req.session.token = token;
 
-        res.redirect("./usuario")
+        return res.status(200).json({ 
+            success: true,
+            message: "Autenticado" 
+        });
 
     } catch (error) {
         console.log("Error en el inicio de sesión => ", error);
@@ -390,5 +392,7 @@ module.exports = {
     validateToken,
     validateSession,
     logOut,
-    eliminarUsuariosSinVerificar
+    eliminarUsuariosSinVerificar,
+    schemaRegister,
+    schemaLogin
 }
