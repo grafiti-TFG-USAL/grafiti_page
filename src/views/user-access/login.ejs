@@ -10,8 +10,8 @@
             <button type="button" class="close" data-dismiss="alert">&times;</button>
         </div>
 
-        <div class="container mt-4" class="form">
-            <form id="login-form">
+        <div class="container mt-4">
+            <form id="login-form" class="form">
 
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -78,7 +78,7 @@
             spinner.classList.remove("d-none");
             emailInput.classList.remove("is-invalid");
             passwordInput.classList.remove("is-invalid");
-            
+
             try {
 
                 // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
@@ -87,6 +87,7 @@
                     headers: {
                         "Content-Type": "application/json"
                     },
+                    credentials: "include",
                     body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
                         email, password
                     })
@@ -96,7 +97,7 @@
                 // Si ha habido algun fallo, lo mostramos
                 if(!respuesta.success){
                     // TODO
-                    errorfeedback.innerText = respuesta.message;
+                    errorfeedback.innerHTML = respuesta.message;
                     emailInput.classList.add("is-invalid");
                     passwordInput.classList.add("is-invalid");
                     spinner.classList.add("d-none");

@@ -1,5 +1,5 @@
 const router = require("express").Router();
-
+const passport = require("passport");
 // RUTA RAIZ "/api/users"
 
 // Cargamos la lógica del controlador de usuarios

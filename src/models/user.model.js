@@ -17,6 +17,7 @@ const userSchema  = mongoose.Schema({
     email: {
         type: String,
         required: true,
+        lowercase: true,
         unique: true,
         min: 6,
         max: 50
@@ -32,24 +33,32 @@ const userSchema  = mongoose.Schema({
         required: true,
         default: "UNVERIFIED"
     },
-    register_date: {
-        type: Date,
-        required: true,
-        default: Date.now
-    },
     code: {
         type: String, 
         required: true
     }
+}, { 
+    timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });
 
 // Métodos del modelo
-userSchema.methods.encryptPassword = (password) => {
-    return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+userSchema.methods.encryptPassword = async (password) => {
+    try {
+        return await bcrypt.hash(password, bcrypt.genSaltSync(10));
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
 };
   
-userSchema.methods.comparePassword = (password) => {
-    return bcrypt.compareSync(password, this.password);
+userSchema.methods.comparePassword = async (password) => {
+    console.log("Comparando contraseña: ", password);
+    try {
+        return await bcrypt.compare(password, this.password);
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
 };
 
 //mongoose.model() busca en la base la coleccion "usuarios" (automaticamente ya pone en lowercase y busca el plural)

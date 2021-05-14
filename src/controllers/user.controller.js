@@ -10,6 +10,9 @@ const { v4: uuidv4 } = require("uuid");
 // jwt para gestionar los tokens
 const jwt = require("jsonwebtoken");
 
+// passport gestiona las cookies de sesión
+const passport = require("passport");
+
 // Importamos la lógica del controlador
 const { getToken, getTokenData } = require("../config/jwt.config.js");
 const { sendEmail, getTemplate } = require("../config/mail.config");
@@ -110,7 +113,6 @@ const signUp = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        req.flash('signupMessage', "Error inesperado al registrar al usuario");
         return res.status(400).json({
             success: false,
             errorOn: "general",
@@ -192,180 +194,57 @@ const schemaLogin = Joi.object({
     password: Joi.string().min(10).max(50).required()
 });
 
-// Lógica de los inicios de sesión
-const logIn = async (req, res) => {
-
-    try {
-
-        //Si había una sesión iniciada la destruimos
-        console.log("Destruimos la sesion anterior de haberla"); //TODO: borrar dep
-        //req.session.destroy();
-        req.session.token = null;
-        console.log("Sesión destruida"); //TODO: borrar dep
-
-        // Validar los datos recibidos
-        console.log("Datos recibidos: ", req.body)
-        const { error } = schemaLogin.validate(req.body);
-        if (error){
-            console.log("Error al validar los datos introducidos");
-            return res.status(400).json({
-                success: false,
-                message: "Error al validar los datos introducidos"
-            });
-        }
-        console.log("Formato adecudado de datos"); //TODO: borrar dep
-
-        // Comprobar que el usuario exista
-        const user = await User.findOne({ email: req.body.email });
-        if (!user){
-            console.log("El usuario o la contraseña son incorrectos");
-            return res.status(400).json({ 
-                success: false,
-                message: "El usuario o la contraseña son incorrectos" 
-            });
-        }
-        console.log("Usuario esisten"); //TODO: BORRAR ESTO
-
-        // Comprobar que el usuario esté verificado
-        if(user.account_status !== "VERIFIED"){
-            console.log("Error: el usuario aún no ha verificado su correo electrónico");
-            return res.status(400).json({
-                success: false,
-                message: "Error: el usuario aún no ha verificado su email"
-            });
-        }
+// Lógica del inicio de sesión
+const logIn = async (req, res, next) => {
     
-        // Comprobar la contraseña
-        const validPassword = await bcrypt.compare(req.body.password, user.password);
-        if (!validPassword){
-            console.log("El usuario o la contraseña son incorrectos");
-            return res.status(400).json({ 
-                success: false,
-                message: "El usuario o la contraseña son incorrectos" 
+    // Si un usuario intenta iniciar sesión, borramos la anterior
+    req.logOut();
+
+    passport.authenticate("local", (err, user, info) => {
+
+        // Comprobamos si ha habido algún error
+        if(err) {
+            console.log("Error 1 en la autenticacion passport: ", info.message);
+            return res.status(400).json({
+                success: false, 
+                message: info.message
             });
         }
-        console.log("Contraseña correcta");
+        if(!user){
+            console.log("Error 2 en la autenticacion passport: ", info.message);
+            return res.status(400).json({
+                success: false, 
+                message: info.message
+            });
+        }
 
-        // Generamos el token
-        const token = getToken({ 
-            id: user._id,
-            email: user.email
-        }, "1d");
+        // Si no ha habido ningun fallo, logeamos
+        req.logIn(user, (err) => {
+            if(err){
+                console.log("Error 3 en el login de passport: ", err);
+                return res.status(400).json({
+                    success: false, 
+                    message: err
+                });
+            }
+        });
 
-        req.session.token = token;
-
+        // Si todo ha ido bien se lo decimos a login
         return res.status(200).json({ 
             success: true,
             message: "Autenticado" 
         });
 
-    } catch (error) {
-        console.log("Error en el inicio de sesión => ", error);
-        return res.status(400).json({
-            success: false,
-            message: error
-        });
-    }
-
-};
-
-// Validación del token del usuario
-const validateToken = async (req, res, next) => {
-
-    try {
-
-        // Obtenemos el token de la cabecera de la petición
-        console.log("Session: ", req.session);
-        const token = req.session.token;
-        if(!token) {
-            // 401 -> Acceso denegado
-            console.log("ERROR: No hay token")
-            return res.status(401).json({ 
-                error: "Acceso denegado" 
-            });
-        }
-        console.log("Sesión leida, token obtenido"); //TODO:BOrrar
-        
-        // Verificamos que el token se corresponda a nuestra clave
-        const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
-        if(!tokenData){
-            console.log("Error: No se ha podido acceder a la información del token");
-            return res.status(400).json({
-                success: false,
-                message: "No se ha podido acceder a la información del token"
-            });
-        }
-        console.log("Token verificado: ", tokenData); //TODO: borrar esto
-        
-        // Obtenemos el nombre de la BD
-        const user = await User.findOne({ email: tokenData.data.email });
-        if(!user) {
-            console.log("Error: No se encuentra el usuario");
-            return res.status(400).json({
-                success: false,
-                message: "No se ha podido encontrar al usuario"
-            });
-        }
-
-        req.user = user;
-        next();
-        
-    } catch (error) {
-        return res.status(400).json({ 
-            success: false,
-            error,
-            message: "Ha habido un problema al verificar el token de usuario" 
-        });
-    }
-
-};
-
-// Validación de la sesión del usuario
-const validateSession = async (req, res, next) => {
-
-    try {
-        
-        // Obtenemos el token de la cabecera de la petición
-        const token = req.session.token;
-        if(!token) {
-            console.log("No hay token"); //TODO: borrar (o no, me gusta tenerlo ahi)
-            req.user = null;
-            return next();
-        }
-        
-        // Verificamos que el token se corresponda a nuestra clave
-        const tokenData = jwt.verify(token, process.env.TOKEN_SECRET);
-        if(!tokenData){
-            req.user = null;
-            return next();
-        }
-        
-        // Obtenemos el nombre de la BD
-        const user = await User.findOne({ email: tokenData.data.email });
-        if(!user) {
-            req.user = null;
-            return next();
-        }
-
-        console.log("Sesion detectada de: ", user.name);
-        req.user = user;
-        return next();
-        
-    } catch (error) {
-        return res.status(400).json({ 
-            success: false,
-            error,
-            message: "Ha habido un problema al verificar el token de usuario" 
-        });
-    }
+    })(req, res, next);
 
 };
 
 // Finalizar la sesión
 const logOut = (req, res) => {
-    req.session.destroy();
-    req.session = null;
-    res.redirect('/');
+    req.logOut();
+    if(req.user)
+        req.user = null;
+    res.redirect("/bienvenido");
 };
 
 // Elimina de la base de datos los usuarios que no se hayan registrado en el plazo especificado
@@ -374,7 +253,7 @@ const eliminarUsuariosSinVerificar = async () => {
     try {
         
         // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
-        const users = await User.deleteMany({ account_status: "UNVERIFIED", register_date: { 
+        const users = await User.deleteMany({ account_status: "UNVERIFIED", createdAt: { 
             $lte: Date.now() - 1000*60*60*24* 2 // 2 días en milisegundos
         }});
         if(users.n > 0) console.log("Usuarios borrados: ", users.n);
@@ -389,8 +268,6 @@ module.exports = {
     signUp,
     confirmUser,
     logIn,
-    validateToken,
-    validateSession,
     logOut,
     eliminarUsuariosSinVerificar,
     schemaRegister,

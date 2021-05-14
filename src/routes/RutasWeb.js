@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Página principal (<host>/)
 router.get("/", (req, res) => {
-    if(!req.user) {
+    if(!req.user) { //TODO: cambiar al agregar passport
         res.render("index.ejs", { titulo: "Página principal" });
     } else {
         res.redirect("/usuario");
@@ -16,12 +16,14 @@ router.get("/", (req, res) => {
 
 // Página de bienvenida (<host>/bienvenido)
 router.get("/bienvenido", (req, res) => {
-        res.render("index.ejs", { titulo: "Página principal" });
+    res.render("index.ejs", { titulo: "Página principal" });
 });
 
 // Página de prueba (<host>/prueba)
 router.get("/prueba", (req, res) => {
-        res.render("prueba.ejs");
+    req.session.cuenta = req.session.cuenta ? req.session.cuenta + 1 : 1;
+    res.send(`Se ha visitado la página ${req.session.cuenta} veces`)
+    //res.render("prueba.ejs");
 });
 
 // Servicios (<host>/servicios)

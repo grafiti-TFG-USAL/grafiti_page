@@ -1,10 +1,11 @@
 const express = require("express");
-const { validateToken } = require("../controllers/user.controller.js")
+
+const passportConf = require("../config/passport.config");
 
 const router = express.Router();
 
 // Middleware de control de sesión
-router.use("/", validateToken); //Solo permite el paso de usuarios autenticados
+router.use("/", passportConf.estaAutenticado); //Solo permite el paso de usuarios autenticados
 
 // RUTAS PARA USUARIOS AUTENTICADOS "/usuario"
 

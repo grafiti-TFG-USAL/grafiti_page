@@ -4,14 +4,17 @@ const app = express();
 // Gestión de sesiones
 const session = require('express-session');
 
+// Almacenamiento de sesiones en la bd
+const MongoStore = require("connect-mongo");
+
+// Gestión de acceso a recursos restringidos
+const passport = require("passport");
+
 // Gestión de directorios
 const path = require("path");
 
 // Visualización de rutas
 const morgan = require("morgan");
-
-// Flash para intercambio de mensajes
-const flash = require('connect-flash');
 
 //TODO: configurar cors
 
@@ -22,26 +25,27 @@ app.use(express.urlencoded({ extended: false }));
 require("dotenv").config();
 
 // Configuramos las sesiones
+const { DB_uri } = require("./config/db.config.js");
 app.use(session({
-  secret: process.env.TOKEN_SECRET,
-  resave: false,
-  saveUninitialized: false
+  secret: process.env.SESSION_SECRET, //salt del algoritmo de cifrado
+  resave: true, //fuerza que cada llamada al servidor guarde la info de sesión sin importar si hubieron cambios
+  saveUninitialized: true, //guarda en la bd el objeto vacío aunque no hubiera info en el principio
+  store: MongoStore.create({ //bd para almacenar sesiones
+    mongoUrl: DB_uri,
+    collectionName: "sessions",
+    ttl: 30 * 24 * 60 * 60, //30 días
+    autoReconnect: true,
+    crypto: { secret: process.env.MONGO_SESSION_SECRET },
+    autoRemove: 'interval',
+    autoRemoveInterval: 10 //borrar sesiones expiradas cada 10 minutos
+  })
 }));
-// Usamos flash en el intercambio de mensajes
-app.use(flash());
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Visualización de peticiones
-app.use(morgan("dev"));
-// log all requests to access.log //TODO: borrar morgan al final
-//app.use(morgan('common'));
-
-// Definimos middleware para gestión de usuarios
-app.use((req, res, next) => {
-  app.locals.signupMessage = req.flash('signupMessage');
-  app.locals.loginMessage = req.flash('loginMessage');
-  //app.locals.user = req.user;
-  next();
-});
+app.use(morgan("dev")); //TODO: borrar morgan al final
 
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser
@@ -50,7 +54,7 @@ app.use(express.json()) // Lo que antes se hacía con body-parser
 const port = process.env.PORT;
 
 // Conexión con la base de datos MongoDB
-const connectDB = require("./config/db.config.js");
+const { connectDB } = require("./config/db.config.js");
 connectDB();
 
 // Motor de plantillas
@@ -59,10 +63,6 @@ app.set("views", __dirname + "/views");
 
 // Establecemos la ruta estática (middleware) //TODO: si al final no lo uso, borrar
 app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
-
-// Comprobación de inicio de sesión
-const { validateSession } = require("./controllers/user.controller.js");
-app.use(validateSession);
 
 // Establecemos el motor de rutas
 app.use("/", require("./routes/RutasWeb.js")); // Paginación pública
