@@ -7,7 +7,8 @@ const router = express.Router();
 
 // Página principal (<host>/)
 router.get("/", (req, res) => {
-    if(!req.user) { //TODO: cambiar al agregar passport
+    console.log("Index: is authenticated? - ", req.isAuthenticated())
+    if(!req.isAuthenticated()) { //TODO: cambiar al agregar passport
         res.render("index.ejs", { titulo: "Página principal" });
     } else {
         res.redirect("/usuario");
@@ -28,7 +29,7 @@ router.get("/prueba", (req, res) => {
 
 // Servicios (<host>/servicios)
 router.get("/servicios", (req, res) => {
-    res.render("servicios.ejs", { titulo: "Servicios", user: req.user }); //TODO:quitar o hacer algo con user
+    res.render("servicios.ejs", { titulo: "Servicios" }); //TODO:quitar o hacer algo con user
 });
 
 

@@ -15,13 +15,18 @@
 
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input class="form-control col-md-6 col-lg-5" type="email" required="required" minlength="6" maxlength="50" name="email" id="email" placeholder="alguien@example.es" value="lluquino@gmail.com">
+                    <input class="form-control col-md-6 col-lg-5" type="email" required="required" minlength="6" maxlength="50" name="email" id="email" placeholder="alguien@example.es">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Contraseña</label>
-                    <input class="form-control col-md-6 col-lg-5" type="password" required="required" maxlength="50" name="password" id="password" placeholder="contraseña" value="ejemploejemplo">
+                    <input class="form-control col-md-6 col-lg-5" type="password" required="required" maxlength="50" name="password" id="password" placeholder="contraseña">
                     <div id="error" class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember" checked/>
+                    <label class="form-check-label" for="remember">No cerrar sesión</label>
                 </div>
                 
                 <div class="form-row my-3">
@@ -73,6 +78,7 @@
             // Recogemos los datos del formulario
             const email = form.elements["email"].value;
             const password = form.elements["password"].value;
+            const remember = form.elements["remember"].value;
 
             //Efectos
             spinner.classList.remove("d-none");
@@ -89,7 +95,7 @@
                     },
                     credentials: "include",
                     body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                        email, password
+                        email, password, remember
                     })
                 });
 

@@ -229,6 +229,13 @@ const logIn = async (req, res, next) => {
             }
         });
 
+        if(req.body.remember) {
+            var hour = 3600000;
+            req.session.cookie.maxAge = 14 * 24 * hour; //2 weeks
+        } else {
+            req.session.cookie.expires = false;
+        }
+
         // Si todo ha ido bien se lo decimos a login
         return res.status(200).json({ 
             success: true,

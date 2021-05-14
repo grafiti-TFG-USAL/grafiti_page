@@ -10,7 +10,8 @@ const bcrypt = require("bcrypt");
 // Indicamos a passport cómo serializar un usuario
 passport.serializeUser((usuario, done) => {
     // Utilizamos el id para hacer el matching entre los usuarios y las sesiones en la base de datos
-    done(null, usuario._id); 
+    console.log("Serialize User: ", usuario.id)
+    done(null, usuario.id); 
 });
 
 // Indicamos a passport cómo desserializar un usuario

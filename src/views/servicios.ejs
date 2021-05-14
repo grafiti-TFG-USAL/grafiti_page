@@ -1,12 +1,7 @@
-<%- include("templates/header.ejs", { user, tipoNavbar: "normal", tituloPestana: "Servicios" }) %>
+<%- include("templates/header.ejs", { tipoNavbar: "normal", tituloPestana: "Servicios" }) %>
 
 <div class="container my-4">
     <h1><%= titulo %></h1>
-    <% if(user) { %>
-        <p><%= user.name %></p>
-    <% } else { %>
-        <p>NO</p>
-    <% } %> 
 </div>
 
 <%- include('templates/footer'); %>
