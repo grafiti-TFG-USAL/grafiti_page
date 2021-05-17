@@ -61,6 +61,7 @@ const signUp = async (req, res) => {
         const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
         const password = await bcrypt.hash(req.body.password, saltos);
         if(!saltos || !password){
+            console.log("Incapaz de asegurar la contraseña del usuario, operación abortada por seguridad");
             return res.status(400).json({
                 success: false,
                 errorOn: "general",
@@ -102,8 +103,6 @@ const signUp = async (req, res) => {
                 message: "Ha habido un error al almacenar al usuario en la base de datos"
             });
         }
-
-        console.log("Usuario ", user.name , " almacenado en la base");
 
         return res.status(200).json({
             success: true,
@@ -179,7 +178,6 @@ const confirmUser = async (req, res) => {
         }
 
         // Redireccionar a la página de confirmación
-        console.log("El usuario ha sido validado correctamente");
         res.status(200).redirect(`../../../user-confirmed/${email}`);
 
     }catch(error){
@@ -249,6 +247,7 @@ const logIn = async (req, res, next) => {
 // Finalizar la sesión
 const logOut = (req, res) => {
     req.logOut();
+    req.session.destroy(); // logOut solo a veces fallaba
     if(req.user)
         req.user = null;
     res.redirect("/bienvenido");
