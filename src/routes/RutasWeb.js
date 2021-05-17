@@ -7,10 +7,12 @@ const router = express.Router();
 
 // Página principal (<host>/)
 router.get("/", (req, res) => {
-    console.log("Index: is authenticated? - ", req.isAuthenticated())
-    if(!req.isAuthenticated()) { //TODO: cambiar al agregar passport
+    // Comprobamos si el usuario está autenticado
+    if(!req.isAuthenticated()) { 
+        // Si el usuario no tiene sesión iniciada, llevamos al índice principal
         res.render("index.ejs", { titulo: "Página principal" });
     } else {
+        // Si el usuario tiene la sesión iniciada, le llevamos a la página principal de usuario directamente
         res.redirect("/usuario");
     }
 });
@@ -29,7 +31,7 @@ router.get("/prueba", (req, res) => {
 
 // Servicios (<host>/servicios)
 router.get("/servicios", (req, res) => {
-    res.render("servicios.ejs", { titulo: "Servicios" }); //TODO:quitar o hacer algo con user
+    res.render("servicios.ejs", { titulo: "Servicios" });
 });
 
 
@@ -48,7 +50,11 @@ router.get("/user-confirmed/:email", (req, res) => {
 
 // Página de inicio de sesión (<host>/login)
 router.get("/login", (req, res) => {
-    res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false });
+    // Si se ha intentado acceder a zona restringida a usuarios y se ha redirigido al login, mostramos aviso
+    console.log(req.query.attempt)
+    const attempted = req.query.attempt ? true : false;
+    
+    res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false, attempted });
 });
 
 

@@ -30,6 +30,7 @@ const sendEmail = async (email, subject, html) => {
         });
     } catch (error) {
         console.log("Algo no ha funcionado con el email: ", error);
+        //TODO: hacer algo
     }
 }
 

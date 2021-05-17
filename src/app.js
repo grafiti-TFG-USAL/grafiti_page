@@ -16,7 +16,7 @@ const path = require("path");
 // Visualización de rutas
 const morgan = require("morgan");
 
-//TODO: configurar cors
+//TODO: configurar cors (?)
 
 // Parsea application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }));
@@ -45,7 +45,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Visualización de peticiones
-app.use(morgan("dev")); //TODO: borrar morgan al final
+if(process.env.MORGAN)
+  app.use(morgan("dev"));
 
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser
@@ -61,14 +62,14 @@ connectDB();
 app.set("view engine", "ejs");
 app.set("views", __dirname + "/views");
 
-// Establecemos la ruta estática (middleware) //TODO: si al final no lo uso, borrar
+// Establecemos la ruta estática (middleware)
 app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
 
 // Establecemos el motor de rutas
 app.use("/", require("./routes/RutasWeb.js")); // Paginación pública
 app.use("/api/users", require("./routes/GestionUsuarios.js")); // Api de gestión de usuarios
 app.use("/usuario", require("./routes/Usuario.js")); // Paginación de usuarios
-//TODO: app.use("/grafitis", require("./router/Grafitis"));
+//app.use("/grafitis", require("./router/Grafitis")); // TODO: Podría ser una página pública de visualización de grafitis de la bd
 
 // Establecemos la página 404
 app.use((req, res) => {

@@ -13,6 +13,7 @@ const getToken = (payload, expires = "1d") => {
 const getTokenData = (token) => {
     
     let data = null;
+    
     jwt.verify(token, process.env.TOKEN_SECRET, (error, decoded) => {
         if(error) {
             console.log("Error: no se pudo obtener los datos del token");

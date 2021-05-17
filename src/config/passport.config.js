@@ -10,7 +10,6 @@ const bcrypt = require("bcrypt");
 // Indicamos a passport cómo serializar un usuario
 passport.serializeUser((usuario, done) => {
     // Utilizamos el id para hacer el matching entre los usuarios y las sesiones en la base de datos
-    console.log("Serialize User: ", usuario.id)
     done(null, usuario.id); 
 });
 
@@ -39,12 +38,10 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
                 message: "Error al validar los datos introducidos"
             });
         }
-        console.log("Formato adecudado de datos"); //TODO: borrar dep
 
         // Compribamos que existe un usuario con el email recibido
         const user = await User.findOne({ email });
         if(!user){
-            console.log("El usuario o la contraseña son incorrectos"); //TODO:Deletethis
             return done(null, false, {
                 message: "El usuario o la contraseña son incorrectos"
             });
@@ -53,7 +50,6 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
         //Comprobamos que el hash de la contraseña del usuario corresponde a la proporcionada
         const validPassword = await bcrypt.compare(password, user.password);
         if(!validPassword){
-            console.log("El usuario o la contraseña son incorrectos"); //TODO:Deletethis
             return done(null, false, {
                 message: "El usuario o la contraseña son incorrectos"
             });
@@ -72,7 +68,7 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
         return done(null, user);
 
     } catch (error) {
-        console.log(error);
+        console.log("Error en api/users/login: ", error);
         return done(null, false, {
             message: error
         });
@@ -83,15 +79,10 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
 
 const estaAutenticado = (req, res, next) => {
     if(req.isAuthenticated()){
-        console.log("Usuario logeado");
         return next(); // Es un middleware, por lo que se coloca entre la peticion y el acceso a la página, a la que redirige next()
     }else{
-        console.log("Usuario NO logeado");
-        res.redirect("/login");
-        /*res.status(401).json({
-            success: false, 
-            message: "No puede acceder al recurso sin estar autenticado"
-        });*/
+        // Añadimos un parámetro para advertir de la necesidad de iniciar sesión en el login
+        res.redirect("/login?attempt=true");
     }
 };
 

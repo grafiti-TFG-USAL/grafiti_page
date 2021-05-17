@@ -10,6 +10,14 @@
             <button type="button" class="close" data-dismiss="alert">&times;</button>
         </div>
 
+        <% if (attempted) { %>
+        <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert" id="alerta">
+            <h4 class="alert-heading">Usuario no autenticado</h4> 
+            <p>Debes iniciar sesión para poder acceder a las páginas de usuario.</p>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        <% } %>
+
         <div class="container mt-4">
             <form id="login-form" class="form">
 
@@ -102,24 +110,33 @@
                 const respuesta = await data.json();
                 // Si ha habido algun fallo, lo mostramos
                 if(!respuesta.success){
-                    // TODO
                     errorfeedback.innerHTML = respuesta.message;
                     emailInput.classList.add("is-invalid");
                     passwordInput.classList.add("is-invalid");
                     spinner.classList.add("d-none");
                 }else{ 
                     // Si todo sale bien vamos a la página de usuario
-                    console.log("ALLA VAMOS!"); //TODO: borrar logs
-                    window.location.href = "/usuario";
-                    console.log("Alla fuimos");
+                    window.location.href = "/usuario"; // El middleware de passport comprobará que se haya iniciado bien la sesión
                 }
 
             } catch (error) {
                     // Si algo ha ido mal lo mostramos por consola
-                    console.log(error); //TODO: cambiar comportamiento
+                    errorfeedback.innerText = error;
+                    emailInput.classList.add("is-invalid");
+                    passwordInput.classList.add("is-invalid");
+                    spinner.classList.add("d-none");
             }
 
         });
+
+        const eliminarAdvertencia = (event) => {
+            if(emailInput.classList.contains("is-invalid"))
+                emailInput.classList.remove("is-invalid");
+            if(passwordInput.classList.contains("is-invalid"))
+                passwordInput.classList.remove("is-invalid");
+        }
+        emailInput.addEventListener("input", eliminarAdvertencia);
+        passwordInput.addEventListener("input", eliminarAdvertencia);
 
     </script>
 
