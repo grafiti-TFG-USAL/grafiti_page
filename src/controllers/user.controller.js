@@ -278,4 +278,4 @@ module.exports = {
     eliminarUsuariosSinVerificar,
     schemaRegister,
     schemaLogin
-}
+};

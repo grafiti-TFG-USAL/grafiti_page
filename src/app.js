@@ -4,17 +4,14 @@ const app = express();
 // Gestión de sesiones
 const session = require('express-session');
 
-// Almacenamiento de sesiones en la bd
-const MongoStore = require("connect-mongo");
-
-// Gestión de acceso a recursos restringidos
-const passport = require("passport");
-
 // Gestión de directorios
 const path = require("path");
 
 // Visualización de rutas
 const morgan = require("morgan");
+
+// Subida de imágenes al servidor
+const multer = require("multer");
 
 //TODO: configurar cors (?)
 
@@ -22,37 +19,23 @@ const morgan = require("morgan");
 app.use(express.urlencoded({ extended: false }));
 
 // Configuración de las variables de entorno
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
 
 // Configuramos las sesiones
-const { DB_uri } = require("./config/db.config.js");
-app.use(session({
-  secret: process.env.SESSION_SECRET, //salt del algoritmo de cifrado
-  resave: true, //fuerza que cada llamada al servidor guarde la info de sesión sin importar si hubieron cambios
-  saveUninitialized: true, //guarda en la bd el objeto vacío aunque no hubiera info en el principio
-  store: MongoStore.create({ //bd para almacenar sesiones
-    mongoUrl: DB_uri,
-    collectionName: "sessions",
-    ttl: 30 * 24 * 60 * 60, //30 días
-    autoReconnect: true,
-    crypto: { secret: process.env.MONGO_SESSION_SECRET },
-    autoRemove: 'interval',
-    autoRemoveInterval: 10 //borrar sesiones expiradas cada 10 minutos
-  })
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
+const passportSessions = require("./config/sessions.config.js");
+passportSessions(app, session);
 
 // Visualización de peticiones
 if(process.env.MORGAN)
   app.use(morgan("dev"));
 
+// Subida de imágenes
+app.use(multer({dest: path.join(__dirname, "./public/upload/temp"), }).single("image"));
+// Cuando suban una imagen se almacenará en temp
+
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser
-
-// Si el hosting no lo asigna, se usa la variable de entorno
-const port = process.env.PORT;
 
 // Conexión con la base de datos MongoDB
 const { connectDB } = require("./config/db.config.js");
@@ -60,22 +43,23 @@ connectDB();
 
 // Motor de plantillas
 app.set("view engine", "ejs");
-app.set("views", __dirname + "/views");
+app.set("views", path.join(__dirname, "views"));
 
-// Establecemos la ruta estática (middleware)
-app.use(express.static(__dirname + "/public")); // Al ir a localhost, iremos directamente a buscar el archivo index de la carpeta public
+// Establecemos la ruta estática
+app.use(express.static(path.join(__dirname, "public")));
 
 // Establecemos el motor de rutas
-app.use("/", require("./routes/RutasWeb.js")); // Paginación pública
-app.use("/api/users", require("./routes/GestionUsuarios.js")); // Api de gestión de usuarios
-app.use("/usuario", require("./routes/Usuario.js")); // Paginación de usuarios
-//app.use("/grafitis", require("./router/Grafitis")); // TODO: Podría ser una página pública de visualización de grafitis de la bd
+const routes = require("./config/router.config.js");
+// En router.config hemos establecido los routers
+routes(app);
 
-// Establecemos la página 404
+// Configuramos la página 404
 app.use((req, res) => {
     res.status(404).render("404.ejs", { titulo: "Error 404" });
 });
 
+// Si el hosting no lo asigna, se usa la variable de entorno
+const port = process.env.PORT;
 // Iniciamos la escucha del servidor en el puerto designado
 app.listen(port, () => {
     console.log(`Servidor      => OK (puerto ${process.env.PORT})`);

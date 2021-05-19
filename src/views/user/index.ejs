@@ -1,7 +1,10 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged", tituloPestana: "Página de usuario", username: user.name }) %>
 
-<div class="container mt-4">
+<div class="container pt-4">
     <h1 class="text-primary mt-2">Dashboard de <%= user.name %>  </h1>
+    <a href="/usuario/subir-grafiti">
+    <button type="button" class="btn btn-primary">Añadir Grafiti</button>
+</a>
 </div>
 
 <%- include('../templates/footer'); %>
