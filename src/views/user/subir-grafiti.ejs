@@ -38,8 +38,16 @@
     const preview = document.getElementById("preview");
     const boton = document.getElementById("subir");
 
+    var curFiles = [];
     //Cambiamos la opacity de input porque si lo pongo a collapse se ve mal
     input.style.opacity = 0;
+
+    const deleteFile = (event) => {
+        const boton = event.target;
+        const fileNum = parseInt(boton.name.split("delete_")[1]);
+        curFiles.splice(fileNum-1,1);
+        updateImageDisplay();
+    };
 
     // Establecemos los tipos de imágenes válidos
     const fileTypes = [
@@ -61,7 +69,7 @@
         }
     }
 
-    // Función para mostrar una preview de los archivos que se subirán
+    // Función para mostrar una preview de los archivos
     function updateImageDisplay() {
 
         // Borramos todo el contenido del div anterior
@@ -69,8 +77,8 @@
             preview.removeChild(preview.firstChild);
         }
 
-        // Obtenemos las imágenes seleccionadas
-        const curFiles = input.files;
+        // Obtenemos los archivos subidos
+        console.log("Hay ",curFiles.length," archivos");
 
         // Si no se ha seleccionado ninguna imagen
         if(curFiles.length === 0) {
@@ -110,7 +118,7 @@
                 "#",
                 "Nombre",
                 "size",
-                ""
+                "", ""
             ];
             headers.forEach(element => {
                 const th_thead = document.createElement("th");
@@ -124,7 +132,7 @@
             const tbody = document.createElement("tbody");
 
             // Rellenamos la table con los previews
-            var n_file = 1;
+            var n_file = 0;
             for(const file of curFiles) {
 
                 // Comprobamos que sea válido
@@ -139,7 +147,7 @@
                 const th = document.createElement("th");
                 th.scope = "row";
                 //th.classList.add("table-light");
-                th.innerText = `${n_file++}`;
+                th.innerText = `${++n_file}`;
                 trow.appendChild(th);
 
                 // Si es válido el formato
@@ -164,8 +172,24 @@
                     img_prev.src = URL.createObjectURL(file);
                     td_img.appendChild(img_prev);
                     trow.appendChild(td_img);
-
-                } else {
+                    
+                    // Añadimos el botón de eliminar
+                    const td_button = document.createElement("td");
+                    td_button.vAlign = "middle";
+                    const delete_button = document.createElement("button");
+                    delete_button.classList.add("btn", "btn-danger");
+                    delete_button.type = "button";
+                    delete_button.name = `delete_${n_file}`;
+                    delete_button.addEventListener("click", deleteFile);
+                    const icon_delete = document.createElement("i");
+                    icon_delete.classList.add("fa", "fa-trash");
+                    delete_button.appendChild(icon_delete);
+                    td_button.appendChild(delete_button);
+                    trow.appendChild(td_button);
+                    
+                } 
+                // Si el formato del archivo no es válido 
+                else {
 
                     // Al haber un fichero inválido, se cancela la subida
                     subir.disabled = true;
@@ -193,10 +217,66 @@
             // Añadimos el div al preview
             preview.appendChild(div_responsive);
 
+            // Ponemos un botón para añadir más imágenes
+            const div_row = document.createElement("div");
+            div_row.classList.add("row", "col");
+            const label_anadir = document.createElement("label");
+            label_anadir.htmlFor = "anadir";
+            label_anadir.classList.add("btn", "btn-success");
+            const icon_plus = document.createElement("i");
+            icon_plus.classList.add("fa", "fa-plus");
+            label_anadir.appendChild(icon_plus);
+            const span_anadir = document.createElement("span");
+            span_anadir.innerText = " Añadir";
+            label_anadir.appendChild(span_anadir);
+            const input_anadir = document.createElement("input");
+            input_anadir.type = "file";
+            input_anadir.classList.add("d-none");
+            input_anadir.style.opacity = 0;
+            input_anadir.required = false;
+            input_anadir.name = "anadir";
+            input_anadir.id = "anadir";
+            input_anadir.accept = "image/png, image/jpeg";
+            input_anadir.multiple = true;
+            
+            input_anadir.addEventListener('change', () => {
+
+                // Obtenemos las imágenes seleccionadas
+                const curAddFiles = input_anadir.files;
+
+                console.log("Llego aquin")
+                // Si se ha seleccionado ninguna imagen
+                if(curAddFiles.length !== 0) {
+                    for(const file of curAddFiles) {
+                        curFiles.push(file);
+                    }
+                    updateImageDisplay();
+                }
+ 
+            });
+
+            div_row.appendChild(label_anadir);
+            div_row.appendChild(input_anadir);
+
+            preview.appendChild(div_row);
+
         }
     }
 
-    input.addEventListener('change', updateImageDisplay);
+    input.addEventListener('change', () => {
+        
+        // Eliminamos los archivos anteriores
+        while(curFiles.length !== 0)
+            curFiles.pop();
+        // Obtenemos los archivos subidos
+        for(const file of input.files) {
+            console.log("Subiendo archivo ",file.name)
+            curFiles.push(file);
+        }
+        // Refrescamos
+        updateImageDisplay();
+
+    });
 
 </script>
 
