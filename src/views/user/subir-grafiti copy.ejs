@@ -1,0 +1,124 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged", tituloPestana: "Página de usuario", username: user.name }) %>
+
+<div id="container" class="container">
+
+    <div class="jumbotron mt-4">
+
+    <h1 class="text-dark">Añadir Grafitis</h1>
+
+    <div class="container pt-4">
+        <form id="upload-form" class="form">
+
+            <div class="form-group col">
+                <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias imágenes</label>
+                <input class="d-none" type="file" required="required" name="archivo" id="archivo" accept="image/png, image/jpeg" multiple>
+            </div>
+            <div id="preview">
+                <p>No se ha selecionado ninguna imagen aún.</p>
+            </div>
+            
+            <div class="form-row my-3">
+                <div class="col text-center text-md-left">
+                    <button id="subir" class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary disabled" type="submit" disabled>
+                       <i class="fa fa-upload"></i> Listo<i class="d-none ml-2 fa fa-spinner fa-pulse" id="spinner"></i></button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    </div>
+</div>
+
+<script>
+
+    const container = document.getElementById('container');
+    const label = document.getElementById('label');
+    const input = document.getElementById('archivo');
+    const preview = document.getElementById('preview');
+    const boton = document.getElementById('subir');
+
+    input.style.opacity = 0;
+
+    const fileTypes = [
+        "image/jpeg",
+        "image/png",
+    ];
+    function validFileType(file) {
+        return fileTypes.includes(file.type);
+    }
+
+    function returnFileSize(number) {
+        if(number < 1024) {
+            return number + 'bytes';
+        } else if(number >= 1024 && number < 1048576) {
+            return (number/1024).toFixed(1) + 'KB';
+        } else if(number >= 1048576) {
+            return (number/1048576).toFixed(1) + 'MB';
+        }
+    }
+
+    function updateImageDisplay() {
+
+        while(preview.firstChild) {
+            preview.removeChild(preview.firstChild);
+        }
+
+        const curFiles = input.files;
+        if(curFiles.length === 0) {
+
+            const para = document.createElement('p');
+            para.textContent = 'No se ha selecionado ninguna imagen aún.';
+            container.classList.replace("container-fluid","container");
+            preview.appendChild(para);
+            subir.disabled = true;
+            subir.classList.add("disabled");
+            label.innerText = "Seleccione una o varias imágenes";
+
+        } else {
+
+            const list = document.createElement('ol');
+            preview.appendChild(list);
+            container.classList.replace("container","container-fluid");
+            subir.disabled = false;
+            subir.classList.remove("disabled");
+            label.innerText = "Cambiar selección";
+
+            for(const file of curFiles) {
+
+                const listItem = document.createElement('li');
+                const para = document.createElement('p');
+                if(validFileType(file)) {
+
+                    para.textContent = `${file.name}, tamaño ${returnFileSize(file.size)}.`;
+                    para.style = "line-height: 32px;padding-left: 10px; display: block; margin-block-start: 1em; margin-block-end: 1em; margin-inline-start: 0px; margin-inline-end: 0px; list-style-type: none; text-align: -webkit-match-parent;"
+                    const image = document.createElement('img');
+                    image.src = URL.createObjectURL(file);
+                    image.style = 
+                    "height: 64px; width:100px; order: 1; list-style-type: none; text-align: -webkit-match-parent;"
+
+                    listItem.appendChild(image);
+                    listItem.appendChild(para);
+
+                } else {
+
+                    para.textContent = `${file.name}: No es un tipo de archivo válido, seleccione solo elementos jpg, jpeg o png.`;
+                    listItem.appendChild(para);
+                    subir.disabled = true;
+                    subir.classList.add("disabled");
+
+                }
+
+                listItem.style = "background: #eee; display: flex; justify-content: space-between; margin-bottom: 10px; list-style-type: none; border: 1px solid black; text-align: -webkit-match-parent;";
+                list.style = "padding-left: 0; display: block; list-style-type: decimal; margin-block-start: 1em; margin-block-end: 1em; margin-inline-start: 0px; margin-inline-end: 0px; padding-inline-start: 40px;";
+                list.appendChild(listItem);
+
+            }
+        }
+    }
+
+    input.addEventListener('change', updateImageDisplay);
+
+</script>
+
+<%- include('../templates/footer'); %>
