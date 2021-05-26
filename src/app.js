@@ -10,9 +10,6 @@ const path = require("path");
 // Visualización de rutas
 const morgan = require("morgan");
 
-// Subida de imágenes al servidor
-const multer = require("multer");
-
 //TODO: configurar cors (?)
 
 // Parsea application/x-www-form-urlencoded
@@ -29,10 +26,6 @@ passportSessions(app, session);
 // Visualización de peticiones
 if(process.env.MORGAN)
   app.use(morgan("dev"));
-
-// Subida de imágenes
-app.use(multer({dest: path.join(__dirname, "./public/upload/temp"), }).single("image"));
-// Cuando suban una imagen se almacenará en temp
 
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser

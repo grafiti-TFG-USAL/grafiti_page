@@ -7,6 +7,10 @@ const { estaAutenticado } = require("../config/passport.config");
 // Obtenemos el controlador de grafitis
 const grafitiController = require("../controllers/grafiti.controller");
 
+// Middleware de procesado de imágenes multer
+const upload = require("../config/multer.config");
+//const { upload } = require("../config/db.config");
+
 // RUTAS DE LA API DE GESTIÓN DE GRAFITIS "/api/grafitis"
 
 
@@ -14,7 +18,7 @@ const grafitiController = require("../controllers/grafiti.controller");
 router.get("/:grafiti_id", grafitiController.index);
 
 // Subida de un grafiti (<host>/api/grafitis/upload)
-router.post("/upload", estaAutenticado, grafitiController.upload);
+router.post("/upload", estaAutenticado, upload.array("imagenes"), grafitiController.upload);
 
 // Subida de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);

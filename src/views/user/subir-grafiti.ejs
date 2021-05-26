@@ -7,7 +7,7 @@
     <h1 class="text-dark">Añadir Grafitis</h1>
 
     <div class="container pt-4">
-        <form id="upload-form" class="form">
+        <form id="upload-form" class="form" enctype="multipart/form-data">
 
             <div class="form-group col">
                 <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias imágenes</label>
@@ -165,17 +165,18 @@
 
                     // Añadimos el preview de la imagen
                     const td_img = document.createElement("td");
-                    td_img.style = "text-align: center";
+                    td_img.style = "text-align: center; vertical-align: middle";
                     const img_prev = document.createElement("img");
-                    img_prev.height = "64";
-                    img_prev.width = "128";
+                    //img_prev.height = "64";
+                    //img_prev.width = "128";
+                    img_prev.style = "max-width: 128px; max-height:64px";
                     img_prev.src = URL.createObjectURL(file);
                     td_img.appendChild(img_prev);
                     trow.appendChild(td_img);
                     
                     // Añadimos el botón de eliminar
                     const td_button = document.createElement("td");
-                    td_button.vAlign = "middle";
+                    td_button.style = "vertical-align: middle";
                     const delete_button = document.createElement("button");
                     delete_button.classList.add("btn", "btn-danger");
                     delete_button.type = "button";
@@ -243,12 +244,12 @@
 
                 // Obtenemos las imágenes seleccionadas
                 const curAddFiles = input_anadir.files;
-
-                console.log("Llego aquin")
-                // Si se ha seleccionado ninguna imagen
+                input.files.push(curAddFiles[0]);
+                // Si se ha seleccionado alguan imagen
                 if(curAddFiles.length !== 0) {
                     for(const file of curAddFiles) {
                         curFiles.push(file);
+                        console.log("File: ", file);
                     }
                     updateImageDisplay();
                 }
@@ -270,11 +271,62 @@
             curFiles.pop();
         // Obtenemos los archivos subidos
         for(const file of input.files) {
-            console.log("Subiendo archivo ",file.name)
             curFiles.push(file);
         }
         // Refrescamos
         updateImageDisplay();
+
+    });
+
+    const form = document.getElementById("upload-form");
+    const spinner = document.getElementById("spinner");
+
+    form.addEventListener("submit", async (event) => {
+        // Anulamos el comportamiento por defecto (recargar página)
+        event.preventDefault();
+
+        //Efectos
+        spinner.classList.remove("d-none");
+
+        try {
+
+            // Creamos y rellenamos un form data con el nombre del form y los archivos a subir
+            const formData = new FormData();
+            //formData.append("name", "imagenes");
+            console.log("Curfiles: ", curFiles);
+            curFiles.forEach(file => {
+                console.log("File: ", file);
+                formData.append("imagenes", file);
+            });
+            console.log("Files uploaded:");
+            for (var pair of formData.entries()) {
+                console.log(pair[0]+ ', ' + pair[1]); 
+            }
+
+            // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
+            const data = await fetch("/api/grafitis/upload", {
+                method: "post",
+                body: formData
+            });
+
+            const respuesta = await data.json();
+            spinner.classList.add("d-none");
+            // Si ha habido algun fallo, lo mostramos
+            if(!respuesta.success) {
+                //TODO: handle error
+                console.log("Error: ", respuesta.message);
+            }
+            // Si todo sale bien vamos a la página de usuario
+            else { 
+                window.location.href = "/usuario"; // El middleware de passport comprobará que se haya iniciado bien la sesión
+            }
+
+        } catch (error) {
+            // Si algo ha ido mal lo mostramos por consola
+            //TODO: handle error
+            console.log(error);
+            spinner.classList.add("d-none");
+        }
 
     });
 

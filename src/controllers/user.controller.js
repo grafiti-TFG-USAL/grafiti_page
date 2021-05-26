@@ -19,7 +19,6 @@ const { sendEmail, getTemplate } = require("../config/mail.config");
 
 // Cargamos el modelo del usuario
 const User = require("../models/user.model.js");
-const { Mongoose } = require("mongoose");
 
 // schemas Joi para almacenar y comprobar los datos introducidos
 const schemaRegister = Joi.object({
@@ -45,7 +44,7 @@ const signUp = async (req, res) => {
         }
 
         // Verificamos que el email introducido no esté registrado ya en la BD
-        const emailExists = await User.findOne({ email: req.body.email })
+        const emailExists = await User.findOne({ email: req.body.email });
         if(emailExists) {
             return res.status(400).json({
                 success: false,
@@ -247,7 +246,7 @@ const logIn = async (req, res, next) => {
 // Finalizar la sesión
 const logOut = (req, res) => {
     req.logOut();
-    req.session.destroy(); // logOut solo a veces fallaba
+    req.session.destroy();
     if(req.user)
         req.user = null;
     res.redirect("/bienvenido");

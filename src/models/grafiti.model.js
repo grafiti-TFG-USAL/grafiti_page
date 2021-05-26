@@ -1,39 +1,43 @@
 const mongoose = require("mongoose");
 const geopointSchema = require("./geopoint.schema.js");
+const path = require("path");
 
 const grafitiSchema  = mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        min: 3,
-        max: 40
-    },
-    geopoint: {
-        type: geopointSchema,
-        required: false, //TODO: a tener en cuenta
-    },
-    descripcion: { //TODO
-        type: String,
-        max: 1000
-    },
-    tags: { //TODO: pendiente de crear objeto
 
-    },
-    notas: { //TODO
+    originalname: {
         type: String,
-        required: true,
-        min: 10,
-        max: 50
-    },
-    account_status: {
-        type: String,
-        required: true,
-        default: "UNVERIFIED"
-    },
-    code: {
-        type: String, 
         required: true
+    },
+    path: {
+        type: String,
+        required: true
+    },
+    descripcion: {
+        type: String
+    },
+    tags: [{ //TODO: pendiente de crear objeto
+        type: String
+    }],
+    metadata: {
+        type: Object
+    },
+    /*geopoint: {
+        type: geopointSchema,
+    },*/
+    uploadedAt: { //TODO
+        type: Date,
+        default: Date.now()
+    },
+    deleted: {
+        type: Boolean,
+        default: false
     }
-}, { 
-    timestamps: true // Incluye la fecha de creación y de última modificación del elemento
+
 });
+
+grafitiSchema.virtual("uniqueId").get(function () {
+        return this.filename.replace(path.extname(this.filename), "");
+    });
+
+//mongoose.model() busca en la base la coleccion "grafitis" (automaticamente ya pone en lowercase y busca el plural)
+module.exports = mongoose.model("Grafiti", grafitiSchema);
