@@ -43,7 +43,8 @@
     input.style.opacity = 0;
 
     const deleteFile = (event) => {
-        const boton = event.target;
+        //TODO arreglarlo que no va
+        const boton = event.currentTarget;
         const fileNum = parseInt(boton.name.split("delete_")[1]);
         curFiles.splice(fileNum-1,1);
         updateImageDisplay();
@@ -77,9 +78,6 @@
             preview.removeChild(preview.firstChild);
         }
 
-        // Obtenemos los archivos subidos
-        console.log("Hay ",curFiles.length," archivos");
-
         // Si no se ha seleccionado ninguna imagen
         if(curFiles.length === 0) {
             // Ponemos un mensaje en el div
@@ -90,6 +88,7 @@
             subir.disabled = true;
             subir.classList.add("disabled");
             label.innerText = "Seleccione una o varias imágenes";
+            input.multiple = true;
 
         } 
         // Si se ha seleccionado una o más imágenes
@@ -120,10 +119,10 @@
                 "size",
                 "", ""
             ];
-            headers.forEach(element => {
+            headers.forEach(header => {
                 const th_thead = document.createElement("th");
                 th_thead.scope = "col";
-                th_thead.innerText = element;
+                th_thead.innerText = header;
                 tr_thead.appendChild(th_thead);
             });
             thead.appendChild(tr_thead);
@@ -244,12 +243,11 @@
 
                 // Obtenemos las imágenes seleccionadas
                 const curAddFiles = input_anadir.files;
-                input.files.push(curAddFiles[0]);
-                // Si se ha seleccionado alguan imagen
+                //input.files.push(curAddFiles[0]);
+                // Si se ha seleccionado alguna imagen
                 if(curAddFiles.length !== 0) {
                     for(const file of curAddFiles) {
                         curFiles.push(file);
-                        console.log("File: ", file);
                     }
                     updateImageDisplay();
                 }
@@ -267,12 +265,15 @@
     input.addEventListener('change', () => {
         
         // Eliminamos los archivos anteriores
-        while(curFiles.length !== 0)
+        while(curFiles.length > 0)
             curFiles.pop();
+
         // Obtenemos los archivos subidos
-        for(const file of input.files) {
+        const newSelectedFiles = input.files;
+        for(const file of newSelectedFiles) {
             curFiles.push(file);
         }
+
         // Refrescamos
         updateImageDisplay();
 
@@ -292,16 +293,10 @@
 
             // Creamos y rellenamos un form data con el nombre del form y los archivos a subir
             const formData = new FormData();
-            //formData.append("name", "imagenes");
-            console.log("Curfiles: ", curFiles);
+            
             curFiles.forEach(file => {
-                console.log("File: ", file);
                 formData.append("imagenes", file);
             });
-            console.log("Files uploaded:");
-            for (var pair of formData.entries()) {
-                console.log(pair[0]+ ', ' + pair[1]); 
-            }
 
             // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
             const data = await fetch("/api/grafitis/upload", {

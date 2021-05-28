@@ -14,8 +14,8 @@ const upload = require("../config/multer.config");
 // RUTAS DE LA API DE GESTIÓN DE GRAFITIS "/api/grafitis"
 
 
-// Acceso a un grafiti (<host>/api/grafitis/:grafiti_id)
-router.get("/:grafiti_id", grafitiController.index);
+// Obtención de un grafiti (<host>/api/grafitis/get/:grafiti_id)
+router.get("/get/:grafiti_id"/*, estaAutenticado*/, upload.array("imagenes"), grafitiController.get);
 
 // Subida de un grafiti (<host>/api/grafitis/upload)
 router.post("/upload", estaAutenticado, upload.array("imagenes"), grafitiController.upload);

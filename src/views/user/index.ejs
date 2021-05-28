@@ -1,10 +1,33 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged", tituloPestana: "Página de usuario", username: user.name }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , username: user.name
+    }) %>
 
-<div class="container pt-4">
-    <h1 class="text-primary mt-2">Dashboard de <%= user.name %>  </h1>
-    <a href="/usuario/subir-grafiti">
-    <button type="button" class="btn btn-primary">Añadir Grafiti</button>
-</a>
-</div>
+    <div class="container pt-4">
+        <h1 class="text-primary mt-2">Dashboard de <%= user.name %>
+        </h1>
 
-<%- include('../templates/footer'); %>
+        <div class="card mt-2">
+
+            <div class="card-header bg-dark text-white">
+                <h3 class="d-inline"><i class="far fa-images"></i> Mis grafitis</h3>
+                <a href="/usuario/subir-grafiti" class="d-inline float-right">
+                    <button type="button" class="btn btn-primary">Añadir Grafiti</button>
+                </a>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <% for(const image of images) { %>
+                        <div class="col-md-4 mb-2">
+                            <a href="/usuario/grafiti/<%= image.serverName %>">
+                                <img src="/api/grafitis/get/<%= image._id %>" alt="<%= image.description %>" class="w-100 h-100">
+                            </a>
+                        </div>
+                        <% } %>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <%- include('../templates/footer'); %>

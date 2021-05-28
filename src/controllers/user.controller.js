@@ -149,6 +149,13 @@ const confirmUser = async (req, res) => {
             });
         }
 
+        // Comprobar el status actual de la cuenta
+        if(user.account_status === "VERIFIED")
+        {
+            console.log("El usuario ya estaba verificado");
+            return res.status(200).redirect("../../../login");
+        }
+
         // Verificar el código
         if(code !== user.code){
             console.log("El código no coincide con el almacenado");
@@ -158,16 +165,8 @@ const confirmUser = async (req, res) => {
             });
         }
 
-        // Comprobar el status actual de la cuenta
-        if(user.account_status === "VERIFIED")
-        {
-            console.log("El usuario ya estaba verificado");
-            return res.status(200).redirect("../../../login");
-        }
-
-        // Actualizar usuario
-        user.account_status = "VERIFIED";
-        userDB = await user.save();
+        // Actualizamos el estado de la cuenta a verificado y eliminamos el atributo code
+        userDB = await User.updateOne({ email }, {$set: { account_status: "VERIFIED" }, $unset: { code: 1 }});
         if(!userDB){
             console.log("El usuario no se ha podido verificar por un problema con la base de datos");
             return res.json({

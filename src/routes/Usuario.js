@@ -2,18 +2,26 @@ const express = require("express");
 
 const passportConf = require("../config/passport.config");
 
+// Controlador de las páginas del usuario logeado
+const userPageController = require("../controllers/userPage.controller");
+// Controlador de los grafitis
+const grafitiController = require("../controllers/userPage.controller");
+
 const router = express.Router();
 
 // Middleware de control de sesión
 router.use("/", passportConf.estaAutenticado); 
 //Solo permite el paso de usuarios autenticados
 
+
 // RUTAS PARA USUARIOS AUTENTICADOS "/usuario"
 
+
 // Página de bienvenida al usuario (<host>/usuario)
-router.get("/", (req, res) => {
-    res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user });
-});
+router.get("/", userPageController.index);
+
+// Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
+router.get("/grafiti/:grafiti_id", grafitiController.index);
 
 // Perfil de usuario (<host>/usuario/perfil)
 router.get("/perfil", (req, res) => {
@@ -24,6 +32,7 @@ router.get("/perfil", (req, res) => {
 router.get("/subir-grafiti", (req, res) => {
     res.render("user/subir-grafiti.ejs", { titulo: "Subir Grafiti", user: req.user });
 });
+
 
 
 module.exports = router;
