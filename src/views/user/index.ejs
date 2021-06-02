@@ -1,29 +1,38 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , username: user.name
     }) %>
 
-    <div class="container pt-4">
-        <h1 class="text-primary mt-2">Dashboard de <%= user.name %>
-        </h1>
+    <div class="container pt-3">
+        <!--h1 class="text-primary mt-2">Dashboard de <#%= user.name %>
+        </h1-->
 
-        <div class="card mt-2">
+        <div class="card mb-3">
 
             <div class="card-header bg-dark text-white">
                 <h3 class="d-inline"><i class="far fa-images"></i> Mis grafitis</h3>
                 <a href="/usuario/subir-grafiti" class="d-inline float-right">
-                    <button type="button" class="btn btn-primary">Añadir Grafiti</button>
+                    <button type="button" class="btn btn-primary">Subir Grafitis</button>
                 </a>
             </div>
 
             <div class="card-body">
-                <div class="row">
-                    <% for(const image of images) { %>
-                        <div class="col-md-4 mb-2">
-                            <a href="/usuario/grafiti/<%= image.serverName %>">
-                                <img src="/api/grafitis/get/<%= image._id %>" alt="<%= image.description %>" class="w-100 h-100">
-                            </a>
-                        </div>
+                <% if (images.length> 0) { %>
+                    <div class="row">
+                        <% for(const image of images) { %>
+                            <div class="col-6 col-sm-4 col-lg-3 mb-2" style="position: relative">
+                                <a href="/usuario/grafiti/<%= image._id %>">
+                                    <img src="/api/grafitis/get/<%= image._id %>" alt="<%= image.description %>"
+                                        class="w-100 h-100 img img-thumbnail" style="display: block">
+                                    <%# if (image.gps.latitude!=0 || image.gps.longitude!=0) { %>
+                                        <!--i class="fa fa-map-marker-alt"
+                                            style="position: absolute; bottom:0; left:0;"></i-->
+                                    <%# } %>
+                                </a>
+                            </div>
+                            <% } %>
+                    </div>
+                    <% } else { %>
+                        <h3 class="display-4 text-center justify-content-center">Aún no se ha subido ninguna imagen</h3>
                         <% } %>
-                </div>
             </div>
 
         </div>

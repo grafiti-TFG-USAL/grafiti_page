@@ -1,0 +1,419 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name }) %>
+
+    <div class="container-fluid my-3">
+        <div class="row border ficha">
+
+            <div class="col-12 col-sm-6">
+                <img src="/api/grafitis/get/<%= grafiti.id %>" class="w-100 img-thumbnail">
+            </div>
+
+            <div class="col-12 col-sm-6 my-3 my-sm-0">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Detalles</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="desc_form" class="form">
+                            <div class="form-group">
+                                <label for="description">Descripción</label>
+                                <button class="d-none btn btn-sm btn-success float-right" id="desc_btn"
+                                    type="button"><span id="btn_text">Guardar</span> <i
+                                        class="d-none fa fa-spinner fa-pulse" id="spinner_desc"></i><i
+                                        class="d-none fa fa-check" id="check_desc"></i></button>
+                                <textarea id="description" name="description" class="form-control" rows="2"
+                                    autocapitalize="sentences" resize="none"
+                                    placeholder="Detalles de la imagen..."><% if (grafiti.description) { %><%= grafiti.description %><% } %></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="map">Ubicación</label>
+                                <button class="btn btn-sm btn-outline-primary float-right" id="coords_btn" type="button"
+                                    data-toggle="modal" data-target="#ubicacion">Seleccionar
+                                    ubicación</button>
+
+                                <div id="map" class="img-thumbnail w-100 d-none" style="height: 200px;"></div>
+
+                            </div>
+
+                            <div class="form-group row">
+                                <label class="col-5" for="">Fecha de captura</label>
+                                <input type="text" class="col-6 form-control" style="text-align: center;" readonly
+                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString() %>">
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-5" for="">Fecha de subida</label>
+                                <input type="text" class="col-6 form-control" style="text-align: center;" readonly
+                                    value="<%= grafiti.uploadedAt.toLocaleString() %>">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer">
+                        <button id="remove" class="col-12 btn btn-danger" type="button" data-toggle="modal"
+                            data-target="#eliminacion">Eliminar grafiti</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- CODIGO DEL MODAL DE UBICACIÓN -->
+    <div class="modal fade" id="ubicacion">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Seleccione la ubicación</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="floating-panel">
+                        <div class="row mx-2">
+                            <div class="input-group">
+                                <input id="direccion" type="text" class="form-control" placeholder="Dirección">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        id="buscar_direccion">Buscar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div id="modalmap" class="img-thumbnail w-100" style="height: 300px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="guardar_ubicacion" type="button" class="btn btn-success">Guardar ubicación <i
+                            class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CODIGO DEL MODAL DE ELIMINACIÓN -->
+    <div class="modal fade" id="eliminacion">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Eliminar Grafiti</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text">¿Está seguro de que desea eliminar el grafiti?</h6><br>
+                    <div class="row justify-content-around">
+
+                        <button type="button" data-dismiss="modal"
+                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
+                        <button class="btn btn-danger col-12 col-sm-4" id="remove_def">Eliminar <i
+                                class="d-none fa fa-spinner fa-pulse" id="spinner_remove"></i></button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script de la página
+
+        let alterado = false;
+
+        // Al cambiar el textarea de descripción
+        document.getElementById("description").addEventListener("input", (event) => {
+            const check = document.getElementById("check_desc");
+            const btn = document.getElementById("desc_btn");
+            if (!check.classList.contains("d-none"))
+                check.classList.add("d-none");
+            if (btn.classList.contains("d-none")) {
+                btn.classList.remove("d-none");
+            }
+            if (btn.classList.contains("btn-success")) {
+                btn.classList.replace("btn-success", "btn-warning");
+                document.getElementById("btn_text").innerText = "Guardar";
+            }
+            if (!alterado)
+                alterado = true;
+        });
+
+        // Al darle a guardar la descripción
+        document.getElementById("desc_btn").addEventListener("click", async (event) => {
+
+            // Evitamos que recargue la página
+            event.preventDefault();
+            if (!alterado) return;
+
+            document.getElementById("spinner_desc").classList.remove("d-none");
+            if (!document.getElementById("check_desc").classList.contains("d-none"))
+                document.getElementById("check_desc").classList.add("d-none");
+            document.getElementById("btn_text").innerText = "Guardando";
+
+            try {
+                const textarea = document.getElementById("description");
+
+                console.log("Preparado para enviar desc: ", textarea.value)
+                // Enviamos la consulta POST a la api
+                const data = await fetch("/api/grafitis/update/<%= grafiti._id %>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                        cambio: "descripcion", atributo: textarea.value
+                    })
+                });
+
+                const respuesta = await data.json();
+
+                document.getElementById("spinner_desc").classList.add("d-none");
+                // Comprobamos que no haya fallado
+                if (!respuesta.success) {
+                    console.log("Fallo en respuesta: ", respuesta.message);
+                    //TODO
+                } else {
+                    console.log(respuesta)
+                    document.getElementById("check_desc").classList.remove("d-none");
+                    document.getElementById("desc_btn").classList.replace("btn-warning", "btn-success");
+                    document.getElementById("btn_text").innerText = "Guardado";
+
+                }
+
+            } catch (error) {
+                console.log("Catch error: ", error);
+            }
+        });
+
+        // Al darle a eliminar
+        document.getElementById("remove_def").addEventListener("click", async (event) => {
+            event.preventDefault();
+
+            document.getElementById("spinner_remove").classList.remove("d-none");
+
+            try {
+
+                // Enviamos la consulta POST a la api
+                const data = await fetch("/api/grafitis/remove/<%= grafiti._id %>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                const respuesta = await data.json();
+
+                // Comprobamos que no haya fallado
+                if (!respuesta.success) {
+                    console.log("Fallo en respuesta: ", respuesta.message);
+                    //TODO
+                } else {
+                    
+                    // Volvemos al dashboard de usuario
+                    window.location.href = "/usuario";
+
+                }
+
+            } catch (error) {
+                console.log("Catch error: ", error);
+            }
+
+        });
+
+    </script>
+
+    <script>
+        // Script del modal
+
+        // Execute a function when the user releases a key on the keyboard
+        document.getElementById("direccion").addEventListener("keyup", function (event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                // Cancel the default action, if needed
+                event.preventDefault();
+                console.log("Buscando...");
+                // Trigger the button element with a click
+                document.getElementById("buscar_direccion").click();
+            }
+        });
+
+        // Obtenemos las coordenadas del grafiti
+        const grafiti = <%= grafiti.gps %>;
+        let modalmarker = null;
+
+        // Initialize and add the map
+        function initMap() {
+
+            // El geocoder, convierte direcciones a coordenadas y viceversa
+            const geocoder = new google.maps.Geocoder();
+
+            // Manejador del evento final de arrastre del marcador
+            const dragend = (event) => {
+                geocoder.geocode({ location: event.latLng }, (results, status) => {
+                    if (status === "OK") {
+                        if (results[0]) {
+                            document.getElementById("direccion").value = results[0].formatted_address;
+                        } else {
+                            window.alert("No results found");
+                        }
+                    } else {
+                        window.alert("Geocoder failed due to: " + status);
+                    }
+                });
+            }
+
+            // Convierte una dirección en una coordenada y apunta en el mapa a ella
+            function geocodeAddress(geocoder, resultsMap, address) {
+                geocoder.geocode({ address, bounds: resultsMap.getBounds() }, (results, status) => {
+                    if (status === "OK") {
+                        // Ajustamos el mapa a los resultados
+                        console.log("Aqui da fallo?", results)
+                        resultsMap.fitBounds(results[0].geometry.viewport);
+                        //Guardamos las coordenadas
+                        coords.lat = results[0].geometry.location.lat();
+                        coords.lng = results[0].geometry.location.lng();
+                        // Creamos el marcador para indicar la posicion
+                        if (modalmarker) modalmarker.setMap(null);
+                        modalmarker = new google.maps.Marker({
+                            map: resultsMap,
+                            position: coords,
+                            draggable: true
+                        });
+                        google.maps.event.addListener(modalmarker, "dragend", dragend);
+
+                        geocoder.geocode({ location: results[0].geometry.location }, (results, status) => {
+                            if (status === "OK") {
+                                if (results[0]) {
+                                    document.getElementById("direccion").value = results[0].formatted_address;
+                                } else {
+                                    window.alert("No results found");
+                                }
+                            } else {
+                                window.alert("Geocoder failed due to: " + status);
+                            }
+                        });
+
+                    } else {
+                        alert("Geocode was not successful for the following reason: " + status);
+                    }
+                });
+            }
+
+            // The location of the grafiti
+            let coords = { lat: grafiti.latitude, lng: grafiti.longitude };
+
+            document.getElementById("guardar_ubicacion").addEventListener("click", async (event) => {
+
+                // Evitamos que recargue la página
+                event.preventDefault();
+                document.getElementById("spinner").classList.remove("d-none");
+
+                try {
+                    coords.lat = await modalmarker.getPosition().lat();
+                    coords.lng = await modalmarker.getPosition().lng();
+                    console.log("Preparado para enviar coords: ", coords)
+                    // Enviamos la consulta POST a la api
+                    const data = await fetch("/api/grafitis/update/<%= grafiti._id %>", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                            cambio: "ubicacion", atributo: coords
+                        })
+                    });
+
+                    const respuesta = await data.json();
+
+                    document.getElementById("spinner").classList.add("d-none");
+                    // Comprobamos que no haya fallado
+                    if (!respuesta.success) {
+                        console.log("Fallo en respuesta: ", respuesta.message);
+                    } else {
+                        console.log(respuesta)
+                        document.location.reload();
+                    }
+
+                } catch (error) {
+                    console.log("Catch error: ", error);
+                }
+            });
+
+            // Si no hay coordenadas no mostramos el mapa
+            let modalmap;
+            if (grafiti.latitude == 0 && grafiti.longitude == 0) {
+                geocoder.geocode({ address: "Spain" }, async (results, status) => {
+                    if (status === "OK") {
+                        const loc = results[0].geometry.location;
+                        coords.lat = await loc.lat();
+                        coords.lng = await loc.lng();
+                        // The modalmap, centered at grafiti coords
+                        modalmap = new google.maps.Map(document.getElementById("modalmap"), {
+                            zoom: 5,
+                            center: coords,
+                        });
+                        // The marker, positioned at grafiti coords
+                        modalmarker = new google.maps.Marker({
+                            position: coords,
+                            map: modalmap,
+                            draggable: true
+                        });
+                        google.maps.event.addListener(modalmarker, "dragend", dragend);
+                    } else {
+                        alert("Geocode was not successful for the following reason: " + status);
+                    }
+                });
+            } else {
+                geocoder.geocode({ location: coords }, (results, status) => {
+                    if (status === "OK") {
+                        if (results[0]) {
+                            document.getElementById("direccion").value = results[0].formatted_address;
+                        } else {
+                            window.alert("No results found");
+                        }
+                    } else {
+                        window.alert("Geocoder failed due to: " + status);
+                    }
+                });
+                // The modalmap, centered at grafiti coords
+                modalmap = new google.maps.Map(document.getElementById("modalmap"), {
+                    zoom: 15,
+                    center: coords,
+                });
+                // The marker, positioned at grafiti coords
+                modalmarker = new google.maps.Marker({
+                    position: coords,
+                    map: modalmap,
+                    draggable: true
+                });
+                google.maps.event.addListener(modalmarker, "dragend", dragend);
+                document.getElementById("map").classList.remove("d-none");
+            }
+
+            // The map, centered at grafiti coords
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: coords,
+                disableDefaultUI: true,
+            });
+            // The marker, positioned at grafiti coords
+            const marker = new google.maps.Marker({
+                position: coords,
+                map: map,
+            });
+
+            document.getElementById("buscar_direccion").addEventListener("click", () => {
+                const boton = document.getElementById("direccion");
+                geocodeAddress(geocoder, modalmap, boton.value);
+            });
+
+
+        }
+
+
+
+    </script>
+    <%# Script de la api de maps; debe ir tras la función initMap %>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
+            async></script>
+
+        <%- include('../templates/footer'); %>

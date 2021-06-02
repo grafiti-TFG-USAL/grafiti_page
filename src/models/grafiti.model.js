@@ -34,9 +34,9 @@ const grafitiSchema  = mongoose.Schema({
         type: String
     },
     // Los tags que el usuario añada a la imagen
-    tags: [{
+    /*tags: [{
         type: String
-    }],
+    }],*/
     // Las coordenadas gps de la ubicación de la imagen
     gps: {
         latitude: { type: Number },
@@ -70,7 +70,12 @@ const grafitiSchema  = mongoose.Schema({
         type: geopointSchema,
     },*/
     // La fecha de subida de la imagen
-    uploadedAt: { //TODO
+    uploadedAt: {
+        type: Date,
+        default: Date.now()
+    },
+    // La fecha de la última actualización de datos
+    lastModified: {
         type: Date,
         default: Date.now()
     },
@@ -91,4 +96,4 @@ grafitiSchema.virtual("uniqueId").get(function () {
     });
 
 //mongoose.model() busca en la base la coleccion "grafitis" (automaticamente ya pone en lowercase y busca el plural)
-module.exports = mongoose.model("Grafiti", grafitiSchema);
+module.exports = mongoose.model(process.env.GRAFITI_COLLECTION_NAME, grafitiSchema);

@@ -15,10 +15,16 @@ const upload = require("../config/multer.config");
 
 
 // Obtención de un grafiti (<host>/api/grafitis/get/:grafiti_id)
-router.get("/get/:grafiti_id"/*, estaAutenticado*/, upload.array("imagenes"), grafitiController.get);
+router.get("/get/:grafiti_id", grafitiController.get);
+
+// Obtención de la miniatura de un grafiti (<host>/api/grafitis/get-thumbnail/:grafiti_id)
+router.get("/get-thumbnail/:grafiti_id", grafitiController.getThumbnail);
 
 // Subida de un grafiti (<host>/api/grafitis/upload)
 router.post("/upload", estaAutenticado, upload.array("imagenes"), grafitiController.upload);
+
+// Actualización de un grafiti (<host>/api/grafitis/update/:grafiti_id)
+router.post("/update/:grafiti_id", estaAutenticado, grafitiController.update);
 
 // Subida de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);
