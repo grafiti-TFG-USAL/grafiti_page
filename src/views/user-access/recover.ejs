@@ -1,0 +1,111 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "auth" , isSignUp, tituloPestana: "Recuperar contraseña" }) %>
+
+    <div class="container my-4" style="max-width: 600px;">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Recupere su contraseña</h4>
+            </div>
+            <div class="card-body row justify-content-center">
+                <form id="recover_form" class="form col-12">
+                    <div class="form-group">
+                        <label for="email" class="d-inline col-12 col-sm-6">Correo electrónico</label>
+                        <input class="d-inline form-control col-12 col-sm-6" type="email" name="email" id="email"
+                            required="required" minlength="6" maxlength="50" placeholder="micorreo@example.es">
+                    </div>
+                    <div class="justify-content-center row mx-4">
+                        <button id="submit" type="submit" class="btn btn-success col-12 col-md-3">
+                            Enviar <i class="fa fa-spinner fa-pulse d-none" id="cargando"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CODIGO DEL MODAL DE AVISO -->
+    <div class="modal" id="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="titulo_modal"> </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="contenido"> </p>
+                    <p class="small" id="contenido_adicional"> </p>
+                </div>
+                <div id="div_button" class="modal-footer d-none">
+                    <a type="button" href="login" class="btn btn-primary">Volver al login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const form = document.getElementById("recover_form");
+        form.addEventListener("submit", async (event) => {
+
+            event.preventDefault();
+
+            document.getElementById("cargando").classList.remove("d-none");
+
+            try {
+
+                const email = document.getElementById("email").value;
+
+                // Enviamos la consulta POST a la api
+                const data = await fetch("/api/users/recoverPassword", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                });
+
+                const respuesta = await data.json();
+                document.getElementById("cargando").classList.add("d-none");
+
+                // Comprobamos que no haya fallado
+                if (!respuesta.success) {
+
+                    console.log("Fallo en respuesta: ", respuesta.message);
+
+                    document.getElementById("titulo_modal").innerText = "Ha ocurrido un error";
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = respuesta.message;
+
+                    $('#modal').modal();
+
+                } else {
+
+                    console.log(respuesta.message);
+
+                    document.getElementById("titulo_modal").innerText = "Correo de recuperación enviado";
+                    document.getElementById("contenido").innerText = "Acceda al enlace que le hemos proporcionado mediante email para restaurar su contraseña.";
+                    document.getElementById("contenido_adicional").innerText = "En caso de no recibir ningún correo compruebe su carpeta de spam o contacte con soporte.";
+                    document.getElementById("div_button").classList.remove("d-none");
+
+                    $('#modal').modal();
+
+                }
+
+            } catch (error) {
+
+                    document.getElementById("titulo_modal").innerText = "Ha ocurrido un error";
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = error;
+
+                    $('#modal').modal();
+
+            }
+
+        });
+
+    </script>
+
+    <%- include('../templates/footer'); %>

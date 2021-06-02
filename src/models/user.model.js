@@ -28,6 +28,10 @@ const userSchema  = mongoose.Schema({
         min: 10,
         max: 50
     },
+    lastPasswordRenewal: {
+        type: Date,
+        default: Date.now()
+    },
     account_status: {
         type: String,
         required: true,

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { restorePassword } = require("../controllers/user.controller");
 
 // RUTA RAIZ "/"
 
@@ -56,6 +57,14 @@ router.get("/login", (req, res) => {
     
     res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false, attempted });
 });
+
+// Página de recuperación de contraseña (<host>/recover)
+router.get("/recover", (req, res) => {
+    res.render("user-access/recover.ejs", { titulo: "Recuperación de contraseña", isSignUp: true });
+});
+
+// Página de cambio de contraseña (<host>/restorePassword/:token)
+router.get("/restorePassword/:token", restorePassword);
 
 
 module.exports = router;

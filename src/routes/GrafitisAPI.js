@@ -28,12 +28,12 @@ router.post("/update/:grafiti_id", estaAutenticado, grafitiController.update);
 
 // Subida de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);
-
+/*
 // Añadir comentario (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/postComment/:grafiti_id", estaAutenticado, grafitiController.postComment);
 
 // Añadir comentario (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/deleteComment/:comment_id", estaAutenticado, grafitiController.deleteComment);
-
+*/
 
 module.exports = router;

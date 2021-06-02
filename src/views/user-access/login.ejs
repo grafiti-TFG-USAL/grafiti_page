@@ -1,76 +1,82 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "auth", isSignUp, tituloPestana: "Iniciar sesión" }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "auth" , isSignUp, tituloPestana: "Iniciar sesión" }) %>
 
     <div class="container">
 
         <h1 class="text-dark mt-4">Inicio de sesión</h1>
 
         <div class="alert alert-warning alert-dismissible fade d-none mt-4" role="alert" id="alerta">
-            <h4 class="alert-heading">Aviso</h4> 
+            <h4 class="alert-heading">Aviso</h4>
             <p>Debes validar tu cuenta mediante el email que te hemos enviado para poder iniciar sesión.</p>
             <button type="button" class="close" data-dismiss="alert">&times;</button>
         </div>
 
         <% if (attempted) { %>
-        <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert" id="alerta">
-            <h4 class="alert-heading">Usuario no autenticado</h4> 
-            <p>Debes iniciar sesión para poder acceder a las páginas de usuario.</p>
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-        </div>
-        <% } %>
+            <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert" id="alerta">
+                <h4 class="alert-heading">Usuario no autenticado</h4>
+                <p>Debes iniciar sesión para poder acceder a las páginas de usuario.</p>
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            <% } %>
 
-        <div class="container mt-4">
-            <form id="login-form" class="form">
+                <div class="container mt-4">
+                    <form id="login-form" class="form">
 
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input class="form-control col-md-6 col-lg-5" type="email" required="required" minlength="6" maxlength="50" name="email" id="email" placeholder="alguien@example.es">
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <input class="form-control col-md-6 col-lg-5" type="password" required="required" maxlength="50" name="password" id="password" placeholder="contraseña">
-                    <div id="error" class="invalid-feedback"></div>
-                </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input class="form-control col-md-6 col-lg-5" type="email" required="required" minlength="6"
+                                maxlength="50" name="email" id="email" placeholder="alguien@example.es">
+                        </div>
 
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="remember" name="remember" checked/>
-                    <label class="form-check-label" for="remember">No cerrar sesión</label>
-                </div>
-                
-                <div class="form-row my-3">
-                    <div class="col text-center text-md-left">
-                        <button class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary" type="submit">Iniciar Sesión   <i class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
-                    </div>
-                </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input class="form-control col-md-6 col-lg-5" type="password" required="required"
+                                maxlength="50" name="password" id="password" placeholder="contraseña">
+                            <div id="error" class="invalid-feedback"></div>
+                        </div>
 
-            </form>
-        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="rememberMe" checked />
+                            <label class="form-check-label" for="rememberMe">No cerrar sesión</label>
+                        </div>
+
+                        <div class="form-row my-3">
+                            <div class="col text-center text-md-left">
+                                <button class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary" type="submit">Iniciar
+                                    Sesión <i class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-row my-3 text-center">
+                            <a class="col-12" href="recover">¿Ha olvidado su contraseña?</a>
+                        </div>
+
+                    </form>
+                </div>
     </div>
 
     <script>
 
         function getCookie(cname) {
-        var name = cname + "=";
-        var decodedCookie = decodeURIComponent(document.cookie);
-        var ca = decodedCookie.split(';');
-        for(var i = 0; i <ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') {
-            c = c.substring(1);
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
             }
-            if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-            }
-        }
-        return "";
+            return "";
         }
 
-        if("true" === getCookie("validationRequired")){
+        if ("true" === getCookie("validationRequired")) {
             const alerta = document.getElementById("alerta");
             alerta.classList.add("show");
             alerta.classList.remove("d-none");
         }
-        
+
         const form = document.getElementById("login-form");
 
         const passwordInput = document.getElementById("password");
@@ -86,7 +92,7 @@
             // Recogemos los datos del formulario
             const email = form.elements["email"].value;
             const password = form.elements["password"].value;
-            const remember = form.elements["remember"].value;
+            const rememberMe = form.elements["rememberMe"].value;
 
             //Efectos
             spinner.classList.remove("d-none");
@@ -103,41 +109,41 @@
                     },
                     credentials: "include",
                     body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                        email, password, remember
+                        email, password, rememberMe
                     })
                 });
 
                 const respuesta = await data.json();
                 // Si ha habido algun fallo, lo mostramos
-                if(!respuesta.success){
+                if (!respuesta.success) {
                     errorfeedback.innerHTML = respuesta.message;
                     emailInput.classList.add("is-invalid");
                     passwordInput.classList.add("is-invalid");
                     spinner.classList.add("d-none");
-                }else{ 
+                } else {
                     // Si todo sale bien vamos a la página de usuario
                     window.location.href = "/usuario"; // El middleware de passport comprobará que se haya iniciado bien la sesión
                 }
 
             } catch (error) {
-                    // Si algo ha ido mal lo mostramos por consola
-                    errorfeedback.innerText = error;
-                    emailInput.classList.add("is-invalid");
-                    passwordInput.classList.add("is-invalid");
-                    spinner.classList.add("d-none");
+                // Si algo ha ido mal lo mostramos por consola
+                errorfeedback.innerText = error;
+                emailInput.classList.add("is-invalid");
+                passwordInput.classList.add("is-invalid");
+                spinner.classList.add("d-none");
             }
 
         });
 
         const eliminarAdvertencia = (event) => {
-            if(emailInput.classList.contains("is-invalid"))
+            if (emailInput.classList.contains("is-invalid"))
                 emailInput.classList.remove("is-invalid");
-            if(passwordInput.classList.contains("is-invalid"))
+            if (passwordInput.classList.contains("is-invalid"))
                 passwordInput.classList.remove("is-invalid");
         }
         emailInput.addEventListener("input", eliminarAdvertencia);
         passwordInput.addEventListener("input", eliminarAdvertencia);
-
+        
     </script>
 
-<%- include('../templates/footer'); %>
+    <%- include('../templates/footer'); %>

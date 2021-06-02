@@ -20,12 +20,12 @@ const RNA = require("../config/neuralnet.config");
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
-        res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
     else if (image.deleted)
-        res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
     // Si existe la devolvemos
     else{
-        res.sendFile(image.absolutePath);
+        return res.sendFile(image.absolutePath);
     }
 };
 
@@ -40,12 +40,12 @@ const getThumbnail = async (req, res) => {
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
-        res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
     else if (image.deleted)
-        res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
     // Si existe la devolvemos
     else{
-        res.send(image.thumbnail);
+        return res.send(image.thumbnail);
     }
 };
 
@@ -164,7 +164,7 @@ const upload = async (req, res) => {
     }
 
     console.log({ success, message });
-    res.status(success ? 200 : 400).json({ success, message });
+    return res.status(success ? 200 : 400).json({ success, message });
 
 };
 
@@ -176,21 +176,21 @@ const update = async (req, res) => {
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
         console.log("No grafiti")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: el grafiti no existe"
         });
     }
     else if (grafiti.deleted) {
         console.log("Grafiti deleted")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: el grafiti ha sido borrado"
         });
     }
     else if (!grafiti.userId.equals(req.user._id)) {
         console.log("Not user")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: solo el usuario que ha subido el grafiti puede modificarlo"
         });
@@ -211,12 +211,12 @@ const update = async (req, res) => {
                         $currentDate: { lastModified: 1 }
                     });
                     if (resultado.nModified < 1 || resultado.nModified > 1) {
-                        res.status(400).json({
+                        return res.status(400).json({
                             success: false,
                             message: "Error: no se ha podido modificar el dato"
                         });
                     } else {
-                        res.status(200).json({
+                        return res.status(200).json({
                             success: true,
                             message: `Ubicación actualizada a: ${req.body.atributo.lat}, ${req.body.atributo.lng}`
                         });
@@ -224,7 +224,7 @@ const update = async (req, res) => {
 
                 } catch (error) {
                     console.log("Error al actualizar: ", error);
-                    res.status(400).json({
+                    return res.status(400).json({
                         success: false,
                         message: "Error: no se ha podido modificar el dato => " + error
                     });
@@ -240,12 +240,12 @@ const update = async (req, res) => {
                         $currentDate: { lastModified: 1 }
                     });
                     if (resultado.nModified < 1 || resultado.nModified > 1) {
-                        res.status(400).json({
+                        return res.status(400).json({
                             success: false,
                             message: "Error: no se ha podido modificar el dato"
                         });
                     } else {
-                        res.status(200).json({
+                        return res.status(200).json({
                             success: true,
                             message: `Descripción actualizada a: ${req.body.atributo}`
                         });
@@ -253,7 +253,7 @@ const update = async (req, res) => {
 
                 } catch (error) {
                     console.log("Error al actualizar: ", error);
-                    res.status(400).json({
+                    return res.status(400).json({
                         success: false,
                         message: "Error: no se ha podido modificar el dato => " + error
                     });
@@ -261,7 +261,7 @@ const update = async (req, res) => {
                 break;
 
             default:
-                res.status(400).json({
+                return res.status(400).json({
                     success: false,
                     message: "Error: El atributo a cambiar no coincide con ninguno de los aceptados"
                 });
@@ -279,21 +279,21 @@ const remove = async (req, res) => {
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
         console.log("No grafiti")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: el grafiti no existe"
         });
     }
     else if (grafiti.deleted) {
         console.log("Grafiti deleted")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: el grafiti ha sido borrado"
         });
     }
     else if (!grafiti.userId.equals(req.user._id)) {
         console.log("Not user")
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
             message: "Error: solo el usuario que ha subido el grafiti puede modificarlo"
         });
@@ -309,12 +309,12 @@ const remove = async (req, res) => {
                 $currentDate: { lastModified: 1 }
             });
             if (resultado.nModified < 1 || resultado.nModified > 1) {
-                res.status(400).json({
+                return res.status(400).json({
                     success: false,
                     message: "Error: no se ha podido eliminar la imagen"
                 });
             } else {
-                res.status(200).json({
+                return res.status(200).json({
                     success: true,
                     message: "Grafiti eliminado"
                 });
@@ -322,7 +322,7 @@ const remove = async (req, res) => {
 
         } catch (error) {
             console.log("No se ha podido eliminar el grafiti: ", error);
-            res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 message: "No se ha podido eliminar el grafiti: " + error
             });
@@ -330,14 +330,14 @@ const remove = async (req, res) => {
 
     }
 };
-
+/*
 const postComment = (req, res) => {
 
 }
 
 const deleteComment = (req, res) => {
 
-}
+}*/
 
 /**
  * Si hay un grafiti_id en req.params, busca que el grafiti se corresponda con el usuario que tiene la sesión loggeada.
@@ -373,7 +373,7 @@ module.exports = {
     upload,
     update,
     remove,
-    postComment,
-    deleteComment,
+    /*postComment,
+    deleteComment,*/
     esSuyo,
 };
