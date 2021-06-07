@@ -16,7 +16,7 @@ const RNA = require("../config/neuralnet.config");
 
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
-    const image = await Grafiti.findOne({ _id: grafiti_id }, { absolutePath: 1 });
+    const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { absolutePath: 1 });
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
@@ -36,7 +36,7 @@ const getThumbnail = async (req, res) => {
 
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
-    const image = await Grafiti.findOne({ _id: grafiti_id }, { thumbnail: 1 });
+    const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { thumbnail: 1 });
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
@@ -59,8 +59,8 @@ const upload = async (req, res) => {
     // Iniciamos la respuesta afirmativa
     var success = true;
     var message = "Subido con éxito";
-
-    //var pathArray = []; // Esto iba a ser para procesar las imagenes de golpe tras subirlas 
+    var errores = [];
+    var fileErr = [];
 
     for (const file of files) {
 
@@ -88,11 +88,13 @@ const upload = async (req, res) => {
                 // Extraemos metadatos del archivo
                 const buffer = fs.readFileSync(imgTargetPath);
                 if (!buffer) {
+                    errores.push(`No se han podido extraer los metadatos de ${file.originalname}, imagen no almacenada.`);
+                    fileErr.push(file.originalName);
                     success = false;
-                    message = "La imagen no se ha podido leer correctamente";
-                    console.log(message);
-                    //TODO: eliminar las anteriores
-                    return;
+                    message = "Fallo al obtener metadatos de imagen";
+                    console.log("Error al extraer metadatos: ", message);
+                    await fs.unlink(imgTargetPath);
+                    continue;
                 }
                 var meta = await exifr.parse(buffer, true);
                 if (!meta) {
@@ -140,38 +142,51 @@ const upload = async (req, res) => {
                 const imageSaved = await image.save();
 
                 if (!imageSaved) {
+                    errores.push(`La imagen ${file.originalname} no se ha podido almacenar en la base de datos.`);
+                    fileErr.push(file.originalName);
                     success = false;
                     message = "Error al subir las imágenes a la base: imagen no almacenada";
                     console.log(message);
-                    //TODO: eliminar las anteriores
-                    return;
+                    await fs.unlink(imgTargetPath);
+                    continue;
                 }
 
             } else {
                 await fs.unlink(imgTempPath);
+                errores.push(`La imagen ${file.originalname} no tiene un formato de archivo aceptado.`);
+                fileErr.push(file.originalName);
                 success = false;
                 message = "Solo puede subir imágenes del tipo especificado";
                 console.log("Error: ", message);
+                await fs.unlink(imgTargetPath);
+                continue;
             }
 
         } catch (error) {
-            //TODO: eliminar todas las que se hayan guardado
+            errores.push(`Error al tratar de subir ${file.originalname}: ${error}`);
+            fileErr.push(file.originalName);
             success = false;
             message = "Error al subir las imágenes a la base => " + error;
             console.log(message);
+            await fs.unlink(imgTargetPath).catch(null);
+            await fs.unlink(imgTempPath).catch(null);
+            continue;
         }
 
-    }
+    } // Hasta aquí el for()
 
-    console.log({ success, message });
-    return res.status(success ? 200 : 400).json({ success, message });
+    console.log({ success, message, errores, fileErr });
+    return res.status(success ? 200 : 400).json({ success, message , errores, fileErr});
 
 };
 
+/**
+ * Actualiza los datos de un documento
+ */
 const update = async (req, res) => {
 
     // Buscamos el grafiti en la base
-    const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
+    const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id, deleted: false });
 
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
@@ -271,10 +286,13 @@ const update = async (req, res) => {
     }
 };
 
+/**
+ * Elimina un documento de la base
+ */
 const remove = async (req, res) => {
 
     // Buscamos el grafiti en la base
-    const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
+    const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id, deleted: false });
 
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
@@ -330,14 +348,68 @@ const remove = async (req, res) => {
 
     }
 };
-/*
-const postComment = (req, res) => {
 
-}
+/**
+ * Devuelve el número de grafitis de un usuario
+ * @returns Entero con el número de grafitis del usuario o null si hay un error 
+ */
+const countOf = async (userId, countDeleted = false) => {
 
-const deleteComment = (req, res) => {
+    try {
+        
+        if(countDeleted){
+            return await Grafiti.countDocuments({ userId });
+        }else{
+            return await Grafiti.countDocuments({ userId, deleted: false });
+        }
+        
+    } catch (error) {
+        console.log("Error al contar grafitis: ", error);
+        return null;
+    }
 
-}*/
+};
+
+/**
+ * Elimina los grafitis de un usuario
+ * @returns Número de grafitis eliminados
+ */
+const deleteUserGrafitis = async (userId, changeUser = false, communityId = null) => {
+
+    try {
+        var deleted;
+        if(changeUser) {
+            if(!communityId){
+                console.log("Debe proporcionar el id del usuario community para poder reasignar los grafitis");
+                return null;
+            }
+            deleted = await Grafiti.updateMany({ userId, deleted: false }, {
+                $set: {
+                    userId: communityId,
+                    originalUser: userId
+                },
+                $currentDate: { lastModified: 1 }
+            });
+        }else{
+            deleted = await Grafiti.updateMany({ userId, deleted: false }, {
+                $set: {
+                    deleted: true
+                },
+                $currentDate: { lastModified: 1 }
+            });
+        }
+        
+        if(!deleted)
+            return null;
+        else
+            return deleted.nModified;
+        
+    } catch (error) {
+        console.log("Error al contar grafitis: ", error);
+        return null;
+    }
+
+};
 
 /**
  * Si hay un grafiti_id en req.params, busca que el grafiti se corresponda con el usuario que tiene la sesión loggeada.
@@ -367,13 +439,33 @@ const esSuyo = async (req, res, next) => {
 
 };
 
+/**
+ * Busca y devuelve el path, el nombre en el servidor y el id de los grafitis del usuario indicado
+ * @param {mongoose.Types.ObjectId} userId - ObjectId del usuario que tiene los grafitis
+ * @param {number} limit - Límite de imágenes a devolver
+ * @param {boolean} getDeleted - Devolver también imágenes eliminadas
+ */
+const getIndexGrafitis = async (userId, limit = 20, getDeleted = false) => {
+    return await Grafiti.find({ userId: userId, deleted: getDeleted }, { _id: 1, relativePath: 1 , serverName: 1 , uniqueId: 1}).sort({ uploadedAt: -1 }).limit(limit);
+};
+
+/**
+ * Busca y devuelve el grafiti especificado por id
+ * @param {mongoose.Types.ObjectId} grafitiId - ObjectId del grafiti a buscar en la BD
+ */
+const getGrafitiById = async (grafitiId) => {
+    return await Grafiti.findOne({ _id: grafitiId });
+};
+
 module.exports = {
     get,
     getThumbnail,
     upload,
     update,
     remove,
-    /*postComment,
-    deleteComment,*/
     esSuyo,
+    countOf,
+    deleteUserGrafitis,
+    getIndexGrafitis,
+    getGrafitiById,
 };

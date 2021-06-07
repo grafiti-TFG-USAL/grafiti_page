@@ -52,7 +52,6 @@ router.get("/user-confirmed/:email", (req, res) => {
 // Página de inicio de sesión (<host>/login)
 router.get("/login", (req, res) => {
     // Si se ha intentado acceder a zona restringida a usuarios y se ha redirigido al login, mostramos aviso
-    console.log(req.query.attempt)
     const attempted = req.query.attempt ? true : false;
     
     res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false, attempted });

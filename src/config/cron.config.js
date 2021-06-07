@@ -9,7 +9,7 @@ function scheduleUnverifiedUsersRemover(comprobarUsuariosSinVerificar) {
     });
     // Y ejecutamos la tarea al inicio del programa
     comprobarUsuariosSinVerificar();
-    console.log("Cron          => OK - Comprobación inicial");
+    console.log("Cron          => OK");
     
 }
 

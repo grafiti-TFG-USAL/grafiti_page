@@ -39,7 +39,7 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
             });
         }
 
-        // Compribamos que existe un usuario con el email recibido
+        // Comprobamos que existe un usuario con el email recibido
         const user = await User.findOne({ email });
         if(!user){
             return done(null, false, {

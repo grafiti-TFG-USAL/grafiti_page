@@ -1,7 +1,318 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged", tituloPestana: "Mi perfil", username: user.name }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mi perfil" , username: user.name }) %>
 
-<div class="container mt-4">
-    <h1 class="text-primary mt-2">Perfil de usuario: <%= user.name %> <%= user.surname %></h1>
-</div>
+    <div class="container my-3 my-sm-4">
 
-<%- include('../templates/footer'); %>
+        <!--CARD-->
+        <div class="card" style="max-width: 700px;">
+
+            <div class="card-header bg-primary">
+                <h4 class="card-title text-light d-inline"><span class="d-none d-sm-inline">Perfil de<span
+                            class="d-none d-lg-inline"> usuario de</span> </span>
+                    <%=user.name+" "+user.surname%></h4>
+                <img src=" /images/user.png" class="img img-thumbnail rounded-circle float-right"
+                        style="max-width: 40px;">
+            </div>
+
+            <div class="card-body">
+                <form class="form align-items-center">
+
+                    <div class="form-row mt-2">
+                        <label for="nombre" class="col-4">Nombre</label>
+                        <input type="text" class="form-control col-8 col-md-6 pl-sm-2" name="nombre" id="nombre"
+                            readonly value="<%= user.name %>">
+                    </div>
+
+                    <div class="form-row mt-2">
+                        <label for="apellidos" class="col-4">Apellidos</label>
+                        <input type="text" class="form-control col-8 col-md-6 pl-sm-2" name="apellidos" id="apellidos"
+                            readonly value="<%= user.surname %>">
+                    </div>
+
+                    <div class="form-row mt-2">
+                        <label for="email" class="col-4">Email</label>
+                        <input type="text" class="form-control col-8 col-md-6 pl-sm-2" name="email" id="email" readonly
+                            value="<%= user.email %>">
+                    </div>
+
+                </form>
+            </div>
+
+            <hr class="mt-3 mb-2">
+
+            <div class="card-body">
+
+                <div class="row justify-content-center">
+                    <h5>Cambiar contraseña</h5>
+                </div>
+                <h6 class="mb-4">Última vez cambiada: <span class="text-info">
+                        <%= user.lastPasswordRenewal.toLocaleString('es-ES') %>
+                    </span></h6>
+
+                <form id="cambio" class="form">
+
+                    <div class="form-row mt-2">
+                        <label for="password" class="col-5">Nueva contraseña</label>
+                        <input type="password" class="form-control col-7 col-md-6 pl-sm-2" name="password" id="password"
+                            placeholder="Contraseña" required="required" minlength="10" maxlength="50">
+                    </div>
+
+                    <div class="form-row mt-2">
+                        <label for="password2" class="col-5">Repita la contraseña</label>
+                        <input type="password" class="form-control col-7 col-md-6 pl-sm-2" name="password2"
+                            id="password2" placeholder="Verificación de contraseña" required="required" minlength="10"
+                            maxlength="50">
+                        <div id="error" class="invalid-feedback"></div>
+                    </div>
+
+                    <button id="submit" type="submit" class="btn btn-warning mt-3 float-right">Cambiar
+                        contraseña <i id="cargando" class="fa fa-spinner fa-pulse d-none"></i></button>
+
+                </form>
+            </div>
+
+            <div class="card-footer">
+                <button type="button" class="btn col text-danger" id="boton_eliminar">Eliminar mi perfil</button>
+            </div>
+
+            <!--FIN CARD-->
+        </div>
+
+    </div>
+
+    <!-- CÓDIGO DEL MODAL DE ELIMINACIÓN DE PERFIL -->
+    <div class="modal" id="eliminacion" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-header">
+                    <h5 class="modal-title text-dark">Está a punto de eliminar su perfil de usuario</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="form_eliminacion" class="form">
+                    <div class="modal-body">
+                        <p>Está a un paso de eliminar completamente su cuenta. Antes de continuar preste atención.</p>
+                        <p>Si está del completamente seguro de que desea eliminar su cuenta haga
+                            click en "<span class="text-dark">Eliminar</span>".</p>
+                        <p>A continuación, si lo tiene claro, decida si desea mantener sus grafitis en la página o si
+                            por el
+                            contrario desea eliminarlos también.</p>
+                        <div class="row justify-content-center">
+                            <div class="card p-2">
+                                <div class="form-check" data-toggle="tooltip"
+                                    title="Los datos de su cuenta serán completamente eliminados de nuestro sistema, y sus imágenes permanecerán almacenadas en la base de datos como contribuciones anónimas de la comunidad.">
+                                    <input type="checkbox" class="form-check-input" id="check" checked="true">
+                                    <label for="check" class="form-check-label">Mantener los grafitis subidos en la
+                                        página
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger text-dark col" id="eliminar">Eliminar <i
+                                class="fa fa-spinner fa-pulse d-none" id="cargando_eliminacion"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CÓDIGO DEL MODAL DE ERROR -->
+    <div class="modal" id="error_modal" tabindex="-2" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Se ha producido un error</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="contenido"> </p>
+                    <p id="contenido_adicional" class="small text-danger"> </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        document.getElementById("form_eliminacion").addEventListener("submit", async (event) => {
+
+            event.preventDefault();
+
+            try {
+
+                const email = document.getElementById("email").value;
+                const checkbox = document.getElementById("check");
+
+                document.getElementById("cargando_eliminacion").classList.remove("d-none");
+
+                // Enviamos la consulta POST a la api
+                const data = await fetch("/api/users/removeUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email,
+                        checked: checkbox.checked,
+                    })
+                });
+
+                document.getElementById("cargando_eliminacion").classList.add("d-none");
+
+                const respuesta = await data.json();
+
+
+                // Si algo ha fallado
+                if (!respuesta.success) {
+
+                    console.log("Fallo en respuesta: ", respuesta.message);
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = "Error:\n > " + respuesta.message;
+                    $('#error_modal').modal();
+                    return;
+                }
+                // Si nada ha fallado
+                else {
+
+                    document.location.reload();
+
+                }
+
+            } catch (error) {
+
+                document.getElementById("titulo_modal").innerText = "Ha ocurrido un error";
+                document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                document.getElementById("contenido_adicional").innerText = "Error:\n > " + error;
+                document.getElementById("cargando_eliminacion").classList.add("d-none");
+
+                $('#error_modal').modal();
+                return;
+
+            }
+
+
+        });
+
+        const btn_eliminar = document.getElementById("boton_eliminar");
+        btn_eliminar.addEventListener("click", (event) => {
+
+            event.preventDefault();
+
+            $("#eliminacion").modal();
+
+        });
+
+        const input1 = document.getElementById("password");
+        const input2 = document.getElementById("password2");
+
+        input1.addEventListener("input", (event) => {
+            if (input1.classList.contains("is-invalid"))
+                input1.classList.remove("is-invalid");
+            if (input2.classList.contains("is-invalid"))
+                input2.classList.remove("is-invalid");
+            if (input1.value === input2.value && input1.length >= 10) {
+                if (!input1.classList.contains("is-valid"))
+                    input1.classList.add("is-valid");
+                if (!input2.classList.contains("is-valid"))
+                    input2.classList.add("is-valid")
+            }
+        });
+
+        input2.addEventListener("input", (event) => {
+            if (input1.classList.contains("is-invalid"))
+                input1.classList.remove("is-invalid");
+            if (input1.value !== input2.value) {
+                if (!input2.classList.contains("is-invalid"))
+                    input2.classList.add("is-invalid");
+            } else {
+                if (input1.classList.contains("is-invalid"))
+                    input1.classList.remove("is-invalid");
+                if (input2.classList.contains("is-invalid"))
+                    input2.classList.remove("is-invalid");
+                if (input1.value.length >= 10) {
+                    if (!input1.classList.contains("is-valid"))
+                        input1.classList.add("is-valid");
+                    if (!input2.classList.contains("is-valid"))
+                        input2.classList.add("is-valid");
+                }
+            }
+        });
+
+        const form = document.getElementById("cambio");
+        form.addEventListener("submit", async (event) => {
+
+            event.preventDefault();
+
+            try {
+
+                const email = document.getElementById("email").value;
+                const password = input1.value;
+                const password2 = input2.value;
+
+                // Comprobamos que las contraseñas coincidan
+                if (password !== password2) {
+                    if (!input1.classList.contains("is-invalid"))
+                        input1.classList.add("is-invalid");
+                    if (!input2.classList.contains("is-invalid"))
+                        input2.classList.add("is-invalid");
+                    document.getElementById("error").innerText = "Las contraseñas no coinciden";
+                    return;
+                }
+
+                document.getElementById("cargando").classList.remove("d-none");
+
+                // Enviamos la consulta POST a la api
+                const data = await fetch("/api/users/changePassword", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+
+                document.getElementById("cargando").classList.add("d-none");
+
+                const respuesta = await data.json();
+
+
+                // Si algo ha fallado
+                if (!respuesta.success) {
+
+                    console.log("Fallo en respuesta: ", respuesta.message);
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = "Error:\n > " + respuesta.message;
+                    $('#error_modal').modal();
+                    return;
+                }
+                // Si nada ha fallado
+                else {
+
+                    document.location.reload();
+
+                }
+
+            } catch (error) {
+
+                document.getElementById("titulo_modal").innerText = "Ha ocurrido un error";
+                document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                document.getElementById("contenido_adicional").innerText = "Error:\n > " + error;
+                document.getElementById("cargando").classList.add("d-none");
+
+                $('#error_modal').modal();
+                return;
+
+            }
+
+        });
+
+    </script>
+
+    <%- include('../templates/footer'); %>

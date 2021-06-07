@@ -30,6 +30,7 @@ const userSchema  = mongoose.Schema({
     },
     lastPasswordRenewal: {
         type: Date,
+        required: true,
         default: Date.now()
     },
     account_status: {
@@ -38,9 +39,8 @@ const userSchema  = mongoose.Schema({
         default: "UNVERIFIED"
     },
     code: {
-        type: String, 
-        required: true
-    }
+        type: String
+    },
 }, { 
     timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });

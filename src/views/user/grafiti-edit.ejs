@@ -36,13 +36,13 @@
 
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de captura</label>
-                                <input type="text" class="col-6 form-control" style="text-align: center;" readonly
-                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString() %>">
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
+                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString('es-ES') %>">
                             </div>
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de subida</label>
-                                <input type="text" class="col-6 form-control" style="text-align: center;" readonly
-                                    value="<%= grafiti.uploadedAt.toLocaleString() %>">
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
+                                    value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
                             </div>
                         </form>
                     </div>
@@ -115,8 +115,26 @@
         </div>
     </div>
 
-    <script>
-        // Script de la página
+    <!-- CÓDIGO DEL MODAL DE ERROR -->
+    <div class="modal" id="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Se ha producido un error</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="contenido"> </p>
+                    <p id="contenido_adicional" class="small text-danger"> </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script> // Script de la página
 
         let alterado = false;
 
@@ -170,17 +188,27 @@
                 // Comprobamos que no haya fallado
                 if (!respuesta.success) {
                     console.log("Fallo en respuesta: ", respuesta.message);
-                    //TODO
+
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = respuesta.message;
+                    $("#ubicacion").modal("hide");
+                    $("#eliminacion").modal("hide");
+                    $('#modal').modal();
                 } else {
                     console.log(respuesta)
                     document.getElementById("check_desc").classList.remove("d-none");
                     document.getElementById("desc_btn").classList.replace("btn-warning", "btn-success");
                     document.getElementById("btn_text").innerText = "Guardado";
-
                 }
 
             } catch (error) {
                 console.log("Catch error: ", error);
+
+                document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                document.getElementById("contenido_adicional").innerText = respuesta.error;
+                $("#ubicacion").modal("hide");
+                $("#eliminacion").modal("hide");
+                $('#modal').modal();
             }
         });
 
@@ -205,9 +233,13 @@
                 // Comprobamos que no haya fallado
                 if (!respuesta.success) {
                     console.log("Fallo en respuesta: ", respuesta.message);
-                    //TODO
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = respuesta.message;
+                    $("#ubicacion").modal("hide");
+                    $("#eliminacion").modal("hide");
+                    $('#modal').modal();
                 } else {
-                    
+
                     // Volvemos al dashboard de usuario
                     window.location.href = "/usuario";
 
@@ -215,16 +247,21 @@
 
             } catch (error) {
                 console.log("Catch error: ", error);
+
+                document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                document.getElementById("contenido_adicional").innerText = error;
+                $("#ubicacion").modal("hide");
+                $("#eliminacion").modal("hide");
+                $('#modal').modal();
             }
 
         });
 
     </script>
 
-    <script>
-        // Script del modal
+    <script> // Script del modal
 
-        // Execute a function when the user releases a key on the keyboard
+        // Al dar enter en la barra de búsqueda de direcciones
         document.getElementById("direccion").addEventListener("keyup", function (event) {
             // Number 13 is the "Enter" key on the keyboard
             if (event.keyCode === 13) {
@@ -328,6 +365,12 @@
                     // Comprobamos que no haya fallado
                     if (!respuesta.success) {
                         console.log("Fallo en respuesta: ", respuesta.message);
+
+                        document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                        document.getElementById("contenido_adicional").innerText = respuesta.message;
+                        $("#ubicacion").modal("hide");
+                        $("#eliminacion").modal("hide");
+                        $('#modal').modal();
                     } else {
                         console.log(respuesta)
                         document.location.reload();
@@ -335,6 +378,12 @@
 
                 } catch (error) {
                     console.log("Catch error: ", error);
+
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = error;
+                    $("#ubicacion").modal("hide");
+                    $("#eliminacion").modal("hide");
+                    $('#modal').modal();
                 }
             });
 
@@ -406,10 +455,7 @@
                 geocodeAddress(geocoder, modalmap, boton.value);
             });
 
-
         }
-
-
 
     </script>
     <%# Script de la api de maps; debe ir tras la función initMap %>

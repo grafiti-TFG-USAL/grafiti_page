@@ -217,7 +217,7 @@ const recoverMail = async (req, res) => {
         const results = await User.updateOne({ email: user.email }, {
             $set: { code }
         });
-        
+
         if (results.nModified < 1 || results.nModified > 1) {
             console.log("No se pudo modificar el dato");
             console.log(results);
@@ -242,7 +242,7 @@ const recoverMail = async (req, res) => {
             "Recuperación de su cuenta",
             template);
 
-        return res.status(response.success? 200 : 400).json(response);
+        return res.status(response.success ? 200 : 400).json(response);
 
     } catch (error) {
         console.log("Error: ", error);
@@ -335,7 +335,7 @@ const resetPassword = async (req, res) => {
         }
 
         // Comprobamos que las contraseñas no coincidan
-        if(bcrypt.compareSync(req.body.password, user.password)){
+        if (bcrypt.compareSync(req.body.password, user.password)) {
             return res.status(400).json({
                 success: false,
                 message: "La contraseña nueva no puede coincidir con la anterior"
@@ -357,7 +357,7 @@ const resetPassword = async (req, res) => {
 
         const results = await User.updateOne({ email }, {
             $set: {
-                password, 
+                password,
                 lastPasswordRenewal: Date.now()
             },
             $unset: { code: 1 }
@@ -383,6 +383,73 @@ const resetPassword = async (req, res) => {
         return res.status(400).json({
             success: false,
             message: "Error al confirmar usuario => " + error
+        });
+    }
+
+};
+
+// Lógica de procesado del cambio de contraseña por petición
+const changePassword = async (req, res) => {
+
+    try {
+
+        const { email, password } = req.body;
+
+        // Verificar que el usuario existe
+        const user = await User.findOne({ email });
+        if (!user) {
+            console.log("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
+            return res.status(400).json({
+                success: false,
+                message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario"
+            });
+        }
+
+        // Comprobamos que las contraseñas no coincidan
+        if (bcrypt.compareSync(password, user.password)) {
+            return res.status(400).json({
+                success: false,
+                message: "La contraseña nueva no puede coincidir con la anterior"
+            });
+        }
+
+        // Hasheamos la contraseña para almacenarla de forma segura
+        const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
+        const newPassword = await bcrypt.hash(password, saltos);
+
+        const results = await User.updateOne({ email }, {
+            $set: {
+                password: newPassword,
+                lastPasswordRenewal: Date.now()
+            }
+        });
+
+        if (results.nModified < 1 || results.nModified > 1) {
+            console.log("No se pudo modificar el dato");
+            console.log(results);
+            return res.status(400).json({
+                success: false,
+                message: "Error: no se ha podido modificar la contraseña"
+            });
+        }
+
+        // Cerramos sesión
+        req.logOut();
+        req.session.destroy();
+        if (req.user)
+            req.user = null;
+
+        // Si todo ha ido bien
+        return res.status(200).json({
+            success: true,
+            message: "Contraseña correctamente modificada"
+        });
+
+    } catch (error) {
+        console.log("Error al cambiar la contraseña => ", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al cambiar la contraseña => " + error
         });
     }
 
@@ -429,9 +496,10 @@ const logIn = async (req, res, next) => {
             }
         });
 
-        if (req.body.remember) {
-            var hour = 3600000;
-            req.session.cookie.maxAge = 14 * 24 * hour; //2 weeks
+        const hour = 3600000;
+
+        if (req.body.rememberMe) {
+            req.session.cookie.maxAge = 2 * 7 * 24 * hour; //2 weeks
         } else {
             req.session.cookie.expires = false;
         }
@@ -439,7 +507,7 @@ const logIn = async (req, res, next) => {
         // Si todo ha ido bien se lo decimos a login
         return res.status(200).json({
             success: true,
-            message: "Autenticado"
+            message: "Autenticado",
         });
 
     })(req, res, next);
@@ -452,7 +520,80 @@ const logOut = (req, res) => {
     req.session.destroy();
     if (req.user)
         req.user = null;
-    res.redirect("/bienvenido");
+    return res.redirect("/bienvenido");
+};
+
+const { countOf, deleteUserGrafitis } = require("./grafiti.controller");
+// Finalizar la sesión
+const removeUser = async (req, res) => {
+
+    var fueEliminado = false;
+    try {
+
+        const { email, checked } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            console.log("Error: El usuario a eliminar no existe");
+            return res.status(400).json({
+                success: false,
+                message: "Error: El usuario a eliminar no existe"
+            });
+        }
+
+        const nGrafitis = await countOf(user._id);
+
+        // Si el usuario nos permite seguir mostrando sus grafitis
+        var nEliminados;
+        if (checked) {
+            const community = await User.findOne({ email: process.env.MAIL_USER })
+            nEliminados = await deleteUserGrafitis(user._id, checked, community._id);
+        } 
+        // Si no nos permite seguir mostrando sus grafitis
+        else {
+            nEliminados = await deleteUserGrafitis(user._id, checked);
+        }
+
+        // Comprobamos que se hayan realizado todas las eliminaciones
+        if (nGrafitis !== nEliminados) {
+            console.log("Error: no se han podido eliminar todos los grafitis del usuario");
+            return res.status(400).json({
+                success: false,
+                message: "No se han podido eliminar todos sus grafitis"
+            });
+        }
+
+        // Eliminamos finalmente el usuario
+        const deleted = await User.remove({ _id: user._id });
+        // Comprobamos
+        if(!deleted){
+            return res.status(400).json({
+                success: false,
+                message: "Error en la base de datos al tratar de eliminar su usuario"
+            });
+        }
+        if(deleted.n < 1 || !deleted.ok){
+            return res.status(400).json({
+                success: false,
+                message: "Error en la base de datos al tratar de eliminar su usuario"
+            });
+        }
+
+        // Si todo ha ido bien
+        return res.status(200).json({
+            success: true,
+            message: "Usuario eliminado con éxito"
+        });
+
+    } catch (error) {
+        console.log("Error durante la eliminación del usuario: ", error);
+        return res.status(400).json({
+            success: false,
+            removed: fueEliminado,
+            message: "Ha ocurrido un fallo inesperado: " + error
+        });
+    }
+
 };
 
 // Elimina de la base de datos los usuarios que no se hayan registrado en el plazo especificado
@@ -480,8 +621,10 @@ module.exports = {
     recoverMail,
     restorePassword,
     resetPassword,
+    changePassword,
     logIn,
     logOut,
+    removeUser,
     eliminarUsuariosSinVerificar,
     schemaRegister,
     schemaLogin

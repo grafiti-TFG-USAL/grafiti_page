@@ -1,10 +1,15 @@
 const Grafiti = require("../models/grafiti.model");
 const path = require("path");
+const { getIndexGrafitis, getGrafitiById } = require("./grafiti.controller");
 
+// Renderiza el índice/dashboard del usuario
 const index = async (req, res) => {
+
     // Obtenemos las 20 imagenes más recientemente subidas
-    const images = await Grafiti.find({ userId: req.user._id, deleted: false }, { _id: 1, relativePath: 1 , serverName: 1 , uniqueId: 1}).sort({ uploadedAt: -1 }).limit(20);
+    const images = await getIndexGrafitis(req.user._id, 20);
+    
     res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user, images });
+
 };
 
 // Lleva al usuario a la página descriptiva del grafiti seleccionado
@@ -14,7 +19,7 @@ const grafitiDesc = async (req, res) => {
     const { grafiti_id } = req.params;
 
     // Obtenemos el grafiti correspondiente a la id
-    const grafiti = await Grafiti.findOne({ _id: grafiti_id });
+    const grafiti = await getGrafitiById(grafiti_id);
 
     // Si no existe el grafiti cargamos la 404
     if (!grafiti)
@@ -27,7 +32,23 @@ const grafitiDesc = async (req, res) => {
 
 };
 
+/**
+ * Muestra la Base de Datos de grafitis de todos los usuarios
+ */
+const grafitiDB = async (req, res) => {
+
+};
+
+/**
+ * Muestra el mapa de los grafitis con ubicación
+ */
+const grafitiMap = async (req, res) => {
+
+};
+
 module.exports = {
     index,
-    grafitiDesc
+    grafitiDesc,
+    grafitiDB,
+    grafitiMap,
 };

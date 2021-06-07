@@ -1,12 +1,12 @@
 // Conexión con la base de datos MongoDB
 const mongoose = require("mongoose");
-
+/* 
 const Grid = require("gridfs-stream");
 const GridFsStorage = require("multer-gridfs-storage");
 
 const crypto = require("crypto");
 const path = require("path");
-const multer = require("multer");
+const multer = require("multer"); */
 
 const { scheduleUnverifiedUsersRemover } = require("./cron.config.js");
 const { eliminarUsuariosSinVerificar } = require("../controllers/user.controller.js");
@@ -16,7 +16,7 @@ const DB_uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@
 const connectDB = async () => {
 
     try {
-        
+
         const connection = await mongoose.connect(DB_uri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -24,70 +24,61 @@ const connectDB = async () => {
             useFindAndModify: false,
         });
 
-        if(connection.STATES.connected){
-            console.log("Base de Datos => OK");
+        if (connection.STATES.connected) {
             scheduleUnverifiedUsersRemover(eliminarUsuariosSinVerificar);
-        }else{
+
+            await inicializarBase();
+            console.log("Base de Datos => OK");
+
+        } else {
             console.log("Base de Datos => Error desconocido");
             process.exit(1);
         }
-        
+
     } catch (error) {
         console.log("Base de Datos => " + error);
         process.exit(1);
     }
 
 }
-/*
-// Configuración del guardado de imágenes
 
-let gfs;
-const conn = mongoose.createConnection(DB_uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-});
-conn.once("open", () => {
-    // Inicialización del stream
-    gfs = Grid(conn.db, mongoose.mongo);
-    gfs.collection("grafitis");
-})
+const inicializarBase = async () => {
 
-const storage = new GridFsStorage({
-    url: DB_uri,
-    file: (req, file) => {
-        return new Promise((resolve, reject) => {
-            crypto.randomBytes(16, (err, buf) => {
-                if(err) {
-                    return reject(err);
-                }
+    const User = require("../models/user.model");
+    try {
 
+        const userCommunity = await User.findOne({ email: process.env.MAIL_USER });
 
-
-                console.log("File db: ", file.buffer)
-                let metaData;
-                if(req.body && req.body.checked){
-                  metaData = true
-                }
-
-
-
-                const fileName = buf.toString("hex") + path.extname(file.originalname);
-                const fileInfo = {
-                    filename: fileName,
-                    bucketName: "grafitis",
-                    metadata: req.body
-                };
-                resolve(fileInfo);
+        if (!userCommunity) {
+            console.log("Base de Datos => No existe usuario comunidad, lo creamos");
+            const bcrypt = require("bcrypt");
+            const salt = await bcrypt.genSalt(10);
+            const password = await bcrypt.hash(process.env.COMMUNITY_PASSWORD, salt);
+            const community = new User({
+                name: "Community",
+                surname: "DB",
+                email: process.env.MAIL_USER,
+                password,
+                account_status: "VERIFIED"
             });
-        });
+            const creado = await community.save();
+            if (!creado) {
+                console.log("No se ha podido crear el usuario comunidad, finalizando servicio...")
+                process.exit(1);
+            } else {
+                console.log("Base de Datos => Usuario comunidad creado");
+            }
+        }
+
+    } catch (error) {
+        console.log("Se ha producido un error al inicializar la base de datos: ", error);
+        console.log("Finalizando servicio...");
+        process.exit(1);
     }
-});
 
-const upload = multer({ storage });*/
+};
 
-module.exports = { 
+module.exports = {
     connectDB,
     DB_uri,
     //upload
