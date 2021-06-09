@@ -10,7 +10,8 @@ const path = require("path");
 // Visualización de rutas
 const morgan = require("morgan");
 
-//TODO: configurar cors (?)
+// Control de origenes cruzados
+const cors = require("cors");
 
 // Parsea application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }));
@@ -34,6 +35,22 @@ app.use(express.json()) // Lo que antes se hacía con body-parser
 const { connectDB } = require("./config/db.config.js");
 connectDB();
 
+// Configuramos los cors
+const allowedOrigins = [`http://localhost:${process.env.PORT}`, 'https://grafiti-page.herokuapp.com'];
+app.use(cors({
+  origin: function(origin, callback){
+    // allow requests with no origin 
+    // (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
+
 // Motor de plantillas
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -55,5 +72,5 @@ app.use((req, res) => {
 const port = process.env.PORT;
 // Iniciamos la escucha del servidor en el puerto designado
 app.listen(port, () => {
-    console.log(`Servidor      => OK (puerto ${process.env.PORT})`);
+    console.log(`Servidor      => OK (puerto ${port})`);
 });

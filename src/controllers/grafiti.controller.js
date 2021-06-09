@@ -5,14 +5,15 @@ const fs = require("fs-extra");
 const exifr = require("exifr");
 const imageThumbnail = require("image-thumbnail");
 
-const Grafiti = require("../models/grafiti.model");
+const Grafiti = require("../models/grafiti.model.js");
+const User = require("../models/user.model");
 
-const RNA = require("../config/neuralnet.config");
+const RNA = require("../config/neuralnet.config.js");
 
 /**
  * Devuelve el archivo del grafiti indicado, para la API
  */
- const get = async (req, res) => {
+const get = async (req, res) => {
 
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
@@ -20,11 +21,11 @@ const RNA = require("../config/neuralnet.config");
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
-        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("src/public/images/image_not_found.png"));
     else if (image.deleted)
-        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("src/public/images/image_not_found.png"));
     // Si existe la devolvemos
-    else{
+    else {
         return res.sendFile(image.absolutePath);
     }
 };
@@ -36,19 +37,24 @@ const getThumbnail = async (req, res) => {
 
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
-    const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { thumbnail: 1 });
+    const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { thumbnail: 1, orientation: 1, absolutePath: 1 });
 
     // Si la imagen no existe o está eliminada cargamos el image not found
     if (!image)
-        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("src/public/images/image_not_found.png"));
     else if (image.deleted)
-        return res.sendFile(path.resolve("../public/images/image_not_found.png"));
+        return res.sendFile(path.resolve("src/public/images/image_not_found.png"));
     // Si existe la devolvemos
-    else{
-        return res.send(image.thumbnail);
+    else {
+        if (image.orientation == 1) {
+            return res.send(image.thumbnail);
+        } else {
+            return res.sendFile(image.absolutePath);
+        }
     }
 };
 
+const thumbnails = require("../helpers/thumbnail");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -86,7 +92,7 @@ const upload = async (req, res) => {
                 await fs.rename(imgTempPath, imgTargetPath);
 
                 // Extraemos metadatos del archivo
-                const buffer = fs.readFileSync(imgTargetPath);
+                var buffer = fs.readFileSync(imgTargetPath);
                 if (!buffer) {
                     errores.push(`No se han podido extraer los metadatos de ${file.originalname}, imagen no almacenada.`);
                     fileErr.push(file.originalName);
@@ -96,9 +102,34 @@ const upload = async (req, res) => {
                     await fs.unlink(imgTargetPath);
                     continue;
                 }
+
+                const rotated = thumbnails.rotate(buffer);
+                if (rotated) {
+                    buffer = rotated;
+                }
+                /*const thumbnail_response = await thumbnails.generateThumbnail(buffer);
+                if (!thumbnail_response) {
+                    console.log("!thumbnail response")
+                    const jpgTypes = /jpeg|jpg/;
+                    if (jpgTypes.test(file.mimetype) || jpgTypes.test(imgExt)) {
+                        console.log("is JPEG");
+                        const rotated = thumbnails.rotate(buffer);
+                        if (rotated){
+                            console.log("Rotated")
+                            buffer = rotated;
+                        }
+                    }
+                }*/
+
                 var meta = await exifr.parse(buffer, true);
+                var description = "";
                 if (!meta) {
                     meta = null;
+                } else {
+                    //if (meta.hasOwnProperty("XPComment")) {
+                    if (meta.XPComment) {
+                            description = meta.XPComment;
+                    }
                 }
                 var gps = await exifr.gps(buffer);
                 if (!gps) {
@@ -124,13 +155,24 @@ const upload = async (req, res) => {
                 if (!thumbnail) {
                     thumbnail = await imageThumbnail(buffer);
                 }
+                /*var thumbnail;
+                if (thumbnail_response) {
+                    console.log("Thumbnail response == true")
+                    thumbnail = thumbnail_response;
+                } else {
+                    thumbnail = await exifr.thumbnail(buffer);
+                    if (!thumbnail) {
+                        thumbnail = await imageThumbnail(buffer);
+                    }
+                }*/
 
                 const image = new Grafiti({
                     originalname: file.originalname,
-                    userId: req.user.id,
+                    user: req.user._id,
                     serverName: imgUniqueName + imgExt,
                     relativePath: imgRelativePath,
                     absolutePath: imgTargetPath,
+                    description,
                     gps,
                     orientation,
                     rotation,
@@ -175,8 +217,7 @@ const upload = async (req, res) => {
 
     } // Hasta aquí el for()
 
-    console.log({ success, message, errores, fileErr });
-    return res.status(success ? 200 : 400).json({ success, message , errores, fileErr});
+    return res.status(success ? 200 : 400).json({ success, message, errores, fileErr });
 
 };
 
@@ -203,7 +244,7 @@ const update = async (req, res) => {
             message: "Error: el grafiti ha sido borrado"
         });
     }
-    else if (!grafiti.userId.equals(req.user._id)) {
+    else if (!grafiti.user.equals(req.user._id)) {
         console.log("Not user")
         return res.status(400).json({
             success: false,
@@ -309,7 +350,7 @@ const remove = async (req, res) => {
             message: "Error: el grafiti ha sido borrado"
         });
     }
-    else if (!grafiti.userId.equals(req.user._id)) {
+    else if (!grafiti.user.equals(req.user._id)) {
         console.log("Not user")
         return res.status(400).json({
             success: false,
@@ -318,7 +359,7 @@ const remove = async (req, res) => {
     } else {
 
         try {
-            
+
             // Actualizamos el grafiti a eliminado
             const resultado = await Grafiti.updateOne({ _id: req.params.grafiti_id }, {
                 $set: {
@@ -353,16 +394,16 @@ const remove = async (req, res) => {
  * Devuelve el número de grafitis de un usuario
  * @returns Entero con el número de grafitis del usuario o null si hay un error 
  */
-const countOf = async (userId, countDeleted = false) => {
+const countOf = async (user, countDeleted = false) => {
 
     try {
-        
-        if(countDeleted){
-            return await Grafiti.countDocuments({ userId });
-        }else{
-            return await Grafiti.countDocuments({ userId, deleted: false });
+
+        if (countDeleted) {
+            return await Grafiti.countDocuments({ user });
+        } else {
+            return await Grafiti.countDocuments({ user, deleted: false });
         }
-        
+
     } catch (error) {
         console.log("Error al contar grafitis: ", error);
         return null;
@@ -374,36 +415,36 @@ const countOf = async (userId, countDeleted = false) => {
  * Elimina los grafitis de un usuario
  * @returns Número de grafitis eliminados
  */
-const deleteUserGrafitis = async (userId, changeUser = false, communityId = null) => {
+const deleteUserGrafitis = async (user, changeUser = false, communityId = null) => {
 
     try {
         var deleted;
-        if(changeUser) {
-            if(!communityId){
+        if (changeUser) {
+            if (!communityId) {
                 console.log("Debe proporcionar el id del usuario community para poder reasignar los grafitis");
                 return null;
             }
-            deleted = await Grafiti.updateMany({ userId, deleted: false }, {
+            deleted = await Grafiti.updateMany({ user, deleted: false }, {
                 $set: {
-                    userId: communityId,
-                    originalUser: userId
+                    user: communityId,
+                    originalUser: user
                 },
                 $currentDate: { lastModified: 1 }
             });
-        }else{
-            deleted = await Grafiti.updateMany({ userId, deleted: false }, {
+        } else {
+            deleted = await Grafiti.updateMany({ user, deleted: false }, {
                 $set: {
                     deleted: true
                 },
                 $currentDate: { lastModified: 1 }
             });
         }
-        
-        if(!deleted)
+
+        if (!deleted)
             return null;
         else
             return deleted.nModified;
-        
+
     } catch (error) {
         console.log("Error al contar grafitis: ", error);
         return null;
@@ -416,37 +457,53 @@ const deleteUserGrafitis = async (userId, changeUser = false, communityId = null
  */
 const esSuyo = async (req, res, next) => {
 
-    // Buscamos el grafiti en la base
-    const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
+    try {
 
-    // Si el grafiti no existe, está borrado o no pertenece al usuario
-    if (!grafiti) {
-        console.log("No grafiti")
-        res.render("../views/404");
-    }
-    else if (grafiti.deleted) {
-        console.log("Grafiti deleted")
-        res.render("../views/404");
-    }
-    else if (!grafiti.userId.equals(req.user._id)) {
-        console.log("Not user")
-        res.render("../views/404");
-    }
-    // Si es correcto, seguimos
-    else {
-        next();
+        // Buscamos el grafiti en la base
+        const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
+
+        // Si el grafiti no existe, está borrado o no pertenece al usuario
+        if (!grafiti) {
+            console.log("No grafiti")
+            res.render("../views/404");
+        }
+        else if (grafiti.deleted) {
+            console.log("Grafiti deleted")
+            res.render("../views/404");
+        }
+        else if (!grafiti.user.equals(req.user._id)) {
+            console.log("Not user")
+            res.render("../views/404");
+        }
+        // Si es correcto, seguimos
+        else {
+            next();
+        }
+
+    } catch (error) {
+        console.log("Error en esSuyo: ", error);
+        return null;
     }
 
 };
 
 /**
  * Busca y devuelve el path, el nombre en el servidor y el id de los grafitis del usuario indicado
- * @param {mongoose.Types.ObjectId} userId - ObjectId del usuario que tiene los grafitis
+ * @param {mongoose.Types.ObjectId} user - ObjectId del usuario que tiene los grafitis
  * @param {number} limit - Límite de imágenes a devolver
  * @param {boolean} getDeleted - Devolver también imágenes eliminadas
  */
-const getIndexGrafitis = async (userId, limit = 20, getDeleted = false) => {
-    return await Grafiti.find({ userId: userId, deleted: getDeleted }, { _id: 1, relativePath: 1 , serverName: 1 , uniqueId: 1}).sort({ uploadedAt: -1 }).limit(limit);
+const getIndexGrafitis = async (user, limit = 20, getDeleted = false) => {
+
+    try {
+
+        return await Grafiti.find({ user: user, deleted: getDeleted }, { _id: 1, relativePath: 1, serverName: 1, uniqueId: 1 }).sort({ uploadedAt: -1 }).limit(limit);
+
+    } catch (error) {
+        console.log("Error en getIndexGrafitis: ", error);
+        return null;
+    }
+
 };
 
 /**
@@ -454,8 +511,100 @@ const getIndexGrafitis = async (userId, limit = 20, getDeleted = false) => {
  * @param {mongoose.Types.ObjectId} grafitiId - ObjectId del grafiti a buscar en la BD
  */
 const getGrafitiById = async (grafitiId) => {
-    return await Grafiti.findOne({ _id: grafitiId });
+
+    try {
+
+        return await Grafiti.findOne({ _id: grafitiId, deleted: false });
+
+    } catch (error) {
+        console.log("Error en getGrafitiById: ", error);
+        return null;
+    }
+
 };
+
+/**
+ * Devuelve n grafitis de la base de datos
+ * @param {Number} page - Número de página
+ * @param {Number} nGrafitis - Número de grafitis por página
+ * @returns Grafitis
+ */
+const getGrafitiPage = async (page, nGrafitis) => {
+
+    try {
+        console.time("Find grafitis");
+        const grafitis = await Grafiti.find({ deleted: false }).sort({ lastModified: -1 }).skip((page - 1) * nGrafitis).limit(nGrafitis).populate("user", { name: 1, surname: 1, email: 1 });
+        console.timeEnd("Find grafitis");
+        if (!grafitis) {
+            console.log("No se han podido recuperar los grafitis en la consulta");
+            return null;
+        }
+        /*console.time("Bucle for");
+        const usuarios = {};
+        for (var grafiti of grafitis) {
+
+            if (!usuarios[grafiti.user.toString]) {
+
+                // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
+                const user = await User.findById(grafiti.user, {
+                    name: 1, surname: 1, email: 1
+                });
+                if (!user) {
+                    console.log("No he han podido consultar los datos del usuario");
+                    return null;
+                }
+
+                const username = {
+                    name: user.name,
+                    surname: user.surname,
+                    email: user.email,
+                };
+
+                grafiti["username"] = username;
+                usuarios[grafiti.user.toString] = username;
+
+            } else {
+                grafiti["username"] = usuarios[grafiti.user.toString];
+            }
+
+        }
+        console.timeEnd("Bucle for");*/
+
+        return grafitis;
+
+    } catch (error) {
+        console.log("Error en getGrafitiPage: ", error);
+        return null;
+    }
+
+};
+
+/**
+ * Devuelve el número de páginas totales dado el número de grafitis por página
+ * @param {Number} n - Número de grafitis por página
+ * @returns Número de páginas
+ */
+const getNumberOfPages = async (n) => {
+
+    try {
+
+        const nGrafitis = await Grafiti.countDocuments({ deleted: false });
+        if (!nGrafitis) {
+            console.log("Error al consultar el número de grafitis");
+            return null;
+        }
+        console.log("Hay ", nGrafitis, " grafitis en la base de datos.");
+
+        return Math.ceil(nGrafitis / n);
+
+    } catch (error) {
+        console.log("Error en getNumberOfPages: ", error);
+        return null;
+    }
+
+};
+
+
 
 module.exports = {
     get,
@@ -468,4 +617,6 @@ module.exports = {
     deleteUserGrafitis,
     getIndexGrafitis,
     getGrafitiById,
+    getNumberOfPages,
+    getGrafitiPage,
 };

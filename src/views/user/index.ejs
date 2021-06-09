@@ -1,5 +1,4 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , username: user.name
-    }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , username: user.name, index: 1 }) %>
 
     <div class="container pt-3">
         <!--h1 class="text-primary mt-2">Dashboard de <#%= user.name %>
@@ -8,7 +7,11 @@
         <div class="card mb-3">
 
             <div class="card-header bg-dark text-white">
-                <h3 class="d-inline"><i class="far fa-images"></i> Mis grafitis</h3>
+                <a href="">
+                    <h3 class="d-inline text-white card-link">
+                        <i class="fa fa-image"></i> Mis grafitis
+                    </h3>
+                </a>
                 <a href="/usuario/subir-grafiti" class="d-inline float-right">
                     <button type="button" class="btn btn-primary">Subir Grafitis</button>
                 </a>
@@ -20,12 +23,12 @@
                         <% for(const image of images) { %>
                             <div class="col-6 col-sm-4 col-lg-3 mb-2" style="position: relative">
                                 <a href="/usuario/grafiti/<%= image._id %>">
-                                    <img src="/api/grafitis/get/<%= image._id %>" alt="<%= image.description %>"
+                                    <img src="/api/grafitis/get-thumbnail/<%= image._id %>" alt="<%= image.description %>"
                                         class="w-100 h-100 img img-thumbnail" style="display: block">
                                     <%# if (image.gps.latitude!=0 || image.gps.longitude!=0) { %>
                                         <!--i class="fa fa-map-marker-alt"
                                             style="position: absolute; bottom:0; left:0;"></i-->
-                                    <%# } %>
+                                        <%# } %>
                                 </a>
                             </div>
                             <% } %>

@@ -1,13 +1,14 @@
 const Grafiti = require("../models/grafiti.model");
 const path = require("path");
-const { getIndexGrafitis, getGrafitiById } = require("./grafiti.controller");
+const { getIndexGrafitis, getGrafitiById, getGrafitiPage, getNumberOfPages } = require("./grafiti.controller");
+const { time } = require("console");
 
 // Renderiza el índice/dashboard del usuario
 const index = async (req, res) => {
 
     // Obtenemos las 20 imagenes más recientemente subidas
-    const images = await getIndexGrafitis(req.user._id, 20);
-    
+    const images = await getIndexGrafitis(req.user._id, 24);
+
     res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user, images });
 
 };
@@ -36,6 +37,47 @@ const grafitiDesc = async (req, res) => {
  * Muestra la Base de Datos de grafitis de todos los usuarios
  */
 const grafitiDB = async (req, res) => {
+
+    const resultsPerPage = 10;
+
+    try {
+
+        // Recogemos el número de página
+        var pagina;
+        if (!req.query.page){
+            pagina = 1;
+        }
+        else{
+            pagina = Number(req.query.page);
+        }
+
+        console.time("pedirgrafitis");
+
+        // Pedimos los grafitis de la página
+        const grafitis = await getGrafitiPage(pagina, resultsPerPage);
+        if(!grafitis){
+            console.log("No se han podido recuperar los grafitis");
+            return res.status(400).redirect("../usuario");
+        }
+
+        console.timeEnd("pedirgrafitis");
+        console.time("pedirpaginas");
+
+        // Pedimos el paginas que podemos mostrar
+        const limPages = await getNumberOfPages(resultsPerPage);
+        if(!limPages){
+            console.log("No se han podido contar los grafitis");
+            return res.status(400).redirect("../usuario");
+        }
+
+        console.timeEnd("pedirpaginas");
+
+        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user });
+
+    } catch (error) {
+        console.log("Ha habido un error en GrafitiDB: ", error);
+        return res.redirect("../usuario");
+    }
 
 };
 

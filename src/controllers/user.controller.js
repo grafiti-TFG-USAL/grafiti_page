@@ -524,6 +524,7 @@ const logOut = (req, res) => {
 };
 
 const { countOf, deleteUserGrafitis } = require("./grafiti.controller");
+const { Mongoose } = require("mongoose");
 // Finalizar la sesión
 const removeUser = async (req, res) => {
 
@@ -611,8 +612,36 @@ const eliminarUsuariosSinVerificar = async () => {
 
     } catch (error) {
         console.log("Error en la eliminación de usuarios sin verificar => ", error);
-        process.exit(1);
+        return null;
     }
+};
+
+/**
+ * Dado un ID, devuelve un objeto con el nombre y apellidos del usuario
+ * @param {*} id - ID del usuario
+ */
+const getUsernameById = async id => {
+
+    try {
+
+        // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
+        const user = await User.findById(id);
+        if(!user){
+            console.log("No he han podido consultar los datos del usuario");
+            return null;
+        }
+
+        return {
+            name: user.name,
+            surname: user.surname,
+            email: user.email,
+        };
+
+    } catch (error) {
+        console.log("Error en la obtención del nombre del usuario => ", error);
+        return null;
+    }
+    
 };
 
 module.exports = {
@@ -626,6 +655,7 @@ module.exports = {
     logOut,
     removeUser,
     eliminarUsuariosSinVerificar,
+    getUsernameById,
     schemaRegister,
     schemaLogin
 };

@@ -10,9 +10,10 @@ const grafitiSchema  = mongoose.Schema({
         required: true
     },
     // El usuario que subió la imagen
-    userId: {
-        type: mongoose.Types.ObjectId,
-        required: true
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: "User" // Esto nos permite hacer un populate
     },
     // El nombre del archivo en el servidor
     serverName: {

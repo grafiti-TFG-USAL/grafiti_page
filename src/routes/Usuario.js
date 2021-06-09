@@ -23,6 +23,14 @@ router.get("/", userPageController.index);
 // Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
 router.get("/grafiti/:grafiti_id", grafitiController.esSuyo, userPageController.grafitiDesc);
 
+// Base de Datos de Grafitis (<host>/usuario/GrafitiDB)
+router.get("/GrafitiDB", userPageController.grafitiDB);
+
+// Mapa de Grafitis de la BD (<host>/usuario/GrafitiMap)
+router.get("/GrafitiMap", (req, res) => {
+    res.render("user/grafiti-map.ejs", { titulo: "Grafiti Map", user: req.user });
+});
+
 // Perfil de usuario (<host>/usuario/perfil)
 router.get("/perfil", (req, res) => {
     res.render("user/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });

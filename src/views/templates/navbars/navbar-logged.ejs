@@ -11,11 +11,26 @@
     <div class="collapse navbar-collapse justify-content-between" id="navbarToCollapse">
       <!-- Paginación -->
       <ul class="navbar-nav ml-4 ml-sm-0">
-        <li class="nav-item">
+        <% if (index==1) { %>
+          <li class="nav-item active">
+        <% }else{ %>
+          <li class="nav-item">
+        <% } %>
           <a class="nav-link" href="/usuario">Dashboard</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/database">Grafiti DB</a>
+        <% if (index==2) { %>
+          <li class="nav-item active">
+        <% }else{ %>
+          <li class="nav-item">
+        <% } %>
+          <a class="nav-link" href="/usuario/GrafitiDB">Grafiti DB</a>
+        </li>
+        <% if (index==3) { %>
+          <li class="nav-item active">
+        <% }else{ %>
+          <li class="nav-item">
+        <% } %>
+          <a class="nav-link" href="/usuario/GrafitiMap">Grafiti Map</a>
         </li>
       </ul>
       <!-- Gestión de usuario -->
