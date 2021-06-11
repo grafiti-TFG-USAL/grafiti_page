@@ -6,7 +6,7 @@ const moment = require("moment");
  * @param {*} timestamp 
  */
 const timeAgo = (timestamp) => {
-    return moment(timestamp).startOf("minute").fromNow();
+    return moment(timestamp).locale("es").startOf("minute").fromNow();
 };
 
 module.exports = {

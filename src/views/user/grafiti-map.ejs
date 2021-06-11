@@ -1,5 +1,110 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mapa de grafitis" , username: user.name, index: 3 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mapa de grafitis" , username: user.name,
+    index: 3 }) %>
 
+    <div class="container-fluid p-0 m-0">
+        <div class="" id="map" style="height: 600px; width: auto;"></div>
+    </div>
 
+    <script async>
 
-    <%- include('../templates/footer'); %>
+        const markers = {};
+
+        // Initialize and add the map
+        async function initMap() {
+
+            // El geocoder, convierte direcciones a coordenadas y viceversa
+            const geocoder = new google.maps.Geocoder();
+
+            // Convierte una dirección en una coordenada y apunta en el mapa a ella
+            /*function geocodeAddress(geocoder, resultsMap, address) {
+                geocoder.geocode({ address, bounds: resultsMap.getBounds() }, (results, status) => {
+                    if (status === "OK") {
+
+                        // Ajustamos el mapa a los resultados
+                        resultsMap.fitBounds(results[0].geometry.viewport);
+
+                        geocoder.geocode({ location: results[0].geometry.location }, (results, status) => {
+                            if (status === "OK") {
+                                if (results[0]) {
+                                    document.getElementById("direccion").value = results[0].formatted_address;
+                                } else {
+                                    window.alert("No results found");
+                                }
+                            } else {
+                                window.alert("Geocoder failed due to: " + status);
+                            }
+                        });
+
+                    } else {
+                        alert("Geocode was not successful for the following reason: " + status);
+                    }
+                });
+            }*/
+
+            // The map, centered at grafiti coords
+            const map = new google.maps.Map(document.getElementById("map"), {
+                disableDefaultUI: true,
+            });
+
+            // Obtenemos las coordenadas de la localización inicial, en este caso, España
+            const initCoords = {};
+            geocoder.geocode({ address: "Spain" }, async (results, status) => {
+                if (status === "OK") {
+
+                    // Recogemos las coordenadas devueltas por el geocoder
+                    const loc = results[0].geometry.location;
+                    initCoords["lat"] = await loc.lat();
+                    initCoords["lng"] = await loc.lng();
+
+                    // Ajustamos el viewport al resultado
+                    map.fitBounds(results[0].geometry.viewport);
+
+                } else {
+                    alert("Geocode was not successful for the following reason: " + status);
+                }
+            });
+
+            const data = await fetch("/api/grafitis/get-grafitis-with-gps", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const respuesta = await data.json();
+            //console.log(respuesta)
+            if(!respuesta){
+                window.location.href = "/usuario";
+            }else
+            if(!respuesta.success){
+                window.location.href = "/usuario";
+            }
+            
+            const grafitis = respuesta.grafitis;
+            console.log(grafitis)
+
+            grafitis.forEach(grafiti => {
+                console.log(grafiti)
+                const marker = new google.maps.Marker({
+                    map: map,
+                    position: { 
+                        lat: grafiti.gps.latitude, 
+                        lng: grafiti.gps.longitude 
+                    },
+                    url: "/usuario/grafiti/"+grafiti._id,
+                });
+                google.maps.event.addListener(marker, "click", () => {
+                    window.location.href = marker.url;
+                });
+                markers[grafiti.stringId] = marker;
+            });
+
+        }
+
+    </script>
+
+    <%# Script de la api de maps; debe ir tras la función initMap %>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
+            async></script>
+
+        <%- include('../templates/footer'); %>

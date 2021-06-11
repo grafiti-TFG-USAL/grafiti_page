@@ -1,5 +1,6 @@
 const Grafiti = require("../models/grafiti.model");
-const { getIndexGrafitis, getGrafitiById, getGrafitiPage, getNumberOfPages } = require("./grafiti.controller");
+const { getIndexGrafitis, getGrafitiById, getGrafitiPage, getNumberOfPages, getGrafitisWithGPS } = require("./grafiti.controller");
+const { timeAgo } = require("../helpers/moment");
 
 // Renderiza el índice/dashboard del usuario
 const index = async (req, res) => {
@@ -46,8 +47,10 @@ const grafitiDesc = async (req, res) => {
     else if (grafiti.deleted)
         res.render("../views/404.ejs");
     // Si existe cargamos la página descriptiva
-    else
-        res.render("../views/user/grafiti-desc.ejs", { user: req.user, grafiti, maps_key: process.env.GMAPS_API_KEY });
+    else{
+        const time = timeAgo(grafiti.uploadedAt);
+        res.render("../views/user/grafiti-desc.ejs", { user: req.user, timeAgo: time, grafiti, maps_key: process.env.GMAPS_API_KEY });
+    }
 
 };
 
@@ -57,7 +60,7 @@ const grafitiDesc = async (req, res) => {
 const showGrafiti = async (req, res, next) => {
 
     try {
-
+        console.log("Mostrando ", req.params.grafiti_id)
         // Buscamos el grafiti en la base
         const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
 
@@ -72,10 +75,12 @@ const showGrafiti = async (req, res, next) => {
         }
         // Si el grafiti no es suyo, cargamos la página de descripción
         else if (!grafiti.user.equals(req.user._id)) {
+            console.log("Se describe")
             grafitiDesc(req, res);
         }
         // Si el grafiti es suyo, cargamos la página de edición
         else {
+            console.log("Se edita")
             grafitiEdit(req, res); //TODO: falta el await?
         }
 
@@ -141,6 +146,8 @@ const grafitiDB = async (req, res) => {
  * Muestra el mapa de los grafitis con ubicación
  */
 const grafitiMap = async (req, res) => {
+
+    return res.render("user/grafiti-map", {  user: req.user ,maps_key: process.env.GMAPS_API_KEY });
 
 };
 

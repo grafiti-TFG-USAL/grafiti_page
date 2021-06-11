@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const geopointSchema = require("./geopoint.schema.js");
 const path = require("path");
 
-const grafitiSchema  = mongoose.Schema({
+const grafitiSchema = mongoose.Schema({
 
     // El nombre original del archivo
     originalname: {
@@ -57,7 +57,7 @@ const grafitiSchema  = mongoose.Schema({
         scaleX: { type: Number },
         scaleY: { type: Number },
         deg: { type: Number },
-        rad: { type: Number}
+        rad: { type: Number }
     },
     // La miniatura de la imagen
     thumbnail: {
@@ -93,8 +93,12 @@ const grafitiSchema  = mongoose.Schema({
 });
 
 grafitiSchema.virtual("uniqueId").get(function () {
-        return this.serverName.replace(path.extname(this.serverName), "");
-    });
+    return this.serverName.replace(path.extname(this.serverName), "");
+});
+
+grafitiSchema.virtual("stringId").get(function () {
+    return this._id.toString();
+});
 
 //mongoose.model() busca en la base la coleccion "grafitis" (automaticamente ya pone en lowercase y busca el plural)
 module.exports = mongoose.model(process.env.GRAFITI_COLLECTION_NAME, grafitiSchema);

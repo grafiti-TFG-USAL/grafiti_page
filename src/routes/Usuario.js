@@ -27,9 +27,7 @@ router.get("/grafiti/:grafiti_id", userPageController.showGrafiti);
 router.get("/GrafitiDB", userPageController.grafitiDB);
 
 // Mapa de Grafitis de la BD (<host>/usuario/GrafitiMap)
-router.get("/GrafitiMap", (req, res) => {
-    res.render("user/grafiti-map.ejs", { titulo: "Grafiti Map", user: req.user });
-});
+router.get("/GrafitiMap", userPageController.grafitiMap);
 
 // Perfil de usuario (<host>/usuario/perfil)
 router.get("/perfil", (req, res) => {

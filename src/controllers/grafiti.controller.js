@@ -91,7 +91,7 @@ const upload = async (req, res) => {
                 await fs.rename(imgTempPath, imgTargetPath);
 
                 // Extraemos metadatos del archivo
-                var buffer = fs.readFileSync(imgTargetPath); 
+                var buffer = fs.readFileSync(imgTargetPath);
                 const stats = fs.statSync(imgTargetPath);
                 if (!buffer || !stats) {
                     errores.push(`No se han podido extraer los metadatos de ${file.originalname}, imagen no almacenada.`);
@@ -102,8 +102,8 @@ const upload = async (req, res) => {
                     await fs.unlink(imgTargetPath);
                     continue;
                 }
-                
-                const rotated = thumbnails.rotate(buffer, stats.size > 1024*1024 ? 20 : 80);
+
+                const rotated = thumbnails.rotate(buffer, stats.size > 1024 * 1024 ? 20 : 80);
                 if (rotated) {
                     buffer = rotated;
                 } else {
@@ -130,14 +130,16 @@ const upload = async (req, res) => {
                 } else {
                     //if (meta.hasOwnProperty("XPComment")) {
                     if (meta.XPComment) {
-                            description = meta.XPComment;
+                        description = meta.XPComment;
                     }
                 }
                 var gps = await exifr.gps(buffer);
                 if (!gps) {
-                    gps = null;
-                } else if (gps.latitude == 0 && gps.longitude == 0) {
-                    gps == null;
+                    gps = {
+                        latitude: 0,
+                        longitude: 0,
+                        altitude: meta.GPSAltitude ? meta.GPSAltitude : null
+                    };
                 } else {
                     gps = {
                         latitude: gps.latitude,
@@ -145,6 +147,7 @@ const upload = async (req, res) => {
                         altitude: meta.GPSAltitude ? meta.GPSAltitude : null
                     };
                 }
+                console.log(gps)
                 var orientation = await exifr.orientation(buffer);
                 if (!orientation) {
                     orientation = null;
@@ -155,14 +158,14 @@ const upload = async (req, res) => {
                 }
                 var thumbnail = await exifr.thumbnail(buffer);
                 if (!thumbnail) {
-                    if(stats.size < 1024*1024){
+                    if (stats.size < 1024 * 1024) {
                         console.log("Imagen demasiado pequeña como para usar su thumbnail")
                         thumbnail = await imageThumbnail(buffer, { percentage: 70 });
                     } else {
                         thumbnail = await imageThumbnail(buffer);
                     }
                 }
-                
+
                 /*var thumbnail;
                 if (thumbnail_response) {
                     console.log("Thumbnail response == true")
@@ -505,9 +508,9 @@ const getGrafitiById = async (grafitiId) => {
 const getGrafitiPage = async (page, nGrafitis) => {
 
     try {
-        
+
         const grafitis = await Grafiti.find({ deleted: false }).sort({ lastModified: -1 }).skip((page - 1) * nGrafitis).limit(nGrafitis).populate("user", { name: 1, surname: 1, email: 1 });
-        
+
         if (!grafitis) {
             console.log("No se han podido recuperar los grafitis en la consulta");
             return null;
@@ -576,6 +579,52 @@ const getNumberOfPages = async (n) => {
 
 };
 
+/**
+ * Devuelve todos los grafitis con su ubicación definida
+ * @returns Número de páginas
+ */
+const getGrafitisWithGPS = async (req, res) => {
+
+    try {
+
+        const grafitis = await Grafiti.find({
+            deleted: false, 
+            "gps.latitude": { $ne: 0 },
+            "gps.longitude": { $ne: 0 } 
+        },
+        { gps: 1 });
+        if (!grafitis) {
+            console.log("Error al consultar el número de grafitis");
+            return res.status(400).json({
+                success: false,
+                message: "Error al consultar el número de grafitis"
+            });
+        } else
+            if (grafitis.length == 0) {
+                console.log("Se obtuvieron 0 grafitis en la consulta");
+                return res.status(400).json({
+                    success: false,
+                    message: "Se obtuvieron 0 grafitis en la consulta"
+                });
+            }
+
+        //console.log("grafitis: ", grafitis);
+        return res.status(200).json({
+            success: true,
+            message: `Se obtuvieron ${grafitis.length} grafitis en la consulta`,
+            grafitis: grafitis
+        });
+
+    } catch (error) {
+        console.log("Error en getGrafitisWithGPS: ", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error en getGrafitisWithGPS: " + error
+        });
+    }
+
+};
+
 
 
 module.exports = {
@@ -590,4 +639,5 @@ module.exports = {
     getGrafitiById,
     getNumberOfPages,
     getGrafitiPage,
+    getGrafitisWithGPS,
 };

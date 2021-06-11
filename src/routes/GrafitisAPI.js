@@ -29,6 +29,10 @@ router.post("/update/:grafiti_id", estaAutenticado, grafitiController.update);
 
 // Subida de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);
+
+// Subida de un grafiti (<host>/api/grafitis/get-grafitis-with-gps)
+router.get("/get-grafitis-with-gps", estaAutenticado, grafitiController.getGrafitisWithGPS);
+
 /*
 // Añadir comentario (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/postComment/:grafiti_id", estaAutenticado, grafitiController.postComment);
