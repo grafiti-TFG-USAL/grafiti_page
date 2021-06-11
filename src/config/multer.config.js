@@ -27,10 +27,12 @@ const upload = multer({
         //Expresión regular
         const filetypes = /jpeg|jpg|png/; 
         const mimetype = filetypes.test(file.mimetype);
-        const extname = filetypes.test(path.extname(file.originalname));
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
         if(mimetype && extname){
             return cb(null, true);
         }
+        console.log("Mime: ", mimetype);
+        console.log("Ext : ", extname);
         cb("Error: Formato de archivo no soportado");
     }
 })

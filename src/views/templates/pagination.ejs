@@ -1,0 +1,141 @@
+<div class="row justify-content-center align-items-center">
+    <ul class="pagination">
+        <% if (pagina==1) { %>
+            <li class="page-item disabled">
+                <a class="page-link" aria-label="Previous">
+        <% } else { %>
+            <li class="page-item">
+                <a class="page-link" href="?page=<%= pagina-1 %>" aria-label="Previous">
+        <% } %>
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">Previous</span>
+            </a>
+        </li>
+
+        <% // Si hay menos de 6 páginas
+        if (limPages < 6) { 
+            
+            for( let index = 1; index <= limPages; index++ ) { 
+
+                if(index == pagina) { %>
+                    <li class="page-item active">
+                        <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                    </li>
+                <% } else { %>
+                    <li class="page-item">
+                        <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                    </li>
+                <% }
+
+            }
+
+        } // Si hay 6 páginas o más
+        else {
+          
+            // Si la página es de 3 para abajo 
+            if(pagina < 4) {
+                
+                // Añadimos las 5 primeras
+                for( let index = 1; index <= 5; index++ ) { 
+
+                    if(index == pagina) { %>
+                        <li class="page-item active">
+                            <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                        </li>
+                    <% } else { %>
+                        <li class="page-item">
+                            <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                        </li>
+                    <% }
+
+                } // Metemos tres puntos y la última página
+                %>
+                <li class="page-item disabled">
+                    <a class="page-link"><span>...</span></a>
+                </li>
+                <li class="page-item">
+                    <a href="?page=<%= limPages %>" class="page-link"><%= limPages %></a>
+                </li>
+
+            <% } // Si la página es de la 6 para arriba
+            else {
+
+                // Si la página es de las 3 últimas
+                if((limPages-3) < pagina) { // Metemos la primera página y tres puntos
+                %>
+                    <li class="page-item">
+                        <a href="?page=1" class="page-link">1</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link"><span>...</span></a>
+                    </li>
+                    <%
+                    // Añadimos las 5 últimas
+                    for( let index = limPages-4; index <= limPages; index++ ) { 
+
+                        if(index == pagina) { %>
+                            <li class="page-item active">
+                                <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item">
+                                <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                            </li>
+                        <% }
+
+                    }
+
+                } // Si la página es intermedia
+                else {// Metemos la primera página y tres puntos
+                %>
+                    <li class="page-item">
+                        <a href="?page=1" class="page-link">1</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link"><span>...</span></a>
+                    </li>
+                    <%
+                    // Añadimos las 3 intermedias
+                    for( let index = pagina-1; index <= pagina+1; index++ ) { 
+
+                        if(index == pagina) { %>
+                            <li class="page-item active">
+                                <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                            </li>
+                        <% } else { %>
+                            <li class="page-item">
+                                <a href="?page=<%= index %>" class="page-link"><%= index %></a>
+                            </li>
+                        <% }
+
+                    } // Metemos tres puntos y la última página
+                    %>
+                    <li class="page-item disabled">
+                        <a class="page-link"><span>...</span></a>
+                    </li>
+                    <li class="page-item">
+                        <a href="?page=<%= limPages %>" class="page-link"><%= limPages %></a>
+                    </li>
+
+             <% }
+
+            }
+
+        } %>
+
+        
+
+        <% if (limPages == pagina) { %>
+        <li class="page-item disabled">
+            <a class="page-link" aria-label="Next">
+        <% } else { %>
+        <li class="page-item">
+            <a class="page-link" href="?page=<%= pagina+1 %>" aria-label="Next">
+        <% } %>
+                <span aria-hidden="true">&raquo;</span>
+                <span class="sr-only">Next</span>
+            </a>
+
+        </li>
+    </ul>
+</div>

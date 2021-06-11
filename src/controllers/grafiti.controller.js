@@ -61,7 +61,6 @@ const thumbnails = require("../helpers/thumbnail");
 const upload = async (req, res) => {
 
     const files = req.files;
-
     // Iniciamos la respuesta afirmativa
     var success = true;
     var message = "Subido con éxito";
@@ -92,8 +91,9 @@ const upload = async (req, res) => {
                 await fs.rename(imgTempPath, imgTargetPath);
 
                 // Extraemos metadatos del archivo
-                var buffer = fs.readFileSync(imgTargetPath);
-                if (!buffer) {
+                var buffer = fs.readFileSync(imgTargetPath); 
+                const stats = fs.statSync(imgTargetPath);
+                if (!buffer || !stats) {
                     errores.push(`No se han podido extraer los metadatos de ${file.originalname}, imagen no almacenada.`);
                     fileErr.push(file.originalName);
                     success = false;
@@ -102,10 +102,12 @@ const upload = async (req, res) => {
                     await fs.unlink(imgTargetPath);
                     continue;
                 }
-
-                const rotated = thumbnails.rotate(buffer);
+                
+                const rotated = thumbnails.rotate(buffer, stats.size > 1024*1024 ? 20 : 80);
                 if (rotated) {
                     buffer = rotated;
+                } else {
+                    console.log("no rotado");
                 }
                 /*const thumbnail_response = await thumbnails.generateThumbnail(buffer);
                 if (!thumbnail_response) {
@@ -153,8 +155,14 @@ const upload = async (req, res) => {
                 }
                 var thumbnail = await exifr.thumbnail(buffer);
                 if (!thumbnail) {
-                    thumbnail = await imageThumbnail(buffer);
+                    if(stats.size < 1024*1024){
+                        console.log("Imagen demasiado pequeña como para usar su thumbnail")
+                        thumbnail = await imageThumbnail(buffer, { percentage: 70 });
+                    } else {
+                        thumbnail = await imageThumbnail(buffer);
+                    }
                 }
+                
                 /*var thumbnail;
                 if (thumbnail_response) {
                     console.log("Thumbnail response == true")
@@ -453,41 +461,6 @@ const deleteUserGrafitis = async (user, changeUser = false, communityId = null) 
 };
 
 /**
- * Si hay un grafiti_id en req.params, busca que el grafiti se corresponda con el usuario que tiene la sesión loggeada.
- */
-const esSuyo = async (req, res, next) => {
-
-    try {
-
-        // Buscamos el grafiti en la base
-        const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
-
-        // Si el grafiti no existe, está borrado o no pertenece al usuario
-        if (!grafiti) {
-            console.log("No grafiti")
-            res.render("../views/404");
-        }
-        else if (grafiti.deleted) {
-            console.log("Grafiti deleted")
-            res.render("../views/404");
-        }
-        else if (!grafiti.user.equals(req.user._id)) {
-            console.log("Not user")
-            res.render("../views/404");
-        }
-        // Si es correcto, seguimos
-        else {
-            next();
-        }
-
-    } catch (error) {
-        console.log("Error en esSuyo: ", error);
-        return null;
-    }
-
-};
-
-/**
  * Busca y devuelve el path, el nombre en el servidor y el id de los grafitis del usuario indicado
  * @param {mongoose.Types.ObjectId} user - ObjectId del usuario que tiene los grafitis
  * @param {number} limit - Límite de imágenes a devolver
@@ -532,9 +505,9 @@ const getGrafitiById = async (grafitiId) => {
 const getGrafitiPage = async (page, nGrafitis) => {
 
     try {
-        console.time("Find grafitis");
+        
         const grafitis = await Grafiti.find({ deleted: false }).sort({ lastModified: -1 }).skip((page - 1) * nGrafitis).limit(nGrafitis).populate("user", { name: 1, surname: 1, email: 1 });
-        console.timeEnd("Find grafitis");
+        
         if (!grafitis) {
             console.log("No se han podido recuperar los grafitis en la consulta");
             return null;
@@ -593,7 +566,6 @@ const getNumberOfPages = async (n) => {
             console.log("Error al consultar el número de grafitis");
             return null;
         }
-        console.log("Hay ", nGrafitis, " grafitis en la base de datos.");
 
         return Math.ceil(nGrafitis / n);
 
@@ -612,7 +584,6 @@ module.exports = {
     upload,
     update,
     remove,
-    esSuyo,
     countOf,
     deleteUserGrafitis,
     getIndexGrafitis,

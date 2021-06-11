@@ -21,7 +21,7 @@ router.use("/", passportConf.estaAutenticado);
 router.get("/", userPageController.index);
 
 // Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
-router.get("/grafiti/:grafiti_id", grafitiController.esSuyo, userPageController.grafitiDesc);
+router.get("/grafiti/:grafiti_id", userPageController.showGrafiti);
 
 // Base de Datos de Grafitis (<host>/usuario/GrafitiDB)
 router.get("/GrafitiDB", userPageController.grafitiDB);

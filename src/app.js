@@ -25,8 +25,8 @@ const passportSessions = require("./config/sessions.config.js");
 passportSessions(app, session);
 
 // Visualización de peticiones
-if(process.env.MORGAN)
-  app.use(morgan("dev"));
+//if(process.env.MORGAN)
+//  app.use(morgan("dev"));
 
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser

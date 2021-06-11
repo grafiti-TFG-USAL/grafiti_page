@@ -1,0 +1,86 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name, index: 0 }) %>
+
+    <div class="container-fluid my-3">
+        <div class="row border ficha">
+
+            <div class="col-12 col-sm-6">
+                <img src="/api/grafitis/get/<%= grafiti.id %>" class="w-100 img-thumbnail">
+            </div>
+
+            <div class="col-12 col-sm-6 my-3 my-sm-0">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Detalles</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="desc_form" class="form">
+                            <div class="form-group">
+                                <label for="description">Descripción</label>
+                                <% if (grafiti.description === "") { %>
+                                    <div id="description"><h6 class="text-secondary">Sin descripción</h6></div>
+                                <% } else { %>
+                                <textarea id="description" class="form-control" rows="2"
+                                    autocapitalize="sentences" resize="none"
+                                    placeholder="Detalles de la imagen..."><% if (grafiti.description) { %><%= grafiti.description %><% } %></textarea>
+                                <% } %>
+                            </div>
+                            <div class="form-group">
+                                <% if (grafiti.gps.latitude == 0 && grafiti.gps.longitude == 0) { %>
+                                    <label for="ubicacion">Ubicación</label>
+                                    <div id="ubicacion" class="mx-auto"><h6 class="text-secondary">Sin datos de ubicación</h6></div>
+                                <% } else { %>
+                                    <label for="map">Ubicación</label>
+                                    <div id="map" class="img-thumbnail w-100" style="height: 200px;"></div>
+                                <% } %>
+                            </div>
+
+                            <div class="form-group row">
+                                <label class="col-5" for="">Fecha de captura</label>
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
+                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString('es-ES') %>">
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-5" for="">Fecha de subida</label>
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
+                                    value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <script>
+
+        // Obtenemos las coordenadas del grafiti
+        const grafiti = <%= grafiti.gps %>;
+
+        // Initialize and add the map
+        function initMap() {
+
+            // The location of the grafiti
+            const coords = { lat: grafiti.latitude, lng: grafiti.longitude };
+
+            // The map, centered at grafiti coords
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: coords,
+                zoom: 15,
+                disableDefaultUI: true,
+            });
+            // The marker, positioned at grafiti coords
+            const marker = new google.maps.Marker({
+                position: coords,
+                map: map,
+            });
+
+        }
+
+    </script>
+    <%# Script de la api de maps; debe ir tras la función initMap %>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
+            async></script>
+
+        <%- include('../templates/footer'); %>

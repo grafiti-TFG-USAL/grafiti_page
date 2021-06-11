@@ -45,6 +45,7 @@ const rotate = (image, quality = null) => {
  */
 const generateThumbnail = async (image) => {
 
+    console.log("Generando thumbnail --------------------------------------")
     try {
 
         const options = {
