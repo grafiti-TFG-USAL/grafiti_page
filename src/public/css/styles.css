@@ -5,3 +5,10 @@ body {
 #ficha {
     background: #adadad;
 }
+
+footer {
+    clear: both;
+    position: relative;
+    height: 50px;
+    margin-top: 0px;
+}

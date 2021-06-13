@@ -592,7 +592,7 @@ const getGrafitisWithGPS = async (req, res) => {
             "gps.latitude": { $ne: 0 },
             "gps.longitude": { $ne: 0 } 
         },
-        { gps: 1 });
+        { gps: 1, user: 1 });
         if (!grafitis) {
             console.log("Error al consultar el número de grafitis");
             return res.status(400).json({
