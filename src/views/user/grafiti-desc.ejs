@@ -26,7 +26,7 @@
                                 <% } %>
                             </div>
                             <div class="form-group">
-                                <% if (grafiti.gps.latitude == 0 && grafiti.gps.longitude == 0) { %>
+                                <% if (grafiti.gps.coordinates.length != 2) { %>
                                     <label for="ubicacion">Ubicación</label>
                                     <div id="ubicacion" class="mx-auto"><h6 class="text-secondary">Sin datos de ubicación</h6></div>
                                 <% } else { %>
@@ -54,16 +54,17 @@
     </div>
     </div>
 
+    <% if (grafiti.gps.coordinates.length == 2) { %>
     <script>
 
         // Obtenemos las coordenadas del grafiti
-        const grafiti = <%= grafiti.gps %>;
+        const coordinates = [<%= grafiti.gps.coordinates %>];
 
         // Initialize and add the map
         function initMap() {
 
             // The location of the grafiti
-            const coords = { lat: grafiti.latitude, lng: grafiti.longitude };
+            const coords = { lat: coordinates[1], lng: coordinates[0] };
 
             // The map, centered at grafiti coords
             const map = new google.maps.Map(document.getElementById("map"), {
@@ -83,5 +84,6 @@
     <%# Script de la api de maps; debe ir tras la función initMap %>
         <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
             async></script>
+    <% } %>
 
         <%- include('../templates/footer'); %>

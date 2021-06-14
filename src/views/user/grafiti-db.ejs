@@ -35,7 +35,7 @@
                                             <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
                                                 alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
                                                 style="display: block">
-                                            <%# if (image.gps.latitude!=0 || image.gps.longitude!=0) { %>
+                                            <%# if (image.gps.coordinates.length != 2) { %>
                                                 <!--i class="fa fa-map-marker-alt"
                                                     style="position: absolute; bottom:0; left:0;"></i-->
                                                 <%# } %>
@@ -162,6 +162,9 @@
                     center: event.latLng,
                     radius: radio * 1000,
                 });
+                // Ajustamos el mapa a los resultados
+                modalmap.fitBounds(modalcircle.getBounds());
+                
             }
 
             document.getElementById("formControlRange").addEventListener("input", (event) => {
@@ -178,6 +181,8 @@
                         center: coords,
                         radius: radio * 1000,
                     });
+                    // Ajustamos el mapa a los resultados
+                    modalmap.fitBounds(modalcircle.getBounds());
             });
 
             document.getElementById("showRange").addEventListener("input", (event) => {
@@ -194,6 +199,8 @@
                     center: coords,
                     radius: radio * 1000,
                 });
+                // Ajustamos el mapa a los resultados
+                modalmap.fitBounds(modalcircle.getBounds());
             });
 
             // Convierte una dirección en una coordenada y apunta en el mapa a ella
@@ -201,7 +208,7 @@
                 geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
                     if (status === "OK") {
                         // Ajustamos el mapa a los resultados
-                        modalmap.fitBounds(results[0].geometry.viewport);
+                        //modalmap.fitBounds(results[0].geometry.viewport);
                         //Guardamos las coordenadas
                         coords.lat = await results[0].geometry.location.lat();
                         coords.lng = await results[0].geometry.location.lng();
@@ -223,6 +230,9 @@
                             center: coords,
                             radius: radio * 1000,
                         });
+                        // Ajustamos el mapa a los resultados
+                        modalmap.fitBounds(modalcircle.getBounds());
+
                         google.maps.event.addListener(modalmarker, "dragend", dragend);
 
                         geocoder.geocode({ location: results[0].geometry.location }, (results, status) => {
@@ -313,6 +323,9 @@
                         center: coords,
                         radius: radio * 1000,
                     });
+                    // Ajustamos el mapa a los resultados
+                    modalmap.fitBounds(modalcircle.getBounds());
+
                     google.maps.event.addListener(modalmarker, "dragend", dragend);
                     document.getElementById("direccion").value = "Salamanca, Spain";
                 } else {

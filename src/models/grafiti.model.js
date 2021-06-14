@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const geopointSchema = require("./geopoint.schema.js");
 const path = require("path");
 
 const grafitiSchema = mongoose.Schema({
@@ -40,9 +39,15 @@ const grafitiSchema = mongoose.Schema({
     }],*/
     // Las coordenadas gps de la ubicación de la imagen
     gps: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-        altitude: { type: Number }
+        type: {
+          type: String,
+          enum: ['Point'],
+          //required: true
+        },
+        coordinates: {
+          type: [Number],
+          //required: true
+        }
     },
     // La orientación de la cámara al capturar la imagen
     orientation: {

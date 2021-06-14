@@ -37,7 +37,7 @@ connectDB();
 
 // Configuramos los cors
 const allowedOrigins = [`http://localhost:${process.env.PORT}`, 'https://grafiti-page.herokuapp.com'];
-app.use(cors({
+/*app.use(cors({
   origin: function(origin, callback){
     // allow requests with no origin 
     // (like mobile apps or curl requests)
@@ -49,7 +49,7 @@ app.use(cors({
     }
     return callback(null, true);
   }
-}));
+}));*/
 
 // Motor de plantillas
 app.set("view engine", "ejs");

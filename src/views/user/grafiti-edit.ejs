@@ -274,7 +274,8 @@
         });
 
         // Obtenemos las coordenadas del grafiti
-        const grafiti = <%= grafiti.gps %>;
+        const grafiti = [<%= grafiti.gps.coordinates %>];
+
         let modalmarker = null;
 
         // Initialize and add the map
@@ -300,14 +301,14 @@
 
             // Convierte una dirección en una coordenada y apunta en el mapa a ella
             function geocodeAddress(geocoder, resultsMap, address) {
-                geocoder.geocode({ address, bounds: resultsMap.getBounds() }, (results, status) => {
+                geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
                     if (status === "OK") {
                         // Ajustamos el mapa a los resultados
                         console.log("Aqui da fallo?", results)
                         resultsMap.fitBounds(results[0].geometry.viewport);
                         //Guardamos las coordenadas
-                        coords.lat = results[0].geometry.location.lat();
-                        coords.lng = results[0].geometry.location.lng();
+                        coords.lat = await results[0].geometry.location.lat();
+                        coords.lng = await results[0].geometry.location.lng();
                         // Creamos el marcador para indicar la posicion
                         if (modalmarker) modalmarker.setMap(null);
                         modalmarker = new google.maps.Marker({
@@ -335,9 +336,6 @@
                 });
             }
 
-            // The location of the grafiti
-            let coords = { lat: grafiti.latitude, lng: grafiti.longitude };
-
             document.getElementById("guardar_ubicacion").addEventListener("click", async (event) => {
 
                 // Evitamos que recargue la página
@@ -345,6 +343,7 @@
                 document.getElementById("spinner").classList.remove("d-none");
 
                 try {
+
                     coords.lat = await modalmarker.getPosition().lat();
                     coords.lng = await modalmarker.getPosition().lng();
                     console.log("Preparado para enviar coords: ", coords)
@@ -387,9 +386,11 @@
                 }
             });
 
+            // La localización del grafiti
+            let coords = { lat: 0, lng: 0 };
             // Si no hay coordenadas no mostramos el mapa
             let modalmap;
-            if (grafiti.latitude == 0 && grafiti.longitude == 0) {
+            if (grafiti.length == 0) {
                 geocoder.geocode({ address: "Spain" }, async (results, status) => {
                     if (status === "OK") {
                         const loc = results[0].geometry.location;
@@ -412,6 +413,7 @@
                     }
                 });
             } else {
+                coords = { lat: grafiti[1], lng: grafiti[0] };
                 geocoder.geocode({ location: coords }, (results, status) => {
                     if (status === "OK") {
                         if (results[0]) {

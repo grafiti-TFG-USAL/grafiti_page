@@ -135,19 +135,14 @@ const upload = async (req, res) => {
                 }
                 var gps = await exifr.gps(buffer);
                 if (!gps) {
-                    gps = {
-                        latitude: 0,
-                        longitude: 0,
-                        altitude: meta.GPSAltitude ? meta.GPSAltitude : null
-                    };
+                    gps = null;
                 } else {
                     gps = {
-                        latitude: gps.latitude,
-                        longitude: gps.longitude,
-                        altitude: meta.GPSAltitude ? meta.GPSAltitude : null
+                        type: "Point",
+                        coordinates: [gps.longitude, gps.latitude],
                     };
                 }
-                console.log(gps)
+                console.log(gps);
                 var orientation = await exifr.orientation(buffer);
                 if (!orientation) {
                     orientation = null;
@@ -270,9 +265,8 @@ const update = async (req, res) => {
                     resultado = await Grafiti.updateOne({ _id: req.params.grafiti_id }, {
                         $set: {
                             gps: {
-                                latitude: req.body.atributo.lat,
-                                longitude: req.body.atributo.lng,
-                                altitude: null
+                                type: "Point",
+                                coordinates: [req.body.atributo.lng, req.body.atributo.lat],
                             }
                         },
                         $currentDate: { lastModified: 1 }
@@ -589,8 +583,7 @@ const getGrafitisWithGPS = async (req, res) => {
 
         const grafitis = await Grafiti.find({
             deleted: false, 
-            "gps.latitude": { $ne: 0 },
-            "gps.longitude": { $ne: 0 } 
+            "gps.type": { $ne: null }
         },
         { gps: 1, user: 1 });
         if (!grafitis) {
