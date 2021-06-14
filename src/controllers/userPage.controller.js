@@ -47,7 +47,7 @@ const grafitiDesc = async (req, res) => {
     else if (grafiti.deleted)
         res.render("../views/404.ejs");
     // Si existe cargamos la página descriptiva
-    else{
+    else {
         const time = timeAgo(grafiti.uploadedAt);
         res.render("../views/user/grafiti-desc.ejs", { user: req.user, timeAgo: time, grafiti, maps_key: process.env.GMAPS_API_KEY });
     }
@@ -60,7 +60,6 @@ const grafitiDesc = async (req, res) => {
 const showGrafiti = async (req, res, next) => {
 
     try {
-        console.log("Mostrando ", req.params.grafiti_id)
         // Buscamos el grafiti en la base
         const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
 
@@ -75,12 +74,10 @@ const showGrafiti = async (req, res, next) => {
         }
         // Si el grafiti no es suyo, cargamos la página de descripción
         else if (!grafiti.user.equals(req.user._id)) {
-            console.log("Se describe")
             grafitiDesc(req, res);
         }
         // Si el grafiti es suyo, cargamos la página de edición
         else {
-            console.log("Se edita")
             grafitiEdit(req, res); //TODO: falta el await?
         }
 
@@ -97,43 +94,54 @@ const showGrafiti = async (req, res, next) => {
 const grafitiDB = async (req, res) => {
 
     const resultsPerPage = 12;
+    // Recogemos el número de página
+    var pagina;
+    if (!req.query.page) {
+        pagina = 1;
+    }
+    else {
+        pagina = Number(req.query.page);
+    }
 
     try {
 
-        // Recogemos el número de página
-        var pagina;
-        if (!req.query.page){
-            pagina = 1;
+        // Resultados filtrados por zona y fecha
+        if ((req.query.lat && req.query.lng && req.query.radio) && (req.query.minDate || req.query.maxDate)) {
+
+        } else
+        // Resultados filtrados por zona
+        if (req.query.lat && req.query.lng && req.query.radio) {
+
+            const lat = req.query.lat;
+            const lng = req.query.lng;
+            const radio = req.query.radio;
+
+        } else
+        // Resultados filtrados por fecha
+        if (req.query.minDate || req.query.maxDate) {
+
         }
-        else{
-            pagina = Number(req.query.page);
+        // Resultados sin filtrar 
+        else {
+
+            // Pedimos los grafitis de la página
+            const grafitis = await getGrafitiPage(pagina, resultsPerPage);
+            if (!grafitis) {
+                console.log("No se han podido recuperar los grafitis");
+                return res.status(400).redirect("../usuario");
+            }
+
+            // Pedimos el paginas que podemos mostrar
+            const limPages = await getNumberOfPages(resultsPerPage);
+            if (!limPages) {
+                console.log("No se han podido contar los grafitis");
+                return res.status(400).redirect("../usuario");
+            }
+
+            console.log("Pagina ", pagina, " de ", limPages);
+            return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY });
+
         }
-
-        console.time("Total consulta");
-        console.time("Recogida de grafitis");
-
-        // Pedimos los grafitis de la página
-        const grafitis = await getGrafitiPage(pagina, resultsPerPage);
-        if(!grafitis){
-            console.log("No se han podido recuperar los grafitis");
-            return res.status(400).redirect("../usuario");
-        }
-
-        console.timeEnd("Recogida de grafitis");
-        console.time("Calculo de páginas");
-
-        // Pedimos el paginas que podemos mostrar
-        const limPages = await getNumberOfPages(resultsPerPage);
-        if(!limPages){
-            console.log("No se han podido contar los grafitis");
-            return res.status(400).redirect("../usuario");
-        }
-
-        console.timeEnd("Calculo de páginas");
-        console.timeEnd("Total consulta");
-
-        console.log("Pagina ", pagina, " de ", limPages);
-        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user });
 
     } catch (error) {
         console.log("Ha habido un error en GrafitiDB: ", error);
@@ -147,7 +155,7 @@ const grafitiDB = async (req, res) => {
  */
 const grafitiMap = async (req, res) => {
 
-    return res.render("user/grafiti-map", {  user: req.user ,maps_key: process.env.GMAPS_API_KEY });
+    return res.render("user/grafiti-map", { user: req.user, maps_key: process.env.GMAPS_API_KEY });
 
 };
 

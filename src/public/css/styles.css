@@ -12,3 +12,7 @@ footer {
     height: 50px;
     margin-top: 0px;
 }
+/* 
+.kilometers::after {
+    content: ' km';
+  } */
