@@ -19,7 +19,7 @@
                                         aria-hidden="true"></i>
                                 </a>
                                 <a class="dropdown-item" type="button" data-toggle="modal"
-                                    data-target="#filtro-zona">por fecha <i class="fa fa-calendar ml-1"
+                                    data-target="#filtro-fecha">por fecha <i class="fa fa-calendar ml-1"
                                         aria-hidden="true"></i>
                                 </a>
                             </div>
@@ -55,7 +55,7 @@
 
                     <div class="card-footer">
                         <!-- ELEMENTO DE PAGINACIÓN -->
-                        <%- include("../templates/pagination.ejs", { pagina, limPages }) %>
+                        <%- include("../templates/pagination.ejs", { pagina, limPages, query }) %>
                     </div>
                 </div>
             </div>
@@ -94,8 +94,38 @@
                     <div id="map" class="img-thumbnail w-100" style="height: 300px;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button id="aplicar_filtro" type="button" class="btn btn-success">Aplicar filtro<i
-                            class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
+                    <button id="aplicar_filtro_zona" type="button" class="btn btn-success">Aplicar filtro<i
+                            class="d-none fa fa-spinner fa-pulse" id="spinner_zona"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CODIGO DEL MODAL DE FILTRO POR FECHA -->
+    <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" id="filtro-fecha">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Seleccione las fechas de subida</h5>
+                    <button type="button" id="cerrar_filtro_fecha" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mx-2">
+                        <div class="col-6">
+                            <label for="fecha_ini">Fecha de inicio</label>
+                            <input type="date" name="fecha_ini" id="fecha_ini">
+                        </div>
+                        <div class="col-6">
+                            <label for="fecha_fin">Fecha final</label>
+                            <input type="date" name="fecha_fin" id="fecha_fin">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="aplicar_filtro_fecha" type="button" class="btn btn-success">Aplicar filtro<i
+                            class="d-none fa fa-spinner fa-pulse" id="spinner_fecha"></i></button>
                 </div>
             </div>
         </div>
@@ -242,18 +272,79 @@
                 map.fitBounds(circle.getBounds());
             });
 
-            // Evento de aplicación del filtro de búsqueda
-            document.getElementById("aplicar_filtro").addEventListener("click", (event) => {
+            // Evento de aplicación del filtro de búsqueda por zona
+            document.getElementById("aplicar_filtro_zona").addEventListener("click", (event) => {
                 event.preventDefault();
-                document.getElementById("spinner").classList.remove("d-none");
-                const urlSearchParams = new URLSearchParams(window.location.search);
+                document.getElementById("spinner_zona").classList.remove("d-none"); const urlSearchParams = new URLSearchParams(window.location.search);
                 const params = Object.fromEntries(urlSearchParams.entries());
                 console.log("Params: ", params);
-                window.location.href = `?lat=${coords.lat}&lng=${coords.lng}&radio=${radio}`;
-                document.getElementById("spinner").classList.add("d-none");
+                var query = `?`;
+                var precedentes = false;
+                if (params.page) {
+                    query += precedentes ? "&" : "";
+                    query += `page=${params.page}`;
+                    precedentes = true;
+                }
+                if (params.minDate) {
+                    query += precedentes ? "&" : "";
+                    query += `minDate=${params.minDate}`;
+                    precedentes = true;
+                }
+                if (params.maxDate) {
+                    query += precedentes ? "&" : "";
+                    query += `maxDate=${params.maxDate}`;
+                    precedentes = true;
+                }
+                query += precedentes ? "&" : "";
+                query += `lat=${coords.lat}&lng=${coords.lng}&radio=${radio}`;
+                precedentes = true;
+                
+                console.log("Query: " + query);
+                window.location.href = query;
+                document.getElementById("spinner_zona").classList.add("d-none");
             });
 
         }
+
+        // Evento de aplicación del filtro de búsqueda por fecha
+        document.getElementById("aplicar_filtro_fecha").addEventListener("click", (event) => {
+            event.preventDefault();
+            const minDate = document.getElementById("fecha_ini").value;
+            const maxDate = document.getElementById("fecha_fin").value;
+            if (!minDate && !maxDate) {
+                document.getElementById("cerrar_filtro_fecha").click();
+                return;
+            }
+            document.getElementById("spinner_fecha").classList.remove("d-none");
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(urlSearchParams.entries());
+            console.log("Params: ", params);
+            var query = `?`;
+            var precedentes = false;
+            if (params.page) {
+                query += precedentes ? "&" : "";
+                query += `page=${params.page}`;
+                precedentes = true;
+            }
+            if (params.lat && params.lng && params.radio) {
+                query += precedentes ? "&" : "";
+                query += `lat=${params.lat}&lng=${params.lng}&radio=${params.radio}`;
+                precedentes = true;
+            }
+            if (minDate) {
+                query += precedentes ? "&" : "";
+                query += `minDate=${minDate}`;
+                precedentes = true;
+            }
+            if (maxDate) {
+                query += precedentes ? "&" : "";
+                query += `maxDate=${maxDate}`;
+                precedentes = true;
+            }
+            console.log("Query: " + query);
+            window.location.href = query;
+            document.getElementById("spinner_fecha").classList.add("d-none");
+        });
 
     </script>
 

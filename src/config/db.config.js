@@ -44,8 +44,9 @@ const connectDB = async () => {
 
 const inicializarBase = async () => {
 
-    const User = require("../models/user.model");
     try {
+        
+        const User = require("../models/user.model");
 
         const userCommunity = await User.findOne({ email: process.env.MAIL_USER });
 
@@ -69,6 +70,7 @@ const inicializarBase = async () => {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
         }
+        
 
     } catch (error) {
         console.log("Se ha producido un error al inicializar la base de datos: ", error);
@@ -81,5 +83,4 @@ const inicializarBase = async () => {
 module.exports = {
     connectDB,
     DB_uri,
-    //upload
 };

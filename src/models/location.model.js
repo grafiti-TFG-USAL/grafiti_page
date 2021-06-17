@@ -9,8 +9,8 @@ const locationSchema = mongoose.Schema({
   location: {
     type: {
       type: String,
-      enum: ['Point'],
-      required: true,
+      enum: ["Point"],
+      default: "Point"
     },
     coordinates: {
       type: [Number],
@@ -22,5 +22,7 @@ const locationSchema = mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+locationSchema.index({ location: "2dsphere" });
 
 module.exports = mongoose.model("Location", locationSchema);

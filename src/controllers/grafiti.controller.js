@@ -736,7 +736,7 @@ const getGrafitisWithGPS = async (req, res) => {
 const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
 
     try {
-        console.log("LNG: " + lng + " - LAT: " + lat);
+        
         const locations = await Location.find({
             location: {
                 $near: {
@@ -755,48 +755,17 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
                 match: { deleted: false },
                 select: { _id: 1, uploadedAt: 1 }
             })
+            .sort({ uploadedAt: -1 })
             .skip((page - 1) * nGrafitis)
             .limit(nGrafitis);
 
-        //console.log("Locations: ", locations);
-
         const grafitiIds = locations.map((location) => { return location.grafiti._id; });
-        console.log("ids: ", grafitiIds);
 
         const grafitis = await Grafiti.find({
             _id: {
                 $in: grafitiIds
             }
         });
-
-
-        /*const grafitis = await Grafiti.find({
-            deleted: false,
-            gps: { $ne: null }
-        })
-            .populate({
-                path: "gps",
-                match: {
-                    location: {
-                        $near: {
-                            $geometry: {
-                                type: "Point",
-                                coordinates: [lng, lat],
-                            },
-                            $maxDistance: radius * 1000,
-                            $minDistance: 0,
-                        }
-                    }
-                }
-            })
-            .sort({ uploadedAt: -1 })
-            .skip((page - 1) * nGrafitis)
-            .limit(nGrafitis);*/
-
-        //const grafitis = await Grafiti.find({ id: locations. })
-
-        //grafitis = await grafitis.populate("grafiti").execPopulate();
-        //grafitis = await grafitis.populate("grafiti.user").execPopulate();
 
         if (!grafitis) {
             console.log("Sin grafitis");
@@ -813,8 +782,8 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
 };
 
 /**
- * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio
- * @returns Grafitis filtrados por ubicación
+ * Devuelve el número de grafitis totales dentro del radio de búsqueda
+ * @returns Número de grafitis filtrados por ubicación
  */
 const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius) => {
 
@@ -852,6 +821,189 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius) => {
 
 };
 
+/**
+ * Devuelve los grafitis de la base filtrados por fechas
+ * @returns Grafitis filtrados por fecha
+ */
+const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis) => {
+
+    try {
+        
+        const min_date = minDate? minDate : Date.now();
+        const max_date = maxDate? maxDate : Date.now();
+        
+        const grafitis = await Grafiti.find({
+            uploadedAt: {
+                $gte: min_date,
+                $lte: max_date,
+            },
+            deleted: false
+        })
+        .sort({ uploadedAt: -1 })
+        .skip((page - 1) * nGrafitis)
+        .limit(nGrafitis);
+
+        if (!grafitis) {
+            console.log("Sin grafitis");
+            return null;
+        }
+
+        return grafitis;
+
+    } catch (error) {
+        console.log("Error en getGrafitisFilteredByDate: ", error);
+        return null;
+    }
+
+};
+
+/**
+ * Devuelve el número de grafitis totales dentro del límite de fecha
+ * @returns Número de grafitis filtrados por fecha
+ */
+const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate) => {
+
+    try {
+
+        const min_date = minDate? minDate : Date.now();
+        const max_date = maxDate? maxDate : Date.now();
+        
+        const nGrafitis = await Grafiti.countDocuments({
+            uploadedAt: {
+                $gte: min_date,
+                $lte: max_date,
+            },
+            deleted: false
+        });
+
+        return nGrafitis? nGrafitis : 0;
+
+    } catch (error) {
+        console.log("Error en getNumberOfGrafitisFilteredByDate: ", error);
+        return 0;
+    }
+
+};
+
+/**
+ * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio y por fecha
+ * @returns Grafitis filtrados por ubicación y fecha
+ */
+const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate, page, nGrafitis) => {
+
+    try {
+        
+        // Obtenemos todos los grafitis dentro del radio de búsqueda
+        const locations = await Location.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [lng, lat],
+                    },
+                    $maxDistance: radius * 1000,
+                    $minDistance: 0,
+                }
+            }
+        }, { grafiti: 1 })
+            .populate({
+                path: "grafiti",
+                model: Grafiti,
+                match: { deleted: false },
+                select: { _id: 1 }
+            });
+
+        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
+
+        // Filtramos a aquellos dentro del marco temporal
+        const min_date = minDate? minDate : Date.now();
+        const max_date = maxDate? maxDate : Date.now();
+        
+        const grafitis = await Grafiti.find({
+            _id: {
+                $in: grafitiIds
+            },
+            uploadedAt: {
+                $gte: min_date,
+                $lte: max_date,
+            },
+            deleted: false
+        })
+        .sort({ uploadedAt: -1 })
+        .skip((page - 1) * nGrafitis)
+        .limit(nGrafitis);
+        
+        if (!grafitis) {
+            console.log("Sin grafitis");
+            return null;
+        }
+
+        return grafitis;
+
+    } catch (error) {
+        console.log("Error en getGrafitisFilteredByGPSAndDate: ", error);
+        return null;
+    }
+
+};
+
+/**
+ * Devuelve el número de grafitis totales dentro del radio de búsqueda y un marco temporal
+ * @returns Número de grafitis filtrados por ubicación y fecha
+ */
+const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate) => {
+
+    try {
+
+        const locations = await Location.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [lng, lat],
+                    },
+                    $maxDistance: radius * 1000,
+                    $minDistance: 0,
+                }
+            }
+        }, { grafiti: 1 })
+            .populate({path: "grafiti", model: Grafiti, select: "deleted"});
+
+        if (!locations) {
+            console.log("Sin grafitis");
+            return 0;
+        }
+
+        const grafitis = locations.filter((grafiti) => {
+            return !grafiti.grafiti.deleted;
+        });
+        
+        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
+
+        // Filtramos a aquellos dentro del marco temporal
+        const min_date = minDate? minDate : Date.now();
+        const max_date = maxDate? maxDate : Date.now();
+        
+        const nGrafitis = await Grafiti.countDocuments({
+            _id: {
+                $in: grafitiIds
+            },
+            uploadedAt: {
+                $gte: min_date,
+                $lte: max_date,
+            },
+            deleted: false
+        })
+        
+        return nGrafitis? nGrafitis : 0;
+
+    } catch (error) {
+        console.log("Error en getNumberOfGrafitisFilteredByGPSAndDate: ", error);
+        return 0;
+    }
+
+};
+
 
 
 module.exports = {
@@ -869,4 +1021,8 @@ module.exports = {
     getGrafitisWithGPS,
     getGrafitisFilteredByGPS,
     getNumberOfGrafitisFilteredByGPS,
+    getGrafitisFilteredByDate,
+    getNumberOfGrafitisFilteredByDate,
+    getGrafitisFilteredByGPSAndDate,
+    getNumberOfGrafitisFilteredByGPSAndDate,
 };
