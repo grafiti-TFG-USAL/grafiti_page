@@ -1,26 +1,26 @@
 const mongoose = require("mongoose");
 
 const locationSchema = mongoose.Schema({
-    grafiti: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: "Grafiti"
+  grafiti: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Grafiti"
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: true,
     },
-    location: {
-        type: {
-          type: String,
-          enum: ['Point'],
-          required: true,
-        },
-        coordinates: {
-          type: [Number],
-          required: true,
-        }
-    },
-    deleted: {
-      type: Boolean,
-      default: false,
+    coordinates: {
+      type: [Number],
+      required: true,
     }
+  },
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 module.exports = mongoose.model("Location", locationSchema);

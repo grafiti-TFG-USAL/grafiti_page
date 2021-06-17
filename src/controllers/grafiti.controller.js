@@ -469,12 +469,6 @@ const remove = async (req, res) => {
                 });
             } else {
 
-                await Location.updateOne({ grafiti: req.params.grafiti_id }, {
-                    $set: {
-                        deleted: true
-                    }
-
-                });
                 return res.status(200).json({
                     success: true,
                     message: "Grafiti eliminado"
@@ -743,8 +737,7 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
 
     try {
         console.log("LNG: " + lng + " - LAT: " + lat);
-        /*const locations = await Location.find({
-            deleted: false,
+        const locations = await Location.find({
             location: {
                 $near: {
                     $geometry: {
@@ -756,11 +749,28 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
                 }
             }
         }, { grafiti: 1 })
+            .populate({
+                path: "grafiti",
+                model: Grafiti,
+                match: { deleted: false },
+                select: { _id: 1, uploadedAt: 1 }
+            })
             .skip((page - 1) * nGrafitis)
-            .limit(nGrafitis)
-            .sort({ uploadedAt: -1 });*/
+            .limit(nGrafitis);
+
+        //console.log("Locations: ", locations);
+
+        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
+        console.log("ids: ", grafitiIds);
 
         const grafitis = await Grafiti.find({
+            _id: {
+                $in: grafitiIds
+            }
+        });
+
+
+        /*const grafitis = await Grafiti.find({
             deleted: false,
             gps: { $ne: null }
         })
@@ -781,7 +791,7 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis) => {
             })
             .sort({ uploadedAt: -1 })
             .skip((page - 1) * nGrafitis)
-            .limit(nGrafitis);
+            .limit(nGrafitis);*/
 
         //const grafitis = await Grafiti.find({ id: locations. })
 
@@ -810,9 +820,8 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius) => {
 
     try {
 
-        const grafitis = await Grafiti.countDocuments({
-            deleted: false,
-            gps: {
+        const locations = await Location.find({
+            location: {
                 $near: {
                     $geometry: {
                         type: "Point",
@@ -822,14 +831,19 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius) => {
                     $minDistance: 0,
                 }
             }
-        });
+        }, { grafiti: 1 })
+            .populate({path: "grafiti", model: Grafiti, select: "deleted"});
 
-        if (!grafitis) {
+        if (!locations) {
             console.log("Sin grafitis");
             return 0;
         }
 
-        return grafitis;
+        const nGrafitis = locations.filter((grafiti) => {
+            return !grafiti.grafiti.deleted;
+        });
+
+        return nGrafitis.length;
 
     } catch (error) {
         console.log("Error en getNumberOfGrafitisFilteredByGPS: ", error);
