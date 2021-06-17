@@ -35,7 +35,7 @@
                                             <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
                                                 alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
                                                 style="display: block">
-                                            <%# if (image.gps.coordinates.length != 2) { %>
+                                            <%# if (image.gps) { %>
                                                 <!--i class="fa fa-map-marker-alt"
                                                     style="position: absolute; bottom:0; left:0;"></i-->
                                                 <%# } %>
@@ -49,8 +49,7 @@
                                     <% } %>
                             </div>
                             <% } else { %>
-                                <h3 class="display-4 text-center justify-content-center">Aún no hay ninguna imagen en la
-                                    base de datos</h3>
+                                <h3 class="display-4 text-center justify-content-center">No hay grafitis</h3>
                                 <% } %>
                     </div>
 
@@ -64,8 +63,8 @@
     </div>
 
     <!-- CODIGO DEL MODAL DE FILTRO POR ZONA -->
-    <div class="modal fade" id="filtro-zona">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" id="filtro-zona">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Seleccione el centro</h5>
@@ -77,270 +76,187 @@
                     <div id="floating-panel">
                         <div class="row mx-2">
                             <div class="input-group">
-                                <input id="direccion" type="text" class="form-control" placeholder="Dirección" autocomplete="off">
+                                <input id="direccion" type="text" class="form-control" placeholder="Dirección"
+                                    autocomplete="off">
                                 <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-secondary"
+                                    <button type="button" class="btn btn-outline-success"
                                         id="buscar_direccion">Buscar</button>
                                 </div>
                             </div>
                         </div>
                         <hr>
-                        <div class="row mx-2">
-                            <div class="form-inline">
-                                <label class="d-inline col-3" for="formControlRange">Rango</label>
-                                <input type="range" class="d-inline form-control-range col-9" autocomplete="off" min="1" max="200" step="1"
-                                    value="5" id="formControlRange">
-                                <div class="col-12 justify-content-center mt-1">
-                                    <input type="number" autocomplete="off" min="1" max="200" step="1" id="showRange" value="5"
-                                        class="form-control col-4 d-inline">
-                                    <label for="showRange" class="d-inline"> km</label>
-                                </div>
-                            </div>
-                        </div>
+                        <label class="d-inline" for="radius">Radio de búsqueda: </label>
+                        <label id="showRadius" class="d-inline">5 km</label>
+                        <input type="range" class="d-block mt-2 col-11 p-0" autocomplete="off" min="0.1" max="200"
+                            step="0.1" value="5" id="radius">
                     </div>
                     <hr>
-                    <div id="modalmap" class="img-thumbnail w-100" style="height: 300px;"></div>
+                    <div id="map" class="img-thumbnail w-100" style="height: 300px;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button id="guardar_ubicacion" type="button" class="btn btn-success">Aplicar filtro<i
+                    <button id="aplicar_filtro" type="button" class="btn btn-success">Aplicar filtro<i
                             class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script> // Script del modal
+    <script> // SCRIPT DEL COMPORTAMIENTO DEL MODAL DE FILTRO DE UBICACIÓN
 
-        var radio = 5;
+        // Crea el mapa
+        function createMap(coords) {
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: coords,
+                zoom: 4
+            });
 
-        // Al dar enter en la barra de búsqueda de direcciones
-        document.getElementById("direccion").addEventListener("keyup", function (event) {
-            // Number 13 is the "Enter" key on the keyboard
-            if (event.keyCode === 13) {
-                // Cancel the default action, if needed
-                event.preventDefault();
-                console.log("Buscando...");
-                // Trigger the button element with a click
-                document.getElementById("buscar_direccion").click();
-            }
-        });
+            return map;
+        }
+        // Crea el marcador del mapa
+        function createMarker(map, coords) {
+            var marker = new google.maps.Marker({
+                map: map,
+                position: coords,
+                draggable: true,
+            });
 
-        let modalmarker = null;
-        let modalcircle = null;
+            return marker;
+        }
+        // Crea el círculo del mapa
+        function createCircle(map, coords, radius) {
+            var circle = new google.maps.Circle({
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: "#FF0000",
+                fillOpacity: 0.3,
+                map: map,
+                center: coords,
+                radius: radius * 1000, // Convertir km a m
+            });
 
-        // Initialize and add the map
+            return circle;
+        }
+        // Cambia la localización del marcador a la dirección buscada
+        async function searchAddress(address, coords, map, geocoder, bounds, marker, circle) {
+
+            geocoder.geocode({ address, bounds }, async (results, status) => {
+
+                if (status === "OK") {
+
+                    //Guardamos las coordenadas
+                    coords.lat = await results[0].geometry.location.lat();
+                    coords.lng = await results[0].geometry.location.lng();
+
+                    // Cambiamos la posición del marcador
+                    marker.setPosition(coords);
+                    // Cambiamos la posición del círculo
+                    circle.setCenter(coords);
+                    // Ajustamos el mapa a los resultados
+                    map.fitBounds(circle.getBounds());
+
+                    setAddress(geocoder, document.getElementById("direccion"), coords);
+
+                } else {
+                    alert("No se ha encontrado la dirección");
+                    console.log("Geocode failed due to: " + status);
+                }
+
+            });
+
+        }
+        // Establece en el input de dirección la dirección correspondiente a las coordenadas
+        function setAddress(geocoder, input, coords) {
+
+            geocoder.geocode({ location: coords }, (results, status) => {
+                if (status === "OK") {
+                    if (results[0]) {
+                        input.value = results[0].formatted_address;
+                    } else {
+                        window.alert("No se han podido localizar las coordenadas");
+                        console.log("No se han podido localizar las coordenadas");
+                    }
+                } else {
+                    window.alert("No se han podido localizar las coordenadas");
+                    console.log("Geocoder failed due to: " + status);
+                }
+            });
+
+        }
+        // Modifica el radio del círculo
+        function modifyRadius(map, circle, radius) {
+            circle.setRadius(radius * 1000);
+            map.fitBounds(circle.getBounds());
+        }
+
         function initMap() {
 
-            // El geocoder, convierte direcciones a coordenadas y viceversa
+            //// Inicialización
+
+            // Instanciamos el objeto de cordenadas, iniciado en Salamanca
+            const coords = { lat: 40.973672887751604, lng: -5.66406277873948 }
+            // Instanciamos el mapa
+            const map = createMap(coords);
+            // Instanciamos el codificador direccion<->coordenadas
             const geocoder = new google.maps.Geocoder();
+            // Inicializamos el marcador
+            const marker = createMarker(map, coords);
+            // Inicializamos el radio, en km
+            let radio = 5;
+            // Inicializamos el círculo
+            const circle = createCircle(map, coords, radio);
+            // Enfocamos el mapa en el viewport del círculo
+            map.fitBounds(circle.getBounds());
 
-            // Manejador del evento final de arrastre del marcador
-            const dragend = async (event) => {
-                geocoder.geocode({ location: event.latLng }, (results, status) => {
-                    if (status === "OK") {
-                        if (results[0]) {
-                            document.getElementById("direccion").value = results[0].formatted_address;
-                        } else {
-                            window.alert("No results found");
-                        }
-                    } else {
-                        window.alert("Geocoder failed due to: " + status);
-                    }
-                });
+            //// Manejo de eventos
 
+            // Eventos de introducir dirección en la barra
+            document.getElementById("direccion").addEventListener("keyup", (event) => {
+                // El código 13 es el equivalente a la tecla Enter
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    const address = event.target.value;
+                    searchAddress(address, coords, map, geocoder, map.getBounds(), marker, circle);
+                }
+            });
+            document.getElementById("buscar_direccion").addEventListener("click", (event) => {
+                event.preventDefault();
+                const address = document.getElementById("direccion").value;
+                const result = searchAddress(address, coords, map, geocoder, map.getBounds(), marker, circle);
+            });
+
+            // Evento de modificar el radio del área de búsqueda
+            document.getElementById("radius").addEventListener("input", (event) => {
+                radio = parseFloat(event.target.value);
+                modifyRadius(map, circle, radio);
+                document.getElementById("showRadius").innerText = `${radio} km`;
+            });
+
+            // Evento de cambiar el marcador de coordenadas
+            google.maps.event.addListener(marker, "dragend", async (event) => {
+                const input = document.getElementById("direccion");
                 coords.lat = await event.latLng.lat();
                 coords.lng = await event.latLng.lng();
-
-                if (modalcircle) modalcircle.setMap(null);
-                modalcircle = new google.maps.Circle({
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: "#FF0000",
-                    fillOpacity: 0.3,
-                    map: modalmap,
-                    center: event.latLng,
-                    radius: radio * 1000,
-                });
-                // Ajustamos el mapa a los resultados
-                modalmap.fitBounds(modalcircle.getBounds());
-                
-            }
-
-            document.getElementById("formControlRange").addEventListener("input", (event) => {
-                    document.getElementById("showRange").value = event.target.value;
-                    radio = parseInt(event.target.value);
-                    if (modalcircle) modalcircle.setMap(null);
-                    modalcircle = new google.maps.Circle({
-                        strokeColor: "#FF0000",
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillColor: "#FF0000",
-                        fillOpacity: 0.3,
-                        map: modalmap,
-                        center: coords,
-                        radius: radio * 1000,
-                    });
-                    // Ajustamos el mapa a los resultados
-                    modalmap.fitBounds(modalcircle.getBounds());
+                setAddress(geocoder, input, coords);
+                circle.setCenter(coords);
+                map.fitBounds(circle.getBounds());
             });
 
-            document.getElementById("showRange").addEventListener("input", (event) => {
-                document.getElementById("formControlRange").value = event.target.value;
-                radio = parseInt(event.target.value);
-                if (modalcircle) modalcircle.setMap(null);
-                modalcircle = new google.maps.Circle({
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: "#FF0000",
-                    fillOpacity: 0.3,
-                    map: modalmap,
-                    center: coords,
-                    radius: radio * 1000,
-                });
-                // Ajustamos el mapa a los resultados
-                modalmap.fitBounds(modalcircle.getBounds());
-            });
-
-            // Convierte una dirección en una coordenada y apunta en el mapa a ella
-            function geocodeAddress(geocoder, resultsMap, address) {
-                geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
-                    if (status === "OK") {
-                        // Ajustamos el mapa a los resultados
-                        //modalmap.fitBounds(results[0].geometry.viewport);
-                        //Guardamos las coordenadas
-                        coords.lat = await results[0].geometry.location.lat();
-                        coords.lng = await results[0].geometry.location.lng();
-                        // Creamos el marcador para indicar la posicion
-                        if (modalmarker) modalmarker.setMap(null);
-                        modalmarker = new google.maps.Marker({
-                            map: modalmap,
-                            position: coords,
-                            draggable: true
-                        });
-                        if (modalcircle) modalcircle.setMap(null);
-                        modalcircle = new google.maps.Circle({
-                            strokeColor: "#FF0000",
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillColor: "#FF0000",
-                            fillOpacity: 0.3,
-                            map: modalmap,
-                            center: coords,
-                            radius: radio * 1000,
-                        });
-                        // Ajustamos el mapa a los resultados
-                        modalmap.fitBounds(modalcircle.getBounds());
-
-                        google.maps.event.addListener(modalmarker, "dragend", dragend);
-
-                        geocoder.geocode({ location: results[0].geometry.location }, (results, status) => {
-                            if (status === "OK") {
-                                if (results[0]) {
-                                    document.getElementById("direccion").value = results[0].formatted_address;
-                                } else {
-                                    window.alert("No results found");
-                                }
-                            } else {
-                                window.alert("Geocoder failed due to: " + status);
-                            }
-                        });
-
-                    } else {
-                        alert("Geocode was not successful for the following reason: " + status);
-                    }
-                });
-            }
-
-            // Ubicación del marcador
-            let coords = { lat: null, lng: null };
-
-            document.getElementById("guardar_ubicacion").addEventListener("click", async (event) => {
-
-                // Evitamos que recargue la página
+            // Evento de aplicación del filtro de búsqueda
+            document.getElementById("aplicar_filtro").addEventListener("click", (event) => {
                 event.preventDefault();
                 document.getElementById("spinner").classList.remove("d-none");
-
-                try {
-                    coords.lat = await modalmarker.getPosition().lat();
-                    coords.lng = await modalmarker.getPosition().lng();
-
-                    // Redirigimos a la página filtrada
-                    window.location.href = `?lat=${coords.lat}&lng=${coords.lng}&radio=${radio}`
-
-                    document.getElementById("spinner").classList.add("d-none");
-                    // Comprobamos que no haya fallado
-                    if (!respuesta.success) {
-                        console.log("Fallo en respuesta: ", respuesta.message);
-
-                        document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
-                        document.getElementById("contenido_adicional").innerText = respuesta.message;
-                        $("#ubicacion").modal("hide");
-                        $("#eliminacion").modal("hide");
-                        $('#modal').modal();
-                    } else {
-                        console.log(respuesta)
-                        document.location.reload();
-                    }
-
-                } catch (error) {
-                    console.log("Catch error: ", error);
-
-                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
-                    document.getElementById("contenido_adicional").innerText = error;
-                    $("#ubicacion").modal("hide");
-                    $("#eliminacion").modal("hide");
-                    $('#modal').modal();
-                }
-            });
-
-            let modalmap;
-            geocoder.geocode({ address: "Salamanca, Spain" }, async (results, status) => {
-                if (status === "OK") {
-                    const loc = results[0].geometry.location;
-                    coords.lat = loc.lat();
-                    coords.lng = loc.lng();
-                    // The modalmap, centered at grafiti coords
-                    modalmap = new google.maps.Map(document.getElementById("modalmap"), {
-                        zoom: 5,
-                        center: coords,
-                    });
-                    // The marker, positioned at grafiti coords
-                    modalmarker = new google.maps.Marker({
-                        position: coords,
-                        map: modalmap,
-                        draggable: true
-                    });
-                    if (modalcircle) modalcircle.setMap(null);
-                    modalcircle = new google.maps.Circle({
-                        strokeColor: "#FF0000",
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillColor: "#FF0000",
-                        fillOpacity: 0.3,
-                        map: modalmap,
-                        center: coords,
-                        radius: radio * 1000,
-                    });
-                    // Ajustamos el mapa a los resultados
-                    modalmap.fitBounds(modalcircle.getBounds());
-
-                    google.maps.event.addListener(modalmarker, "dragend", dragend);
-                    document.getElementById("direccion").value = "Salamanca, Spain";
-                } else {
-                    alert("No se ha podido determinar la ubicación: " + status);
-                }
-            });
-
-            document.getElementById("buscar_direccion").addEventListener("click", () => {
-                const boton = document.getElementById("direccion");
-                geocodeAddress(geocoder, modalmap, boton.value);
+                const urlSearchParams = new URLSearchParams(window.location.search);
+                const params = Object.fromEntries(urlSearchParams.entries());
+                console.log("Params: ", params);
+                window.location.href = `?lat=${coords.lat}&lng=${coords.lng}&radio=${radio}`;
+                document.getElementById("spinner").classList.add("d-none");
             });
 
         }
 
     </script>
+
     <%# Script de la api de maps; debe ir tras la función initMap %>
         <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
             async></script>

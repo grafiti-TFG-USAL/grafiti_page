@@ -104,8 +104,8 @@
                 const marker = new google.maps.Marker({
                     map: map,
                     position: {
-                        lat: grafiti.gps.coordinates[1],
-                        lng: grafiti.gps.coordinates[0],
+                        lat: grafiti.gps.location.coordinates[1],
+                        lng: grafiti.gps.location.coordinates[0],
                     },
                     //icon: svgMarker,
                     url: "/usuario/grafiti/" + grafiti._id,

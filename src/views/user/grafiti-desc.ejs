@@ -26,7 +26,7 @@
                                 <% } %>
                             </div>
                             <div class="form-group">
-                                <% if (grafiti.gps.coordinates.length != 2) { %>
+                                <% if (grafiti.gps) { %>
                                     <label for="ubicacion">Ubicación</label>
                                     <div id="ubicacion" class="mx-auto"><h6 class="text-secondary">Sin datos de ubicación</h6></div>
                                 <% } else { %>
@@ -38,7 +38,7 @@
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de captura</label>
                                 <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
-                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString('es-ES') %>">
+                                    value="<%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %>">
                             </div>
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de subida</label>
@@ -54,11 +54,11 @@
     </div>
     </div>
 
-    <% if (grafiti.gps.coordinates.length == 2) { %>
+    <% if (grafiti.gps) { %>
     <script>
-
+        console.log(grafiti)
         // Obtenemos las coordenadas del grafiti
-        const coordinates = [<%= grafiti.gps.coordinates %>];
+        const coordinates = [<%= grafiti.gps.location.coordinates %>];
 
         // Initialize and add the map
         function initMap() {

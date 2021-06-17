@@ -33,21 +33,10 @@ const grafitiSchema = mongoose.Schema({
     description: {
         type: String
     },
-    // Los tags que el usuario añada a la imagen
-    /*tags: [{
-        type: String
-    }],*/
     // Las coordenadas gps de la ubicación de la imagen
     gps: {
-        type: {
-          type: String,
-          enum: ['Point'],
-          //required: true
-        },
-        coordinates: {
-          type: [Number],
-          //required: true
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Location" // Esto nos permite hacer un populate
     },
     // La orientación de la cámara al capturar la imagen
     orientation: {
@@ -72,9 +61,10 @@ const grafitiSchema = mongoose.Schema({
     metadata: {
         type: Object
     },
-    /*geopoint: {
-        type: geopointSchema,
-    },*/
+    dateTimeOriginal: {
+        type: Date,
+        default: Date.now()
+    },
     // La fecha de subida de la imagen
     uploadedAt: {
         type: Date,
@@ -91,9 +81,7 @@ const grafitiSchema = mongoose.Schema({
         default: false
     },
     // El mapa de características generado por la RNA
-    featureMap: [{
-        type: Number
-    }]
+    featureMap: [Number],
 
 });
 

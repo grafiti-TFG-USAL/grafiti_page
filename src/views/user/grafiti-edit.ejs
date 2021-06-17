@@ -1,4 +1,5 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name, index: 0 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name, index: 0
+    }) %>
 
     <div class="container-fluid my-3">
         <div class="row ">
@@ -36,13 +37,13 @@
 
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de captura</label>
-                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
-                                    value="<%= grafiti.metadata.DateTimeOriginal.toLocaleString('es-ES') %>">
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
+                                    readonly value="<%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %>">
                             </div>
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de subida</label>
-                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;" readonly
-                                    value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
+                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
+                                    readonly value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
                             </div>
                         </form>
                     </div>
@@ -83,6 +84,9 @@
                     <div id="modalmap" class="img-thumbnail w-100" style="height: 300px;"></div>
                 </div>
                 <div class="modal-footer">
+                    
+                    <button id="eliminar_ubicacion" type="button" class="btn btn-outline-danger <% if(!grafiti.gps) { %>d-none<% } %>">Eliminar
+                        ubicación</button>
                     <button id="guardar_ubicacion" type="button" class="btn btn-success">Guardar ubicación <i
                             class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
                 </div>
@@ -274,9 +278,13 @@
         });
 
         // Obtenemos las coordenadas del grafiti
-        const grafiti = [<%= grafiti.gps.coordinates %>];
+        <% if (grafiti.gps) { %>
+        const grafiti = [<%= grafiti.gps.location.coordinates %>];
+        <% } else { %>
+        const grafiti = [];
+        <% } %>
 
-        let modalmarker = null;
+            let modalmarker = null;
 
         // Initialize and add the map
         function initMap() {
@@ -355,6 +363,54 @@
                         },
                         body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
                             cambio: "ubicacion", atributo: coords
+                        })
+                    });
+
+                    const respuesta = await data.json();
+
+                    document.getElementById("spinner").classList.add("d-none");
+                    // Comprobamos que no haya fallado
+                    if (!respuesta.success) {
+                        console.log("Fallo en respuesta: ", respuesta.message);
+
+                        document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                        document.getElementById("contenido_adicional").innerText = respuesta.message;
+                        $("#ubicacion").modal("hide");
+                        $("#eliminacion").modal("hide");
+                        $('#modal').modal();
+                    } else {
+                        console.log(respuesta)
+                        document.location.reload();
+                    }
+
+                } catch (error) {
+                    console.log("Catch error: ", error);
+
+                    document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+                    document.getElementById("contenido_adicional").innerText = error;
+                    $("#ubicacion").modal("hide");
+                    $("#eliminacion").modal("hide");
+                    $('#modal').modal();
+                }
+            });
+
+
+            document.getElementById("eliminar_ubicacion").addEventListener("click", async (event) => {
+
+                // Evitamos que recargue la página
+                event.preventDefault();
+                document.getElementById("spinner").classList.remove("d-none");
+
+                try {
+
+                    // Enviamos la consulta POST a la api
+                    const data = await fetch("/api/grafitis/update/<%= grafiti._id %>", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
+                            cambio: "eliminar_ubicacion"
                         })
                     });
 

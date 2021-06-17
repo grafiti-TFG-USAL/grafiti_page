@@ -10,7 +10,7 @@ footer {
     clear: both;
     position: relative;
     height: 50px;
-    margin-top: 0px;
+    margin-top: 0;
 }
 /* 
 .kilometers::after {
