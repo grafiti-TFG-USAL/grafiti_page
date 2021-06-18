@@ -69,8 +69,12 @@ app.use((req, res) => {
 });
 
 // Si el hosting no lo asigna, se usa la variable de entorno
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 // Iniciamos la escucha del servidor en el puerto designado
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Servidor      => OK (puerto ${port})`);
 });
+
+// Sockets para permitir conexiones e intercambio de eventos entre navegador y servidor
+const sockets = require("./config/sockets.config.js");
+sockets.init(server, app);

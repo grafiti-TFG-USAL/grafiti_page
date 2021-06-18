@@ -9,6 +9,7 @@ const Grafiti = require("../models/grafiti.model");
 const User = require("../models/user.model");
 const Location = require("../models/location.model");
 
+const Sockets = require("../config/sockets.config");
 const RNA = require("../config/neuralnet.config");
 
 /**
@@ -68,8 +69,20 @@ const upload = async (req, res) => {
     var errores = [];
     var fileErr = [];
 
+    //
+    const nFiles = files.length;
+    const step = 100.0 / nFiles;
+    const socketid = Sockets.connectedUsers[req.user.id].id;
+    function emitStep(index) {
+        req.app.io.to(socketid).emit("upload:step", { percentage: (index*step).toFixed(2) });
+    }
+    function emitSemiStep(index, percentage) {
+        req.app.io.to(socketid).emit("upload:step", { percentage: ((index-1)*step+percentage*step).toFixed(2) });
+    }
+    
+    var index = 0; 
     for (const file of files) {
-
+        index++;
         try {
 
             var images, imgTempPath, imgExt, imgUniqueName, imgTargetPath, imgRelativePath;
@@ -101,15 +114,18 @@ const upload = async (req, res) => {
                     message = "Fallo al obtener metadatos de imagen";
                     console.log("Error al extraer metadatos: ", message);
                     await fs.unlink(imgTargetPath);
+                    emitStep(index);
                     continue;
                 }
+                emitSemiStep(index, 0.25);
 
                 const rotated = thumbnails.rotate(buffer, stats.size > 1024 * 1024 ? 20 : 80);
                 if (rotated) {
                     buffer = rotated;
                 } else {
-                    console.log("no rotado");
+                    //console.log("no rotado");
                 }
+                emitSemiStep(index, 0.5);
                 /*const thumbnail_response = await thumbnails.generateThumbnail(buffer);
                 if (!thumbnail_response) {
                     console.log("!thumbnail response")
@@ -134,7 +150,7 @@ const upload = async (req, res) => {
                     }
                 }
                 var gps = await exifr.gps(buffer);
-                console.log("GPS: ", gps);
+                //console.log("GPS: ", gps);
                 if (!gps) {
                     gps = null;
                 } else {
@@ -154,7 +170,7 @@ const upload = async (req, res) => {
                 var thumbnail = await exifr.thumbnail(buffer);
                 if (!thumbnail) {
                     if (stats.size < 1024 * 1024) {
-                        console.log("Imagen demasiado pequeña como para usar su thumbnail")
+                        //console.log("Imagen demasiado pequeña como para usar su thumbnail")
                         thumbnail = await imageThumbnail(buffer, { percentage: 70 });
                     } else {
                         thumbnail = await imageThumbnail(buffer);
@@ -164,6 +180,7 @@ const upload = async (req, res) => {
                 if (meta.DateTimeOriginal) {
                     dateTimeOriginal = meta.DateTimeOriginal;
                 }
+                emitSemiStep(index, 0.7);
 
                 const image = new Grafiti({
                     originalname: file.originalname,
@@ -189,9 +206,11 @@ const upload = async (req, res) => {
                     message = "Error al subir las imágenes a la base: imagen no almacenada";
                     console.log(message);
                     await fs.unlink(imgTargetPath);
+                    emitStep(index);
                     continue;
                 }
-
+                emitSemiStep(index, 0.9);
+                
                 if (gps) {
                     const location = new Location({
                         grafiti: imageSaved._id,
@@ -204,6 +223,7 @@ const upload = async (req, res) => {
                         success = false;
                         message = "Error al subir las imágenes a la base: ubicación de la imagen no almacenada";
                         console.log(message);
+                        emitStep(index);
                         continue;
                     }
 
@@ -216,6 +236,7 @@ const upload = async (req, res) => {
                         message = "Error al subir las imágenes a la base: ubicación de la imagen no almacenada";
                         console.log(message);
                         await locationSaved.delete();
+                        emitStep(index);
                         continue;
                     }
                 }
@@ -228,6 +249,7 @@ const upload = async (req, res) => {
                 message = "Solo puede subir imágenes del tipo especificado";
                 console.log("Error: ", message);
                 await fs.unlink(imgTargetPath);
+                emitStep(index);
                 continue;
             }
 
@@ -239,9 +261,11 @@ const upload = async (req, res) => {
             console.log(message);
             await fs.unlink(imgTargetPath).catch(null);
             await fs.unlink(imgTempPath).catch(null);
+            emitStep(index);
             continue;
         }
-
+        emitStep(index);
+        
     } // Hasta aquí el for()
 
     return res.status(success ? 200 : 400).json({ success, message, errores, fileErr });
@@ -829,8 +853,8 @@ const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis) => {
 
     try {
         
-        const min_date = minDate? minDate : Date.now();
-        const max_date = maxDate? maxDate : Date.now();
+        const min_date = minDate? minDate : new Date(-8640000000000000);
+        const max_date = maxDate? maxDate : new Date(8640000000000000);
         
         const grafitis = await Grafiti.find({
             uploadedAt: {
@@ -865,8 +889,8 @@ const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate) => {
 
     try {
 
-        const min_date = minDate? minDate : Date.now();
-        const max_date = maxDate? maxDate : Date.now();
+        const min_date = minDate? minDate : new Date(-8640000000000000);
+        const max_date = maxDate? maxDate : new Date(8640000000000000);
         
         const nGrafitis = await Grafiti.countDocuments({
             uploadedAt: {
@@ -916,8 +940,8 @@ const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDat
         const grafitiIds = locations.map((location) => { return location.grafiti._id; });
 
         // Filtramos a aquellos dentro del marco temporal
-        const min_date = minDate? minDate : Date.now();
-        const max_date = maxDate? maxDate : Date.now();
+        const min_date = minDate? minDate : new Date(-8640000000000000);
+        const max_date = maxDate? maxDate : new Date(8640000000000000);
         
         const grafitis = await Grafiti.find({
             _id: {
@@ -981,8 +1005,8 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
         const grafitiIds = locations.map((location) => { return location.grafiti._id; });
 
         // Filtramos a aquellos dentro del marco temporal
-        const min_date = minDate? minDate : Date.now();
-        const max_date = maxDate? maxDate : Date.now();
+        const min_date = minDate? minDate : new Date(-8640000000000000);
+        const max_date = maxDate? maxDate : new Date(8640000000000000);
         
         const nGrafitis = await Grafiti.countDocuments({
             _id: {

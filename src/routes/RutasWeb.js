@@ -23,13 +23,6 @@ router.get("/bienvenido", (req, res) => {
     res.render("index.ejs", { titulo: "Página principal" });
 });
 
-// Página de prueba (<host>/prueba)
-router.get("/prueba", (req, res) => {
-    req.session.cuenta = req.session.cuenta ? req.session.cuenta + 1 : 1;
-    res.send(`Se ha visitado la página ${req.session.cuenta} veces`)
-    //res.render("prueba.ejs");
-});
-
 // Servicios (<host>/servicios)
 router.get("/servicios", (req, res) => {
     res.render("servicios.ejs", { titulo: "Servicios" });

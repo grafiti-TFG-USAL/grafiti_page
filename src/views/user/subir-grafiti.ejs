@@ -1,4 +1,5 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , username: user.name, index: 0 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , username: user.name,
+    index: 0 }) %>
 
     <div id="container" class="container">
 
@@ -19,12 +20,17 @@
                         <p>No se ha selecionado ninguna imagen aún.</p>
                     </div>
 
-                    <div class="form-row my-3">
+                    <div class="form-row mt-3 mb-1">
                         <div class="col text-center text-md-left">
                             <button id="subir" class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary disabled"
                                 type="submit" disabled>
                                 <i class="fa fa-upload"></i> Listo <i class="d-none ml-2 fa fa-spinner fa-pulse"
                                     id="spinner"></i></button>
+                            <div id="progress" class=" col-12 progress mt-3 d-none"
+                                style="height: 30px; background-color: white; padding: 0;">
+                                <div id="progressbar"
+                                    class="progress-bar progress-bar-striped progress-bar-animated bg-success"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -52,8 +58,9 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js" charset="utf-8"></script>
+    <!--script src="/js/subir-grafiti.js" charset="utf-8"></script-->
     <script>
-
         const container = document.getElementById("container");
         const label = document.getElementById("label");
         const input = document.getElementById("archivo");
@@ -303,6 +310,17 @@
         const form = document.getElementById("upload-form");
         const spinner = document.getElementById("spinner");
 
+        // Iniciamos el socket
+        const socket = io();
+        const progress = document.getElementById("progress");
+        const progressbar = document.getElementById("progressbar");
+
+        socket.on("upload:step", data => {
+            console.log(`Step: ${data.percentage}%`);
+            progressbar.style.width = `${data.percentage}%`;
+            progressbar.innerText = `${data.percentage}%`;
+        });
+
         form.addEventListener("submit", async (event) => {
             // Anulamos el comportamiento por defecto (recargar página)
             event.preventDefault();
@@ -319,6 +337,11 @@
                     formData.append("imagenes", file);
                 });
 
+                socket.emit("upload:init", { userId: "<%= user.id %>" });
+
+                progressbar.style.width = "1%";
+                progress.classList.remove("d-none");
+
                 // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
                 const data = await fetch("/api/grafitis/upload", {
                     method: "post",
@@ -326,7 +349,11 @@
                 });
 
                 const respuesta = await data.json();
+
+                socket.emit("upload:finish", { userId: "<%= user.id %>" });
                 spinner.classList.add("d-none");
+                progressbar.classList.remove("progress-bar-striped", "progress-bar-animated");
+                progressbar.classList.replace("bg-success", "bg-principal");
 
                 // Si ha habido algun fallo, lo mostramos
                 if (!respuesta.success) {
