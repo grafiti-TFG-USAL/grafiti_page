@@ -23,6 +23,9 @@ router.get("/", userPageController.index);
 // Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
 router.get("/grafiti/:grafiti_id", userPageController.showGrafiti);
 
+// Grafitis del usuario (<host>/usuario/Mis-Grafitis)
+router.get("/Mis-Grafitis", userPageController.userGrafitis);
+
 // Base de Datos de Grafitis (<host>/usuario/GrafitiDB)
 router.get("/GrafitiDB", userPageController.grafitiDB);
 

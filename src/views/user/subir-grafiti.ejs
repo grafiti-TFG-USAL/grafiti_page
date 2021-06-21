@@ -1,26 +1,30 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , username: user.name,
     index: 0 }) %>
 
-    <div id="container" class="container">
 
-        <div class="jumbotron mt-4">
+    <div class="container pt-3">
 
-            <h1 class="text-dark">Añadir Grafitis</h1>
+        <div class="card mb-3">
+            <div class="card-header">
+                <h2>Añadir Grafitis</h2>
+            </div>
 
-            <div class="container pt-4">
-                <form id="upload-form" class="form" enctype="multipart/form-data">
+            <form id="upload-form" class="form" enctype="multipart/form-data">
+
+                <div class="card-body" id="container">
 
                     <div class="form-group col">
-                        <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias
-                            imágenes</label>
+                        <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias imágenes</label>
                         <input class="d-none" type="file" required="required" name="archivo" id="archivo"
                             accept="image/png, image/jpeg" multiple>
                     </div>
                     <div id="preview">
                         <p>No se ha selecionado ninguna imagen aún.</p>
                     </div>
+                </div>
 
-                    <div class="form-row mt-3 mb-1">
+                <div class="card-footer">
+                    <div class="form-row">
                         <div class="col text-center text-md-left">
                             <button id="subir" class="col-12 col-sm-6 col-md-3 col-lg-2 btn btn-primary disabled"
                                 type="submit" disabled>
@@ -33,11 +37,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                </form>
-            </div>
-
+            </form>
         </div>
+
     </div>
 
     <!-- CÓDIGO DEL MODAL DE ERROR -->
@@ -316,9 +320,8 @@
         const progressbar = document.getElementById("progressbar");
 
         socket.on("upload:step", data => {
-            console.log(`Step: ${data.percentage}%`);
-            progressbar.style.width = `${data.percentage}%`;
             progressbar.innerText = `${data.percentage}%`;
+            progressbar.style.width = `${data.percentage}%`;
         });
 
         form.addEventListener("submit", async (event) => {
