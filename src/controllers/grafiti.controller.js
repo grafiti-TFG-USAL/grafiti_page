@@ -1,4 +1,3 @@
-const { Mongoose } = require("mongoose");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs-extra");
@@ -6,8 +5,10 @@ const exifr = require("exifr");
 const imageThumbnail = require("image-thumbnail");
 
 const Grafiti = require("../models/grafiti.model");
-const User = require("../models/user.model");
+//const User = require("../models/user.model");
 const Location = require("../models/location.model");
+const Notification = require("../models/notification.model");
+const User = require("../models/user.model");
 
 const Sockets = require("../config/sockets.config");
 const RNA = require("../config/neuralnet.config");
@@ -57,6 +58,7 @@ const getThumbnail = async (req, res) => {
 };
 
 const thumbnails = require("../helpers/thumbnail");
+const notificationModel = require("../models/notification.model");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -239,6 +241,23 @@ const upload = async (req, res) => {
                         emitStep(index);
                         continue;
                     }
+                } else {
+                    const notificacion = new Notification({
+                        user: req.user._id,
+                        type: "Ubicación no establecida",
+                        grafiti: imageSaved._id,
+                        seen: false,
+                    });
+                    const notificacionSaved = await notificacion.save();
+                    if(!notificacionSaved){
+                        await fs.unlink(imgTempPath);
+                        errores.push("No se ha podido  notificación al usuario");
+                        fileErr.push(file.originalName);
+                        success = false;
+                        await fs.unlink(imgTargetPath);
+                        emitStep(index);
+                        continue;
+                    }
                 }
 
             } else {
@@ -327,6 +346,17 @@ const update = async (req, res) => {
                                 gps: resultado._id
                             },
                         });
+                        const removal = await Notification.deleteOne({
+                            type: "Ubicación no establecida",
+                            grafiti: req.params.grafiti_id
+                        });
+                        const decrement = await User.updateOne({ _id: req.user._id }, {
+                            $inc: { notifications: -1 },
+                        })
+                        if(!removal || 
+                        !decrement){
+                            console.error("No se ha podido eliminar la notificación");
+                        }
 
                     } else {
 
@@ -385,12 +415,29 @@ const update = async (req, res) => {
                     } else {
                         const eliminacion = await Location.deleteOne({ grafiti: req.params.grafiti_id });
                         if (eliminacion.deletedCount == 1 && eliminacion.ok == 1) {
+                            console.log("Resultado data: ", resultado);
+                            const notificacion = new Notification({
+                                user: req.user.id,
+                                type: "Ubicación no establecida",
+                                grafiti: req.params.grafiti_id,
+                                seen: false,
+                            });
+                            const notificacionSaved = await notificacion.save();
+                            if(!notificacionSaved){
+                                console.error("Error, no se ha podido  notificación al usuario");
+                                return res.status(400).json({
+                                    success: false,
+                                    message: "Error: no se ha podido añadir notificación al usuario"
+                                });
+                            }
+                            // Si todo ha ido bien
                             return res.status(200).json({
                                 success: true,
                                 message: `Ubicación eliminada`
                             });
+                            
                         } else {
-                            console.log("Error, no se ha podido eliminar el documento Location");
+                            console.error("Error, no se ha podido eliminar el documento Location");
                             return res.status(400).json({
                                 success: false,
                                 message: "Error: no se ha podido modificar el dato"
@@ -493,6 +540,8 @@ const remove = async (req, res) => {
                 });
             } else {
 
+                // Eliminamos todas las notificaciones relativas a la imagen
+                await Notification.deleteMany({ grafiti: req.params.grafiti_id });
                 return res.status(200).json({
                     success: true,
                     message: "Grafiti eliminado"
@@ -607,9 +656,8 @@ const getGrafitiById = async (grafitiId) => {
         if (grafiti) {
             console.log("Hay grafiti")
             if (grafiti.gps) {
-                console.log("Hay gps en grafiti")
+                console.log("Hay gps en grafiti");
                 grafiti = await grafiti.populate("gps", { location: 1 }).execPopulate();
-                console.log("Grafiti: ", grafiti);
             }
         }
 

@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 // Obtenemos el middleware que nos verifica que el usuario que manda la petición está autenticado
-const { estaAutenticado } = require("../config/passport.config");
+const { estaAutenticado } = require("../../config/passport.config");
 
 // Obtenemos el controlador de grafitis
-const grafitiController = require("../controllers/grafiti.controller");
+const grafitiController = require("../../controllers/grafiti.controller");
 
 // Middleware de procesado de imágenes multer
-const upload = require("../config/multer.config");
+const upload = require("../../config/multer.config");
 //const { upload } = require("../config/db.config");
 
 

@@ -14,6 +14,9 @@ module.exports = app => {
     app.use("/usuario", require(path.join(routesPath,"Usuario.js")));
     
     // API de gestión de grafitis
-    app.use("/api/grafitis", require(path.join(routesPath, "GrafitisAPI.js"))); 
+    app.use("/api/grafitis", require(path.join(routesPath, "APIs/GrafitisAPI.js"))); 
+    
+    // API de gestión de grafitis
+    app.use("/api/notifications", require(path.join(routesPath, "APIs/NotificationsAPI.js"))); 
 
 };

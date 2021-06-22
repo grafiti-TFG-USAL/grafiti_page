@@ -1,4 +1,6 @@
 const Grafiti = require("../models/grafiti.model");
+const Notification = require("../models/notification.model");
+const User = require("../models/user.model");
 const { 
     getIndexGrafitis, 
     getGrafitiById, 
@@ -92,7 +94,7 @@ const showGrafiti = async (req, res, next) => {
                     grafiti = grafitiWithGPS;
                 }
             }*/
-            console.log(grafiti);
+            //console.log(grafiti);
             
             // Si el grafiti no es suyo, cargamos la página de descripción
             if (!grafiti.user.equals(req.user._id)) {
@@ -393,6 +395,93 @@ const grafitiMap = async (req, res) => {
 
 };
 
+/**
+ * Recoge las notificaciones del usuario y se las muestra
+ */
+const notifications = async (req, res) => {
+    
+    try {
+        
+        return res.render("user/user-notifications.ejs", { titulo: "Notificaciones", user: req.user });
+        
+    } catch (error) {
+        console.error("Error al recoger las notificaciones");
+    }
+    
+};
+
+/**
+ * Alterna el estado visto de la notificación
+ */
+const switchNotificationSeenState = async (req, res) => {
+    
+    const notificationId = req.params.notification_id;
+    try {
+        
+        const notification = await Notification.findOne({ _id: notificationId }, { _id: 1, seen: 1, user: 1 });
+        if(!notification) {
+            throw "No se ha encontrado la notificación";
+        }
+        notification.seen = !notification.seen;
+        const notificationUpdated = await notification.save();
+        
+        // Si falla la operación lanzamos la excepción
+        if(!notificationUpdated){
+            throw "No se ha podido llevar a cabo la modificacion";
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "El estado seen se ha invertido",
+        });
+        
+    } catch (error) {
+        console.error("Error al alternar el estado: "+error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al alternar el estado: "+error,
+        });
+    }
+    
+};
+
+/**
+ * Cambia el estado de todas las notificaciones a visto
+ */
+const switchAllNotificationsSeenState = async (req, res) => {
+    
+    try {
+        
+        const notification = await Notification.updateMany({ user: req.user._id }, {
+            seen: true,
+        });
+        console.log("Notification: ", notification)
+        if (!notification || notification.nModified < 1) {
+            throw "No se ha modificado ninguna notificación";
+        }
+        
+        const user = await User.findOneAndUpdate({ _id: req.user._id }, {
+            $set: { notifications: 0 },
+        });
+        if (!user || user.notifications==0) {
+            throw "No se ha modificado el conteo del usuario";
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "El estado seen se ha invertido en todas las notificaciones del usuario",
+        });
+        
+    } catch (error) {
+        console.error("Error al alternar el estado: "+error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al alternar el estado: "+error,
+        });
+    }
+    
+};
+
 module.exports = {
     index,
     showGrafiti,
@@ -401,4 +490,7 @@ module.exports = {
     userGrafitis,
     grafitiDB,
     grafitiMap,
+    notifications,
+    switchNotificationSeenState,
+    switchAllNotificationsSeenState,
 };

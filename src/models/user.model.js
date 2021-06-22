@@ -33,6 +33,11 @@ const userSchema  = mongoose.Schema({
         required: true,
         default: Date.now()
     },
+    notifications: { 
+        type: Number, 
+        default: 0,
+        min: 0
+    },
     account_status: {
         type: String,
         required: true,

@@ -1,18 +1,14 @@
 body {
     background: #dcdde1;
-}
-
-#ficha {
-    background: #adadad;
+    min-height: 100vh;
+    position: relative;
+    margin: 0;
+    padding-bottom: 56px; /*Altura del footer*/
 }
 
 footer {
-    clear: both;
-    position: relative;
-    height: 50px;
-    margin-top: 0;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 56px;
 }
-/* 
-.kilometers::after {
-    content: ' km';
-  } */

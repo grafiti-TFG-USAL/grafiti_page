@@ -43,14 +43,17 @@
         </li>
         <li class="nav-item dropdown active text-right">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-            <%= username %> 
+            <%= user.name %> 
           </a>
           <!-- Menú de opciones de usuario desplegable -->
           <ul class="dropdown-menu dropdown-menu-right bg-light">
             <li><a class="dropdown-item" href="/usuario/perfil">Mi perfil </a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="/usuario/mis-grafitis">Mis Grafitis </a></li>
-            <li><a class="dropdown-item" href="#">Notificaciones <span class="badge badge-pill badge-warning ml-2">7</span></a></li>
+            <li><a class="dropdown-item" href="/usuario/notificaciones">Notificaciones 
+              <% if(user.notifications > 0) { %><span class="badge badge-pill badge-warning ml-2"><%= user.notifications %></span> <% } else { %>
+              <span class="badge badge-pill badge-success ml-2">0</span> <% } %>
+              </a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="/api/users/logout"><button class="btn btn-danger btn-block">Log Out <span class="badge badge-danger badge-pill mb-1 ml-1">&times;</span></button></a></li>
           </ul>

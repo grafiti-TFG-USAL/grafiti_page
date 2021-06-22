@@ -1,7 +1,7 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name, index: 0 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , user, index: 0, cssFiles: [] }) %>
 
     <div class="container-fluid my-3">
-        <div class="row border ficha">
+        <div class="row border">
 
             <div class="col-12 col-sm-6">
                 <img src="/api/grafitis/get/<%= grafiti.id %>" class="w-100 img-thumbnail">
@@ -56,7 +56,7 @@
 
     <% if (grafiti.gps) { %>
     <script>
-        console.log(grafiti)
+        
         // Obtenemos las coordenadas del grafiti
         const coordinates = [<%= grafiti.gps.location.coordinates %>];
 

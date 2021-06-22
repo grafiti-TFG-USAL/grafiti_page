@@ -1,5 +1,4 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , username: user.name, index: 0
-    }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , user, index: 0, cssFiles: []}) %>
 
     <div class="container-fluid my-3">
         <div class="row ">
@@ -379,8 +378,18 @@
                         $("#eliminacion").modal("hide");
                         $('#modal').modal();
                     } else {
-                        console.log(respuesta)
-                        document.location.reload();
+                        console.log(respuesta);
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if(urlParams){
+                            const notification = urlParams.get("notification");
+                            if (notification === "true") {
+                                window.location.href = "/usuario/notificaciones";
+                            } else {
+                                document.location.reload();
+                            }
+                        }else{
+                            document.location.reload();
+                        }
                     }
 
                 } catch (error) {

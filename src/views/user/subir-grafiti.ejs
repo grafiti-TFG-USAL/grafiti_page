@@ -1,5 +1,5 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , username: user.name,
-    index: 0 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , user,
+    index: 0, cssFiles: [] }) %>
 
 
     <div class="container pt-3">
@@ -14,7 +14,8 @@
                 <div class="card-body" id="container">
 
                     <div class="form-group col">
-                        <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias imágenes</label>
+                        <label id="label" for="archivo" class="btn btn-outline-primary">Seleccione una o varias
+                            imágenes</label>
                         <input class="d-none" type="file" required="required" name="archivo" id="archivo"
                             accept="image/png, image/jpeg" multiple>
                     </div>
@@ -282,6 +283,8 @@
                             curFiles.push(file);
                         }
                         updateImageDisplay();
+                        
+                        window.location.href = "#footer";
                     }
 
                 });
@@ -308,6 +311,8 @@
 
             // Refrescamos
             updateImageDisplay();
+
+            window.location.href = "#footer";
 
         });
 

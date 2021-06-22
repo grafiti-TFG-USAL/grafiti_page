@@ -1,4 +1,4 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , username: user.name, index: 1 }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , user, index: 1, cssFiles: [] }) %>
 
     <div class="container pt-3">
 
@@ -32,8 +32,8 @@
                             <% } %>
                     </div>
                     <% } else { %>
-                        <h3 class="display-4 text-center justify-content-center">Aún no se ha subido ninguna imagen</h3>
-                        <% } %>
+                        <h3 class="display-4 text-center justify-content-center text-secondary">Aún no se ha subido ninguna imagen</h3>
+                    <% } %>
             </div>
 
         </div>

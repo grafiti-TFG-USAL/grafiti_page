@@ -18,6 +18,9 @@
 
     <!-- Estilo personalizado -->
     <link rel="stylesheet" href="/css/styles.css">
+    <% for( let index = 0; index < cssFiles.length; index++ ) { %>
+    <link rel="stylesheet" href="/css/<%= cssFiles[index] %>.css">
+    <% } %>
 
 </head>
 

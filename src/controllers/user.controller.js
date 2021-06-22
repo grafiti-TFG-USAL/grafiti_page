@@ -18,7 +18,9 @@ const { getToken, getTokenData } = require("../config/jwt.config.js");
 const { sendEmail, getConfirmTemplate, getRecoverTemplate } = require("../config/mail.config");
 
 // Cargamos el modelo del usuario
-const User = require("../models/user.model.js");
+const User = require("../models/user.model");
+// Cargamos el modelo de notificaciones
+const Notification = require("../models/notification.model");
 
 // schemas Joi para almacenar y comprobar los datos introducidos
 const schemaRegister = Joi.object({
@@ -644,6 +646,53 @@ const getUsernameById = async id => {
     
 };
 
+/**
+ * Obtiene las notificaciones de un usuario
+ */
+const getUserNotifications = async (req, res) => {
+    try {
+        
+        if(req.user.id !== req.params.user_id){
+            throw "El usuario solicitado y el usuario autenticado no coinciden";
+        }
+        
+        const notificaciones = await Notification.find({
+            user: req.user._id,
+        })
+        .sort({
+            seen: 1, // Ordenamos por, primero las no vistas
+            createdAt: -1, // Luego por fecha
+        });
+        
+        const nNotificaciones = await Notification.countDocuments({
+            user: req.user._id,
+            seen: false,
+        });
+        
+        await User.updateOne({ _id: req.user._id }, {
+            $set: { notifications: nNotificaciones }
+        });
+        
+        if(notificaciones){
+            return res.status(200).json({
+                success: true,
+                message: `Encontradas ${notificaciones.length} notificaciones`,
+                notificaciones
+            });
+        }else{
+            throw "No se han encontrado notificaciones para el usuario especificado";
+        }
+        
+    } catch (error) {
+        console.error("Ha habido un fallo al consultar las notificaciones: " + error);
+        res.status(400).json({
+            success: false,
+            message: `Ha habido un fallo al consultar las notificaciones: ${error}`
+        });
+    }  
+};
+
+
 module.exports = {
     signUp,
     confirmUser,
@@ -656,6 +705,7 @@ module.exports = {
     removeUser,
     eliminarUsuariosSinVerificar,
     getUsernameById,
+    getUserNotifications,
     schemaRegister,
     schemaLogin
 };

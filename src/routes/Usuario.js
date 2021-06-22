@@ -37,9 +37,12 @@ router.get("/perfil", (req, res) => {
     res.render("user/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });
 });
 
+// Notificaciones del usuario (<host>/usuario/notificaciones)
+router.get("/notificaciones", userPageController.notifications);
+
 // Subida de grafitis (<host>/usuario/subir-grafiti)
 router.get("/subir-grafiti", (req, res) => {
-    res.render("user/subir-grafiti.ejs", { titulo: "Subir Grafiti", user: req.user });
+    res.render("user/subir-grafiti.ejs", { titulo: "Subir Grafitis", user: req.user });
 });
 
 
