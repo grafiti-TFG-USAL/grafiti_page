@@ -1,4 +1,5 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , user, index: 1, cssFiles: [] }) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , user, index: 1,
+    cssFiles: [] }) %>
 
     <div class="container pt-3">
 
@@ -21,8 +22,9 @@
                         <% for(const image of images) { %>
                             <div class="col-6 col-sm-4 col-lg-3 mb-2" style="position: relative">
                                 <a href="/usuario/grafiti/<%= image._id %>">
-                                    <img src="/api/grafitis/get-thumbnail/<%= image._id %>" alt="<%= image.description %>"
-                                        class="w-100 h-100 img img-thumbnail" style="display: block">
+                                    <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
+                                        alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
+                                        style="display: block">
                                     <%# if (!image.gps) { %>
                                         <!--i class="fa fa-map-marker-alt"
                                             style="position: absolute; bottom:0; left:0;"></i-->
@@ -32,8 +34,9 @@
                             <% } %>
                     </div>
                     <% } else { %>
-                        <h3 class="display-4 text-center justify-content-center text-secondary">Aún no se ha subido ninguna imagen</h3>
-                    <% } %>
+                        <h3 class="display-4 text-center justify-content-center text-secondary">Aún no se ha subido
+                            ninguna imagen</h3>
+                        <% } %>
             </div>
 
         </div>

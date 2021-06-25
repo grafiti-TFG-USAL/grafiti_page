@@ -1,0 +1,44 @@
+<div class=" row d-none col-12 mx-auto py-2 px-0" id="carouselContainer">
+  
+    <div class="card col-12 offset-lg-3 col-lg-6 p-0">
+        
+        <a id="linkToMatches" href="">
+        <div class="card-header" id="matchesCardHeader">
+            <h5 id="matchesHeader" class="text-success text-center mb-0"><i class="fa fa-bullseye" aria-hidden="true"></i> Matches <span id="nMatches"></span></h5>
+        </div>
+        </a>
+        
+        <div class="card-body p-0" id="matchesCardBody">
+            
+            <div class="carousel slide" id="matchCarousel"
+            data-ride="carousel" 
+            data-grafiti="<%= grafiti._id %>"
+            data-height="<%= imagesHeight %>">
+        
+                <!-- INDICADORES -->
+                <ol class="carousel-indicators" id="matchCarouselIndicators">
+                </ol>
+                
+                <!-- IMÁGENES -->
+                <div class="carousel-inner" id="matchCarouselInner">
+                </div>
+                
+                <!-- CONTROLES IZQ Y DER -->
+                <a class="carousel-control-prev" href="#matchCarousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+          
+                <a class="carousel-control-next" href="#matchCarousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+                
+            </div>
+            
+        </div>
+    </div>
+    
+</div>
+
+<script async src="/js/elements/match-carousel.js"></script>

@@ -6,41 +6,41 @@ const grafitiSchema = mongoose.Schema({
     // El nombre original del archivo
     originalname: {
         type: String,
-        required: true
+        required: true,
     },
     // El usuario que subió la imagen
     user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: "User" // Esto nos permite hacer un populate
+        ref: "User", // Esto nos permite hacer un populate
     },
     // El nombre del archivo en el servidor
     serverName: {
         type: String,
-        required: true
+        required: true,
     },
     // La ruta relativa al archivo en el servidor
     relativePath: {
         type: String,
-        required: true
+        required: true,
     },
     // La ruta absoluta al archivo en el servidor
     absolutePath: {
         type: String,
-        required: true
+        required: true,
     },
     // La descripción del usuario de la imagen
     description: {
-        type: String
+        type: String,
     },
     // Las coordenadas gps de la ubicación de la imagen
     gps: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Location" // Esto nos permite hacer un populate
+        ref: "Location", // Esto nos permite hacer un populate
     },
     // La orientación de la cámara al capturar la imagen
     orientation: {
-        type: Number
+        type: Number,
         // 1 = Horizontal (normal), 2 = Mirror horizontal, 3 = Rotate 180, 4 = Mirror vertical, 5 = Mirror horizontal and rotate 270 CW, 6 = Rotate 90 CW, 7 = Mirror horizontal and rotate 90 CW, 8 = Rotate 270 CW
     },
     // Los datos del IMU de la cámara al tomar la imagen
@@ -51,34 +51,34 @@ const grafitiSchema = mongoose.Schema({
         scaleX: { type: Number },
         scaleY: { type: Number },
         deg: { type: Number },
-        rad: { type: Number }
+        rad: { type: Number },
     },
     // La miniatura de la imagen
     thumbnail: {
-        type: Buffer
+        type: Buffer,
     },
     // Todos los metadatos extraidos del archivo original
     metadata: {
-        type: Object
+        type: Object,
     },
     dateTimeOriginal: {
         type: Date,
-        default: Date.now()
+        default: Date.now(),
     },
     // La fecha de subida de la imagen
     uploadedAt: {
         type: Date,
-        default: Date.now()
+        default: Date.now(),
     },
     // La fecha de la última actualización de datos
     lastModified: {
         type: Date,
-        default: Date.now()
+        default: Date.now(),
     },
     // Si la imagen se encuentra o no borrada
     deleted: {
         type: Boolean,
-        default: false
+        default: false,
     },
     // El mapa de características generado por la RNA
     featureMap: [Number],

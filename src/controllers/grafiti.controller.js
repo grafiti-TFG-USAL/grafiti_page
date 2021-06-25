@@ -9,6 +9,7 @@ const Grafiti = require("../models/grafiti.model");
 const Location = require("../models/location.model");
 const Notification = require("../models/notification.model");
 const User = require("../models/user.model");
+const Match = require("../models/match.model");
 
 const Sockets = require("../config/sockets.config");
 const RNA = require("../config/neuralnet.config");
@@ -58,7 +59,6 @@ const getThumbnail = async (req, res) => {
 };
 
 const thumbnails = require("../helpers/thumbnail");
-const notificationModel = require("../models/notification.model");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -114,7 +114,7 @@ const upload = async (req, res) => {
                     fileErr.push(file.originalName);
                     success = false;
                     message = "Fallo al obtener metadatos de imagen";
-                    console.log("Error al extraer metadatos: ", message);
+                    console.error("Error al extraer metadatos: ", message);
                     await fs.unlink(imgTargetPath);
                     emitStep(index);
                     continue;
@@ -125,7 +125,7 @@ const upload = async (req, res) => {
                 if (rotated) {
                     buffer = rotated;
                 } else {
-                    //console.log("no rotado");
+                    //console.error("no rotado");
                 }
                 emitSemiStep(index, 0.5);
                 /*const thumbnail_response = await thumbnails.generateThumbnail(buffer);
@@ -172,7 +172,7 @@ const upload = async (req, res) => {
                 var thumbnail = await exifr.thumbnail(buffer);
                 if (!thumbnail) {
                     if (stats.size < 1024 * 1024) {
-                        //console.log("Imagen demasiado pequeña como para usar su thumbnail")
+                        //console.error("Imagen demasiado pequeña como para usar su thumbnail")
                         thumbnail = await imageThumbnail(buffer, { percentage: 70 });
                     } else {
                         thumbnail = await imageThumbnail(buffer);
@@ -206,7 +206,7 @@ const upload = async (req, res) => {
                     fileErr.push(file.originalName);
                     success = false;
                     message = "Error al subir las imágenes a la base: imagen no almacenada";
-                    console.log(message);
+                    console.error(message);
                     await fs.unlink(imgTargetPath);
                     emitStep(index);
                     continue;
@@ -224,7 +224,7 @@ const upload = async (req, res) => {
                         fileErr.push(file.originalName);
                         success = false;
                         message = "Error al subir las imágenes a la base: ubicación de la imagen no almacenada";
-                        console.log(message);
+                        console.error(message);
                         emitStep(index);
                         continue;
                     }
@@ -236,7 +236,7 @@ const upload = async (req, res) => {
                         fileErr.push(file.originalName);
                         success = false;
                         message = "Error al subir las imágenes a la base: ubicación de la imagen no almacenada";
-                        console.log(message);
+                        console.error(message);
                         await locationSaved.delete();
                         emitStep(index);
                         continue;
@@ -266,7 +266,7 @@ const upload = async (req, res) => {
                 fileErr.push(file.originalName);
                 success = false;
                 message = "Solo puede subir imágenes del tipo especificado";
-                console.log("Error: ", message);
+                console.error("Error: ", message);
                 await fs.unlink(imgTargetPath);
                 emitStep(index);
                 continue;
@@ -277,7 +277,7 @@ const upload = async (req, res) => {
             fileErr.push(file.originalName);
             success = false;
             message = "Error al subir las imágenes a la base => " + error;
-            console.log(message);
+            console.error(message);
             await fs.unlink(imgTargetPath).catch(null);
             await fs.unlink(imgTempPath).catch(null);
             emitStep(index);
@@ -301,21 +301,21 @@ const update = async (req, res) => {
 
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
-        console.log("No grafiti")
+        console.error("No grafiti")
         return res.status(400).json({
             success: false,
             message: "Error: el grafiti no existe"
         });
     }
     else if (grafiti.deleted) {
-        console.log("Grafiti deleted")
+        console.error("Grafiti deleted")
         return res.status(400).json({
             success: false,
             message: "Error: el grafiti ha sido borrado"
         });
     }
     else if (!grafiti.user.equals(req.user._id)) {
-        console.log("Not user")
+        console.error("Not user")
         return res.status(400).json({
             success: false,
             message: "Error: solo el usuario que ha subido el grafiti puede modificarlo"
@@ -372,7 +372,7 @@ const update = async (req, res) => {
                     }
 
                     if (resultado.nModified < 1 || resultado.nModified > 1) {
-                        console.log("Error en la actualización de la ubicación de " + req.params.grafiti_id + ": ", resultado);
+                        console.error("Error en la actualización de la ubicación de " + req.params.grafiti_id + ": ", resultado);
                         return res.status(400).json({
                             success: false,
                             message: "Error (1): no se ha podido modificar el dato"
@@ -391,7 +391,7 @@ const update = async (req, res) => {
                     }
 
                 } catch (error) {
-                    console.log("Error al actualizar: ", error);
+                    console.error("Error al actualizar: ", error);
                     return res.status(400).json({
                         success: false,
                         message: "Error (2): no se ha podido modificar el dato => " + error
@@ -415,13 +415,14 @@ const update = async (req, res) => {
                     } else {
                         const eliminacion = await Location.deleteOne({ grafiti: req.params.grafiti_id });
                         if (eliminacion.deletedCount == 1 && eliminacion.ok == 1) {
-                            console.log("Resultado data: ", resultado);
+                            
                             const notificacion = new Notification({
                                 user: req.user.id,
                                 type: "Ubicación no establecida",
                                 grafiti: req.params.grafiti_id,
                                 seen: false,
                             });
+                            
                             const notificacionSaved = await notificacion.save();
                             if(!notificacionSaved){
                                 console.error("Error, no se ha podido  notificación al usuario");
@@ -445,7 +446,7 @@ const update = async (req, res) => {
                         }
                     }
                 } catch (error) {
-                    console.log("Error al actualizar: ", error);
+                    console.error("Error al actualizar: ", error);
                     return res.status(400).json({
                         success: false,
                         message: "Error: no se ha podido modificar el dato => " + error
@@ -474,7 +475,7 @@ const update = async (req, res) => {
                     }
 
                 } catch (error) {
-                    console.log("Error al actualizar: ", error);
+                    console.error("Error al actualizar: ", error);
                     return res.status(400).json({
                         success: false,
                         message: "Error: no se ha podido modificar el dato => " + error
@@ -503,21 +504,21 @@ const remove = async (req, res) => {
 
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
-        console.log("No grafiti")
+        console.error("No grafiti")
         return res.status(400).json({
             success: false,
             message: "Error: el grafiti no existe"
         });
     }
     else if (grafiti.deleted) {
-        console.log("Grafiti deleted")
+        console.error("Grafiti deleted")
         return res.status(400).json({
             success: false,
             message: "Error: el grafiti ha sido borrado"
         });
     }
     else if (!grafiti.user.equals(req.user._id)) {
-        console.log("Not user")
+        console.error("Not user")
         return res.status(400).json({
             success: false,
             message: "Error: solo el usuario que ha subido el grafiti puede modificarlo"
@@ -550,7 +551,7 @@ const remove = async (req, res) => {
             }
 
         } catch (error) {
-            console.log("No se ha podido eliminar el grafiti: ", error);
+            console.error("No se ha podido eliminar el grafiti: ", error);
             return res.status(400).json({
                 success: false,
                 message: "No se ha podido eliminar el grafiti: " + error
@@ -575,7 +576,7 @@ const countOf = async (user, countDeleted = false) => {
         }
 
     } catch (error) {
-        console.log("Error al contar grafitis: ", error);
+        console.error("Error al contar grafitis: ", error);
         return null;
     }
 
@@ -591,7 +592,7 @@ const deleteUserGrafitis = async (user, changeUser = false, communityId = null) 
         var deleted;
         if (changeUser) {
             if (!communityId) {
-                console.log("Debe proporcionar el id del usuario community para poder reasignar los grafitis");
+                console.error("Debe proporcionar el id del usuario community para poder reasignar los grafitis");
                 return null;
             }
             deleted = await Grafiti.updateMany({ user, deleted: false }, {
@@ -616,7 +617,7 @@ const deleteUserGrafitis = async (user, changeUser = false, communityId = null) 
             return deleted.nModified;
 
     } catch (error) {
-        console.log("Error al contar grafitis: ", error);
+        console.error("Error al contar grafitis: ", error);
         return null;
     }
 
@@ -637,7 +638,7 @@ const getIndexGrafitis = async (user, limit = 20, getDeleted = false) => {
             .sort({ uploadedAt: -1 });
 
     } catch (error) {
-        console.log("Error en getIndexGrafitis: ", error);
+        console.error("Error en getIndexGrafitis: ", error);
         return null;
     }
 
@@ -654,9 +655,7 @@ const getGrafitiById = async (grafitiId) => {
         var grafiti = await Grafiti.findOne({ _id: grafitiId, deleted: false });
 
         if (grafiti) {
-            console.log("Hay grafiti")
             if (grafiti.gps) {
-                console.log("Hay gps en grafiti");
                 grafiti = await grafiti.populate("gps", { location: 1 }).execPopulate();
             }
         }
@@ -664,7 +663,7 @@ const getGrafitiById = async (grafitiId) => {
         return grafiti;
 
     } catch (error) {
-        console.log("Error en getGrafitiById: ", error);
+        console.error("Error en getGrafitiById: ", error);
         return null;
     }
 
@@ -699,7 +698,7 @@ const getGrafitiPage = async (page, nGrafitis, user = null) => {
         }
 
         if (!grafitis) {
-            console.log("No se han podido recuperar los grafitis en la consulta");
+            console.error("No se han podido recuperar los grafitis en la consulta");
             return null;
         }
         /*console.time("Bucle for");
@@ -713,7 +712,7 @@ const getGrafitiPage = async (page, nGrafitis, user = null) => {
                     name: 1, surname: 1, email: 1
                 });
                 if (!user) {
-                    console.log("No he han podido consultar los datos del usuario");
+                    console.error("No he han podido consultar los datos del usuario");
                     return null;
                 }
 
@@ -736,7 +735,7 @@ const getGrafitiPage = async (page, nGrafitis, user = null) => {
         return grafitis;
 
     } catch (error) {
-        console.log("Error en getGrafitiPage: ", error);
+        console.error("Error en getGrafitiPage: ", error);
         return null;
     }
 
@@ -762,14 +761,14 @@ const getNumberOfPages = async (n, user = null) => {
         }
 
         if (!nGrafitis) {
-            console.log("Error al consultar el número de grafitis");
+            console.error("Error al consultar el número de grafitis");
             return null;
         }
 
         return Math.ceil(nGrafitis / n);
 
     } catch (error) {
-        console.log("Error en getNumberOfPages: ", error);
+        console.error("Error en getNumberOfPages: ", error);
         return null;
     }
 
@@ -791,21 +790,21 @@ const getGrafitisWithGPS = async (req, res) => {
             .populate("gps", { location: 1 });
 
         if (!grafitis) {
-            console.log("Error al consultar el número de grafitis");
+            console.error("Error al consultar el número de grafitis");
             return res.status(400).json({
                 success: false,
                 message: "Error al consultar el número de grafitis"
             });
         } else
+        {
             if (grafitis.length == 0) {
-                console.log("Se obtuvieron 0 grafitis en la consulta");
                 return res.status(400).json({
                     success: false,
                     message: "Se obtuvieron 0 grafitis en la consulta"
                 });
             }
+        }
 
-        //console.log("grafitis: ", grafitis);
         return res.status(200).json({
             success: true,
             message: `Se obtuvieron ${grafitis.length} grafitis en la consulta`,
@@ -813,7 +812,7 @@ const getGrafitisWithGPS = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error en getGrafitisWithGPS: ", error);
+        console.error("Error en getGrafitisWithGPS: ", error);
         return res.status(400).json({
             success: false,
             message: "Error en getGrafitisWithGPS: " + error
@@ -852,7 +851,8 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user 
             .skip((page - 1) * nGrafitis)
             .limit(nGrafitis);
 
-        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
+        const grafitiWithLocations = locations.filter((location) => { return location.grafiti? true : false; });
+        const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
 
         var grafitis = null;
         if (!user) {
@@ -871,14 +871,13 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user 
         }
 
         if (!grafitis) {
-            console.log("Sin grafitis");
             return null;
         }
 
         return grafitis;
 
     } catch (error) {
-        console.log("Error en getGrafitisFilteredByGPS: ", error);
+        console.error("Error en getGrafitisFilteredByGPS: ", error);
         return null;
     }
 
@@ -907,7 +906,6 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius, user = null) =
             .populate({ path: "grafiti", model: Grafiti, select: { deleted: 1, user: 1 } });
 
         if (!locations) {
-            console.log("Sin grafitis");
             return 0;
         }
 
@@ -922,7 +920,7 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius, user = null) =
         return nGrafitis.length;
 
     } catch (error) {
-        console.log("Error en getNumberOfGrafitisFilteredByGPS: ", error);
+        console.error("Error en getNumberOfGrafitisFilteredByGPS: ", error);
         return 0;
     }
 
@@ -966,14 +964,13 @@ const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis, user
         }
 
         if (!grafitis) {
-            console.log("Sin grafitis");
             return null;
         }
 
         return grafitis;
 
     } catch (error) {
-        console.log("Error en getGrafitisFilteredByDate: ", error);
+        console.error("Error en getGrafitisFilteredByDate: ", error);
         return null;
     }
 
@@ -1013,7 +1010,7 @@ const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate, user = null) 
         return nGrafitis ? nGrafitis : 0;
 
     } catch (error) {
-        console.log("Error en getNumberOfGrafitisFilteredByDate: ", error);
+        console.error("Error en getNumberOfGrafitisFilteredByDate: ", error);
         return 0;
     }
 
@@ -1047,7 +1044,8 @@ const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDat
                 select: { _id: 1 }
             });
 
-        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
+        const grafitiWithLocations = locations.filter((location) => { return location.grafiti? true : false; });
+        const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
 
         // Filtramos a aquellos dentro del marco temporal
         const min_date = minDate ? minDate : new Date(-8640000000000000);
@@ -1087,14 +1085,13 @@ const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDat
 
 
         if (!grafitis) {
-            console.log("Sin grafitis");
             return null;
         }
 
         return grafitis;
 
     } catch (error) {
-        console.log("Error en getGrafitisFilteredByGPSAndDate: ", error);
+        console.error("Error en getGrafitisFilteredByGPSAndDate: ", error);
         return null;
     }
 
@@ -1123,12 +1120,11 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
             .populate({ path: "grafiti", model: Grafiti, select: "deleted" });
 
         if (!locations) {
-            console.log("Sin grafitis");
             return 0;
         }
 
         const grafitis = locations.filter((grafiti) => {
-            return !grafiti.grafiti.deleted;
+            return (!grafiti.grafiti.deleted && grafiti.gps);
         });
 
         const grafitiIds = locations.map((location) => { return location.grafiti._id; });
@@ -1163,16 +1159,47 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
             });
         }
 
-
         return nGrafitis ? nGrafitis : 0;
 
     } catch (error) {
-        console.log("Error en getNumberOfGrafitisFilteredByGPSAndDate: ", error);
+        console.error("Error en getNumberOfGrafitisFilteredByGPSAndDate: ", error);
         return 0;
     }
 
 };
 
+/**
+ * Devuelve los matches del grafiti indicado como parámetro en la URI
+ */
+const getMatches = async (req, res) => {
+    try {
+        
+        const grafitiId = req.params.grafiti_id;
+        const matches = await Match.find({
+            $or: [ { grafiti_1: grafitiId }, { grafiti_2: grafitiId } ],
+        })
+        .sort({ similarity: -1 });
+        
+        const aux = matches.keys().length;
+        const coincidencias = aux? aux : 0;
+        const message = `Se han encontrado ${coincidencias} coincidencias`;
+        const ret = {
+            success: true,
+            message,
+            matches,
+            nMatches: coincidencias,
+        };
+        
+        return res.status(200).json(ret);
+        
+    } catch (error) {
+        console.error("Ha habido un error en getMatches: ", error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }  
+};
 
 
 module.exports = {
@@ -1194,4 +1221,5 @@ module.exports = {
     getNumberOfGrafitisFilteredByDate,
     getGrafitisFilteredByGPSAndDate,
     getNumberOfGrafitisFilteredByGPSAndDate,
+    getMatches,
 };

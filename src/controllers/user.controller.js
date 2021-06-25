@@ -62,7 +62,7 @@ const signUp = async (req, res) => {
         const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
         const password = await bcrypt.hash(req.body.password, saltos);
         if (!saltos || !password) {
-            console.log("Incapaz de asegurar la contraseña del usuario, operación abortada por seguridad");
+            console.error("Incapaz de asegurar la contraseña del usuario, operación abortada por seguridad");
             return res.status(400).json({
                 success: false,
                 errorOn: "general",
@@ -97,7 +97,7 @@ const signUp = async (req, res) => {
         // Almacenamos el usuario en la base de datos
         const userDB = await user.save();
         if (!userDB) {
-            console.log("Ha habido un error al almacenar al usuario en la base de datos");
+            console.error("Ha habido un error al almacenar al usuario en la base de datos");
             return res.status(400).json({
                 success: false,
                 errorOn: "general",
@@ -112,7 +112,7 @@ const signUp = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(400).json({
             success: false,
             errorOn: "general",
@@ -133,10 +133,10 @@ const confirmUser = async (req, res) => {
         // Comprobar y extraer los datos
         const tokenData = await getTokenData(token);
         if (!tokenData) {
-            console.log("Error al obtener los datos del token");
-            return res.json({
+            console.error("Error al obtener los datos del token");
+            return res.status(400).json({
                 success: false,
-                message: "Error al obtener los datos del token"
+                message: "Error al obtener los datos del token",
             });
         }
         const { email, code } = tokenData.data;
@@ -144,35 +144,35 @@ const confirmUser = async (req, res) => {
         // Verificar que el usuario existe
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
-            return res.json({
+            console.error("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
+            return res.status(400).json({
                 success: false,
-                message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario"
+                message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario",
             });
         }
 
         // Comprobar el status actual de la cuenta
         if (user.account_status === "VERIFIED") {
-            console.log("El usuario ya estaba verificado");
+            console.error("El usuario ya estaba verificado");
             return res.status(200).redirect("../../../login");
         }
 
         // Verificar el código
         if (code !== user.code) {
-            console.log("El código no coincide con el almacenado");
-            return res.json({
+            console.error("El código no coincide con el almacenado");
+            return res.status(400).json({
                 success: false,
-                message: "El código no coincide con el almacenado"
+                message: "El código no coincide con el almacenado",
             });
         }
 
         // Actualizamos el estado de la cuenta a verificado y eliminamos el atributo code
         userDB = await User.updateOne({ email }, { $set: { account_status: "VERIFIED" }, $unset: { code: 1 } });
         if (!userDB) {
-            console.log("El usuario no se ha podido verificar por un problema con la base de datos");
-            return res.json({
+            console.error("El usuario no se ha podido verificar por un problema con la base de datos");
+            return res.status(400).json({
                 success: false,
-                message: "El usuario no se ha podido verificar por un problema con la base de datos"
+                message: "El usuario no se ha podido verificar por un problema con la base de datos",
             });
         }
 
@@ -180,7 +180,11 @@ const confirmUser = async (req, res) => {
         return res.status(200).redirect(`../../../user-confirmed/${email}`);
 
     } catch (error) {
-        console.log("Error al confirmar usuario => ", error);
+        console.error("Error al confirmar usuario => ", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al confirmar usuario => " + error,
+        });
     }
 
 };
@@ -194,7 +198,7 @@ const recoverMail = async (req, res) => {
 
         const { error } = Joi.string().email().validate(email);
         if (error) {
-            console.log("Error al validar el formato del email: " + error.details[0].message);
+            console.error("Error al validar el formato del email: " + error.details[0].message);
             return res.status(400).json({
                 success: false,
                 message: "Error al validar el formato del email: " + error.details[0].message
@@ -202,9 +206,8 @@ const recoverMail = async (req, res) => {
         }
 
         const user = await User.findOne({ email: email });
-        console.log(user)
         if (!user) {
-            console.log(`No hay ningun usuario con el correo "${email}"`);
+            console.error(`No hay ningun usuario con el correo "${email}"`);
             // No podemos, por seguridad, decirle al solicitante que no existe el email asi que enviamos mensaje de éxito
             return res.status(400).json({
                 success: true,
@@ -221,8 +224,7 @@ const recoverMail = async (req, res) => {
         });
 
         if (results.nModified < 1 || results.nModified > 1) {
-            console.log("No se pudo modificar el dato");
-            console.log(results);
+            console.error("No se pudo modificar el dato: ", results);
             return res.status(400).json({
                 success: false,
                 message: "Error: no se ha podido modificar el dato"
@@ -247,7 +249,7 @@ const recoverMail = async (req, res) => {
         return res.status(response.success ? 200 : 400).json(response);
 
     } catch (error) {
-        console.log("Error: ", error);
+        console.error("Error: ", error);
         return res.status(400).json({
             success: false,
             message: "Error: " + error
@@ -267,7 +269,7 @@ const restorePassword = async (req, res) => {
         // Comprobar y extraer los datos
         const tokenData = await getTokenData(token);
         if (!tokenData) {
-            console.log("Error al obtener los datos del token");
+            console.error("Error al obtener los datos del token");
             return res.status(400).json({
                 success: false,
                 message: "Error al obtener los datos del token"
@@ -278,7 +280,7 @@ const restorePassword = async (req, res) => {
         // Verificar que el usuario existe
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
+            console.error("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
             return res.status(400).json({
                 success: false,
                 message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario"
@@ -287,7 +289,7 @@ const restorePassword = async (req, res) => {
 
         // Verificar el código
         if (code !== user.code) {
-            console.log("El código no coincide con el almacenado");
+            console.error("El código no coincide con el almacenado");
             return res.status(400).json({
                 success: false,
                 message: "El código no coincide con el almacenado"
@@ -298,7 +300,7 @@ const restorePassword = async (req, res) => {
         return res.render("user-access/resetPassword", { titulo: "Restablecimiento de contraseña", isSignUp: true, email: user.email, token });
 
     } catch (error) {
-        console.log("Error al confirmar usuario => ", error);
+        console.error("Error al confirmar usuario => ", error);
         return res.status(400).json({
             success: false,
             message: "Error al confirmar usuario => " + error
@@ -318,7 +320,7 @@ const resetPassword = async (req, res) => {
         // Comprobar y extraer los datos
         const tokenData = await getTokenData(token);
         if (!tokenData) {
-            console.log("Error al obtener los datos del token");
+            console.error("Error al obtener los datos del token");
             return res.status(400).json({
                 success: false,
                 message: "Error al obtener los datos del token"
@@ -329,7 +331,7 @@ const resetPassword = async (req, res) => {
         // Verificar que el usuario existe
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
+            console.error("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
             return res.status(400).json({
                 success: false,
                 message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario"
@@ -346,7 +348,7 @@ const resetPassword = async (req, res) => {
 
         // Verificar el código
         if (code !== user.code) {
-            console.log("El código no coincide con el almacenado");
+            console.error("El código no coincide con el almacenado");
             return res.status(400).json({
                 success: false,
                 message: "El código no coincide con el almacenado"
@@ -366,8 +368,7 @@ const resetPassword = async (req, res) => {
         });
 
         if (results.nModified < 1 || results.nModified > 1) {
-            console.log("No se pudo modificar el dato");
-            console.log(results);
+            console.error("No se pudo modificar el dato: ", results);
             return res.status(400).json({
                 success: false,
                 message: "Error: no se ha podido modificar la contraseña"
@@ -381,7 +382,7 @@ const resetPassword = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error al confirmar usuario => ", error);
+        console.error("Error al confirmar usuario => ", error);
         return res.status(400).json({
             success: false,
             message: "Error al confirmar usuario => " + error
@@ -400,7 +401,7 @@ const changePassword = async (req, res) => {
         // Verificar que el usuario existe
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
+            console.error("El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario");
             return res.status(400).json({
                 success: false,
                 message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario"
@@ -427,8 +428,7 @@ const changePassword = async (req, res) => {
         });
 
         if (results.nModified < 1 || results.nModified > 1) {
-            console.log("No se pudo modificar el dato");
-            console.log(results);
+            console.error("No se pudo modificar el dato: ", results);
             return res.status(400).json({
                 success: false,
                 message: "Error: no se ha podido modificar la contraseña"
@@ -448,7 +448,7 @@ const changePassword = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error al cambiar la contraseña => ", error);
+        console.error("Error al cambiar la contraseña => ", error);
         return res.status(400).json({
             success: false,
             message: "Error al cambiar la contraseña => " + error
@@ -473,14 +473,14 @@ const logIn = async (req, res, next) => {
 
         // Comprobamos si ha habido algún error
         if (err) {
-            console.log("Error 1 en la autenticacion passport: ", info.message);
+            console.error("Error 1 en la autenticacion passport: ", info.message);
             return res.status(400).json({
                 success: false,
                 message: info.message
             });
         }
         if (!user) {
-            console.log("Error 2 en la autenticacion passport: ", info.message);
+            console.error("Error 2 en la autenticacion passport: ", info.message);
             return res.status(400).json({
                 success: false,
                 message: info.message
@@ -490,7 +490,7 @@ const logIn = async (req, res, next) => {
         // Si no ha habido ningun fallo, logeamos
         req.logIn(user, (err) => {
             if (err) {
-                console.log("Error 3 en el login de passport: ", err);
+                console.error("Error 3 en el login de passport: ", err);
                 return res.status(400).json({
                     success: false,
                     message: err
@@ -537,7 +537,7 @@ const removeUser = async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("Error: El usuario a eliminar no existe");
+            console.error("Error: El usuario a eliminar no existe");
             return res.status(400).json({
                 success: false,
                 message: "Error: El usuario a eliminar no existe"
@@ -559,7 +559,7 @@ const removeUser = async (req, res) => {
 
         // Comprobamos que se hayan realizado todas las eliminaciones
         if (nGrafitis !== nEliminados) {
-            console.log("Error: no se han podido eliminar todos los grafitis del usuario");
+            console.error("Error: no se han podido eliminar todos los grafitis del usuario");
             return res.status(400).json({
                 success: false,
                 message: "No se han podido eliminar todos sus grafitis"
@@ -589,7 +589,7 @@ const removeUser = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error durante la eliminación del usuario: ", error);
+        console.error("Error durante la eliminación del usuario: ", error);
         return res.status(400).json({
             success: false,
             removed: fueEliminado,
@@ -610,10 +610,13 @@ const eliminarUsuariosSinVerificar = async () => {
                 $lte: Date.now() - 1000 * 60 * 60 * 24 * 2 // 2 días en milisegundos
             }
         });
-        if (users.n > 0) console.log("Usuarios borrados: ", users.n);
+        if (users.n > 0) {
+            console.log("Usuarios borrados: ", users.n);
+        }
+            
 
     } catch (error) {
-        console.log("Error en la eliminación de usuarios sin verificar => ", error);
+        console.error("Error en la eliminación de usuarios sin verificar => ", error);
         return null;
     }
 };
@@ -629,7 +632,7 @@ const getUsernameById = async id => {
         // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
         const user = await User.findById(id);
         if(!user){
-            console.log("No he han podido consultar los datos del usuario");
+            console.error("No he han podido consultar los datos del usuario");
             return null;
         }
 
@@ -640,7 +643,7 @@ const getUsernameById = async id => {
         };
 
     } catch (error) {
-        console.log("Error en la obtención del nombre del usuario => ", error);
+        console.error("Error en la obtención del nombre del usuario => ", error);
         return null;
     }
     

@@ -3,6 +3,7 @@ const label = document.getElementById("label");
 const input = document.getElementById("archivo");
 const preview = document.getElementById("preview");
 const boton = document.getElementById("subir");
+const userId = boton.dataset.user;
 
 var curFiles = [];
 //Cambiamos la opacity de input porque si lo pongo a collapse se ve mal
@@ -215,6 +216,8 @@ function updateImageDisplay() {
                     curFiles.push(file);
                 }
                 updateImageDisplay();
+
+                window.location.href = "#footer";
             }
 
         });
@@ -242,10 +245,22 @@ input.addEventListener('change', () => {
     // Refrescamos
     updateImageDisplay();
 
+    window.location.href = "#footer";
+
 });
 
 const form = document.getElementById("upload-form");
 const spinner = document.getElementById("spinner");
+
+// Iniciamos el socket
+const socket = io();
+const progress = document.getElementById("progress");
+const progressbar = document.getElementById("progressbar");
+
+socket.on("upload:step", data => {
+    progressbar.innerText = `${data.percentage}%`;
+    progressbar.style.width = `${data.percentage}%`;
+});
 
 form.addEventListener("submit", async (event) => {
     // Anulamos el comportamiento por defecto (recargar página)
@@ -262,22 +277,12 @@ form.addEventListener("submit", async (event) => {
         curFiles.forEach(file => {
             formData.append("imagenes", file);
         });
-        
-        // Iniciamos el socket
-        const socket = io(document.location);
-        socket.emit("upload:init", { userId: <%= user.id %> });
-        
-        const progress = document.getElementById("progress");
-        progress.classList.remove("d-none");
-        const progressbar = document.getElementById("progressbar");
+
+        socket.emit("upload:init", { userId });
+
         progressbar.style.width = "1%";
-        
-        socket.on("upload:step", data => {
-            console.log(`Step: ${data.percentage}%`);
-            progressbar.style.width = `${data.percentage}%`;
-            progressbar.innerText = `${data.percentage}%`;
-        });
-        
+        progress.classList.remove("d-none");
+
         // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
         const data = await fetch("/api/grafitis/upload", {
             method: "post",
@@ -285,9 +290,11 @@ form.addEventListener("submit", async (event) => {
         });
 
         const respuesta = await data.json();
-        
-        socket.emit("upload:finish", { userId: <%= user.id %> });
+
+        socket.emit("upload:finish", { userId });
         spinner.classList.add("d-none");
+        progressbar.classList.remove("progress-bar-striped", "progress-bar-animated");
+        progressbar.classList.replace("bg-success", "bg-principal");
 
         // Si ha habido algun fallo, lo mostramos
         if (!respuesta.success) {

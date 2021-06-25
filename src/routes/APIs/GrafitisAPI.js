@@ -9,7 +9,6 @@ const grafitiController = require("../../controllers/grafiti.controller");
 
 // Middleware de procesado de imágenes multer
 const upload = require("../../config/multer.config");
-//const { upload } = require("../config/db.config");
 
 
 // RUTAS DE LA API DE GESTIÓN DE GRAFITIS "/api/grafitis"
@@ -33,12 +32,8 @@ router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);
 // Subida de un grafiti (<host>/api/grafitis/get-grafitis-with-gps)
 router.get("/get-grafitis-with-gps", estaAutenticado, grafitiController.getGrafitisWithGPS);
 
-/*
-// Añadir comentario (<host>/api/grafitis/remove/:grafiti_id)
-router.post("/postComment/:grafiti_id", estaAutenticado, grafitiController.postComment);
+// Obtención de los matches de un grafiti (<host>/api/grafitis/get-matches/:grafiti_id)
+router.get("/get-matches/:grafiti_id", estaAutenticado, grafitiController.getMatches);
 
-// Añadir comentario (<host>/api/grafitis/remove/:grafiti_id)
-router.post("/deleteComment/:comment_id", estaAutenticado, grafitiController.deleteComment);
-*/
 
 module.exports = router;
