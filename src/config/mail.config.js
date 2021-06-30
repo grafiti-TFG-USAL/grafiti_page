@@ -5,11 +5,11 @@ const mail = {
 
 const nodemailer = require("nodemailer");
 
-// create reusable transporter object using the default SMTP transport
+// Creamos un objeto transporter con la configuración propia del servidor del correo (GMAIL)
 let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465, // SSL
-    secure: true, // Ya usamos SSL
+    secure: true, // Usamos SSL
     tls: {
         rejectUnauthorized: false
     },
@@ -21,20 +21,18 @@ let transporter = nodemailer.createTransport({
 
 const sendEmail = async (email, subject, html) => {
     try {
+        // Enviamos el correo
         const res = await transporter.sendMail({
-            from: `Grafiti Page no-reply <${mail.user}>`, // sender address
-            to: email, // list of receivers
-            subject, // Subject line
-            text: "Mensaje automático de la página Grafiti Page", // plain text body
-            html // html body
+            from: `Grafiti Page no-reply <${mail.user}>`, // Nombre y correo del emisor
+            to: email, // Lista de receptores
+            subject, // Asunto
+            text: "Mensaje automático de la página Grafiti Page", // Cuerpo del mensaje
+            html // HTML del mensaje
         });
 
         const state = res.response.split(" ")[2];
         if (state !== "OK" && res.accepted.contains(email)) {
-            return {
-                success: false,
-                message: "El mensaje no se ha podido enviar"
-            };
+            throw "El mensaje no se ha podido enviar";
         } else {
             return {
                 success: true,
@@ -43,10 +41,10 @@ const sendEmail = async (email, subject, html) => {
         }
 
     } catch (error) {
-        console.log("Algo no ha funcionado con el email: ", error);
+        console.error("Error al enviar el mensaje: " + error);
         return {
             success: false,
-            message: "Error al enviar el mensaje" + error
+            message: "Error al enviar el mensaje: " + error
         };
     }
 }
@@ -77,8 +75,21 @@ const getRecoverTemplate = (name, token, host) => {
         </div>`;
 }
 
+const getMatchNotificationTemplate = (name, grafitiID, host) => {
+    return `
+        <div>
+            <h4>Hola, ${name}</h4>
+            <p>¡Estás de suerte!</p>
+            <p>Nuestro sistema ha detectado que uno de tus grafitis tiene una coincidencia con otro de nuestra base de datos.</p>
+            <a href="" target="_blank"><img src="http://${host}/api/grafitis/get/${grafitiID}"></a>
+            <br><br><br>
+            <p>Puede ver el match haciendo click <a href="http://${host}/usuario/matches/${grafitiID}" target="_blank">AQUÍ</a>.</p>
+        </div>`;
+}
+
 module.exports = {
     sendEmail,
     getConfirmTemplate,
-    getRecoverTemplate
+    getRecoverTemplate,
+    getMatchNotificationTemplate
 }

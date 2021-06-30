@@ -76,7 +76,8 @@ const signUp = async (req, res) => {
             surname: req.body.surname,
             email: req.body.email,
             password,
-            code
+            code,
+            email_notifications: [],
         });
 
         // Generamos el token
@@ -457,6 +458,51 @@ const changePassword = async (req, res) => {
 
 };
 
+// Lógica de procesado del cambio de contraseña por petición
+const changeNotificationConfig = async (req, res) => {
+
+    try {
+        
+        const userId = req.user._id;
+        
+        const { matches } = req.body;
+        
+        // Rellenamos el array de notificaciones por correo permitidas
+        const notification_array = [];
+        const notification_config = req.body;
+        const keys = Object.keys(notification_config);
+        for (let index = 0; index < keys.length; index++) {
+            const notification = notification_config[keys[index]];
+            if (notification) {
+                notification_array.push(keys[index]);
+            }
+        }
+        
+        const results = await User.updateOne({ _id: userId }, {
+            $set: {
+                email_notifications: notification_array,
+            }
+        });
+        if (results.nModified < 1 || results.nModified > 1) {
+            throw "No se pudo modificar el dato: " + results;
+        }
+
+        // Si todo ha ido bien
+        return res.status(200).json({
+            success: true,
+            message: "Notificaciones correctamente modificadas"
+        });
+
+    } catch (error) {
+        console.error("Error al actualizar las notificaciones => ", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al actualizar las notificaciones => " + error
+        });
+    }
+
+};
+
 // schema para la verificación de los datos de inicio de sesión
 const schemaLogin = Joi.object({
     email: Joi.string().min(6).max(50).required().email(),
@@ -703,6 +749,7 @@ module.exports = {
     restorePassword,
     resetPassword,
     changePassword,
+    changeNotificationConfig,
     logIn,
     logOut,
     removeUser,

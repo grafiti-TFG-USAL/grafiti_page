@@ -5,10 +5,14 @@ const carouselId = "matchCarousel";
 async function getMatches(grafitiId) {
 
     const grafitiID = grafitiId;
+    const matchLimit = 5;
     try {
 
         // Solicitamos al servidor los matches del grafiti
-        const fetchURI = "/api/grafitis/get-matches/" + grafitiID;
+        const fetchURI_base = "/api/grafitis/get-matches/" + grafitiID;
+        const fetchURI = fetchURI_base + "?" +
+        "docsppage=" + matchLimit + "&" +
+        "order=" + "-1";
         const data = await fetch(fetchURI, {
             method: "GET",
         });
@@ -34,7 +38,12 @@ async function getMatches(grafitiId) {
         var index = 0;
         const imagesHeight = document.getElementById(carouselId).dataset.imagesHeight;
         for (const match of matches) {
-
+            // Si se altera la consulta, que el límite se mantenga
+            if(index >= matchLimit){
+                console.log("Broke lim matches");
+                break;
+            }
+            
             // Vemos qué grafiti es el otro
             var grafiti = null;
             if (match.grafiti_1 === grafitiID) {
@@ -63,6 +72,7 @@ async function getMatches(grafitiId) {
             const grafiti_img = document.createElement("img");
             grafiti_img.src = "/api/grafitis/get/" + grafiti;
             div_item.appendChild(grafiti_img);
+            
             // Añadimos el porcentaje de similitud a la imagen
             const div_caption = document.createElement("div");
             div_caption.classList = "carousel-caption";

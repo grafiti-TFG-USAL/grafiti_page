@@ -19,11 +19,14 @@ router.get("/confirm/:token", UserController.confirmUser);
 // RECUPERAR CONTRASEÑA (<host>/api/users/recoverPassword)
 router.post("/recoverPassword", UserController.recoverMail);
 
-// RESTABLECER CONTRASEÑA (<host>/api/users/recoverPassword)
+// RESTABLECER CONTRASEÑA (<host>/api/users/resetPassword)
 router.post("/resetPassword", UserController.resetPassword);
 
-// CAMBIAR CONTRASEÑA (<host>/api/users/recoverPassword)
+// CAMBIAR CONTRASEÑA (<host>/api/users/changePassword)
 router.post("/changePassword", estaAutenticado, UserController.changePassword);
+
+// CAMBIAR CONFIGURACIÓN DE NOTIFICACIONES POR EMAIL (<host>/api/users/changeEmailNotificationsConfig/)
+router.post("/changeEmailNotificationsConfig/", estaAutenticado, UserController.changeNotificationConfig);
 
 // LOGIN (<host>/api/users/login)
 router.post("/login", UserController.logIn);

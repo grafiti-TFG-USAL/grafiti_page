@@ -36,9 +36,7 @@ router.get("/GrafitiDB", userPageController.grafitiDB);
 router.get("/GrafitiMap", userPageController.grafitiMap);
 
 // Perfil de usuario (<host>/usuario/perfil)
-router.get("/perfil", (req, res) => {
-    res.render("user/user-profile.ejs", { titulo: "Perfil de usuario", user: req.user });
-});
+router.get("/perfil", userPageController.userProfile);
 
 // Notificaciones del usuario (<host>/usuario/notificaciones)
 router.get("/notificaciones", userPageController.notifications);

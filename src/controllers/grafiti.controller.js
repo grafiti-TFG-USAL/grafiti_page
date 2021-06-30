@@ -645,6 +645,35 @@ const getIndexGrafitis = async (user, limit = 20, getDeleted = false) => {
 };
 
 /**
+ * Busca y devuelve las estadísticas que se mostrarán en el dashboard
+ * @param {mongoose.Types.ObjectId} user - ObjectId del usuario
+ */
+const getIndexStats = async (user) => {
+
+    try {
+        
+        const stats = {};
+        
+        // Recogemos el nº de grafitis del usuario
+        const nUserGrafitis = await Grafiti.countDocuments({ user, deleted: false });
+        stats.nUserGrafitis = nUserGrafitis? nUserGrafitis : 0;
+        // Recogemos el nº de grafitis de la base
+        const nGrafitis = await Grafiti.countDocuments({ deleted: false });
+        stats.nGrafitis = nGrafitis? nGrafitis : 0;
+        // Recogemos el nº de grafitis del usuario con gps
+        const nGPSUserGrafitis = await Grafiti.countDocuments({ deleted: false , user, gps: { $ne: null } });
+        stats.nGPSUserGrafitis = nGPSUserGrafitis ? nGPSUserGrafitis : 0;
+        
+        return stats;
+
+    } catch (error) {
+        console.error("Error en getIndexStats: ", error);
+        return null;
+    }
+
+};
+
+/**
  * Busca y devuelve el grafiti especificado por id
  * @param {mongoose.Types.ObjectId} grafitiId - ObjectId del grafiti a buscar en la BD
  */
@@ -1169,19 +1198,42 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
 };
 
 /**
- * Devuelve los matches del grafiti indicado como parámetro en la URI
+ * Devuelve los matches del grafiti indicado como parámetro en la URI y el número total de matches del grafiti
  */
 const getMatches = async (req, res) => {
     try {
         
         const grafitiId = req.params.grafiti_id;
-        const matches = await Match.find({
+        const coincidencias = await Match.countDocuments({
             $or: [ { grafiti_1: grafitiId }, { grafiti_2: grafitiId } ],
-        })
-        .sort({ similarity: -1 });
+        });
         
-        const aux = matches.keys().length;
-        const coincidencias = aux? aux : 0;
+        const query = req.query;
+        console.log("Query: ", query);
+        var matches =  Match.find({ 
+            $or: [ { grafiti_1: grafitiId }, { grafiti_2: grafitiId } ],
+        });
+        // Si no hay parámetros de búsqueda
+        if(!req.query) {
+            // Consulta por defecto
+            matches = matches.sort({ similarity: -1 });
+        } else {
+            // Ordenamos los resultados, default: similaridad descendente
+            matches = matches.sort({ similarity: query.order? Number.parseInt(query.order) : -1 });
+            //// Seleccionamos los grafitis correspondientes a la página
+            // Saltamos las páginas anteriores, default: es la primera página
+            const page = query.page? Number.parseInt(query.page)-1 : 0;
+            // Limitamos los resultados a un número, default: sin límite = 0
+            const limPage = query.docsppage? Number.parseInt(query.docsppage) : 0;
+            matches = matches
+            .skip(page*limPage) // Si limPage es 0, skip no tendrá efecto
+            .limit(limPage);
+        }
+        // Ejecutamos la consulta
+        matches = await matches.exec();
+        
+        console.log({ matches, coincidencias });
+        
         const message = `Se han encontrado ${coincidencias} coincidencias`;
         const ret = {
             success: true,
@@ -1211,6 +1263,7 @@ module.exports = {
     countOf,
     deleteUserGrafitis,
     getIndexGrafitis,
+    getIndexStats,
     getGrafitiById,
     getNumberOfPages,
     getGrafitiPage,

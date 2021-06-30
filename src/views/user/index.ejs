@@ -1,46 +1,79 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Página de usuario" , user, index: 1,
-    cssFiles: [] }) %>
+    cssFiles: ["dashboard"] }) %>
 
-    <div class="container pt-3">
+    <div class="container-fluid mt-3">
+        <div class="row">
 
-        <div class="card mb-3">
+            <div class="col-12 col-md-7 mb-3">
+                <div class="card">
 
-            <div class="card-header bg-dark text-white">
-                <a href="usuario/mis-grafitis">
-                    <h3 class="d-inline text-white card-link">
-                        <i class="fa fa-image"></i> Mis grafitis
-                    </h3>
-                </a>
-                <a href="/usuario/subir-grafiti" class="d-inline float-right">
-                    <button type="button" class="btn btn-primary">Subir Grafitis</button>
-                </a>
-            </div>
-
-            <div class="card-body">
-                <% if (images.length> 0) { %>
-                    <div class="row">
-                        <% for(const image of images) { %>
-                            <div class="col-6 col-sm-4 col-lg-3 mb-2" style="position: relative">
-                                <a href="/usuario/grafiti/<%= image._id %>">
-                                    <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
-                                        alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
-                                        style="display: block">
-                                    <%# if (!image.gps) { %>
-                                        <!--i class="fa fa-map-marker-alt"
-                                            style="position: absolute; bottom:0; left:0;"></i-->
-                                        <%# } %>
-                                </a>
-                            </div>
-                            <% } %>
+                    <div class="card-header bg-dark">
+                        <a id="misGrafitis" href="usuario/mis-grafitis">
+                            <h3 class="d-inline text-white">
+                                <i class="fa fa-image"></i> Mis grafitis
+                            </h3>
+                        </a>
+                        <a href="/usuario/subir-grafiti" class="d-inline float-right">
+                            <button type="button" class="btn btn-primary">Subir Grafitis</button>
+                        </a>
                     </div>
-                    <% } else { %>
-                        <h3 class="display-4 text-center justify-content-center text-secondary">Aún no se ha subido
-                            ninguna imagen</h3>
-                        <% } %>
+
+                    <div class="card-body">
+                        <% if (images.length> 0) { %>
+                            <div class="row">
+                                <% for(const image of images) { %>
+                                    <div class="col-6 col-sm-4 col-lg-3 mb-2">
+                                        <a href="/usuario/grafiti/<%= image._id %>">
+                                            <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
+                                                alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail">
+                                            <%# if (!image.gps) { %>
+                                                <!--i class="fa fa-map-marker-alt"
+                                            style="position: absolute; bottom:0; left:0;"></i-->
+                                                <%# } %>
+                                        </a>
+                                    </div>
+                                    <% } %>
+                            </div>
+                            <% } else { %>
+                                <h3 class="display-4 text-center justify-content-center text-secondary">Aún no se ha
+                                    subido
+                                    ninguna imagen</h3>
+                                <% } %>
+                    </div>
+
+                </div>
             </div>
 
+            <div class="col-12 col-md-5 mb-3">
+                <div class="card">
+
+                    <div class="card-header bg-info">
+                        <h4 class="mb-0 text-white"><i class="fa fa-info-circle"></i> Estadísticas </h4>
+                    </div>
+
+                    <div class="card-body card-body-dark">
+                        <div class="row">
+                            <strong class="col-8">Nº Grafitis: </strong><span class="col-4">
+                                <%= stats.nUserGrafitis %>
+                            </span>
+                        </div>
+                        <div class="row">
+                            <strong class="col-8">Nº Grafitis con GPS: </strong><span class="col-4">
+                                <%= stats.nGPSUserGrafitis %> / <%= stats.nUserGrafitis %>
+                            </span>
+                        </div>
+                        <div class="row">
+                            <strong class="col-8">Grafitis en la base: </strong><span class="col-4">
+                                <%= stats.nGrafitis %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
+    </div>
     </div>
 
     <%- include('../templates/footer'); %>

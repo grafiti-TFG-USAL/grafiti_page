@@ -2,50 +2,64 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const userSchema  = mongoose.Schema({
+    // Nombre del usuario
     name: {
         type: String,
         required: true,
         min: 2,
-        max: 20
+        max: 20,
     },
+    // Apellido/s del usuario
     surname: {
         type: String,
         required: true,
         min: 2,
-        max: 50
+        max: 50,
     },
+    // Email del usuario
     email: {
         type: String,
         required: true,
         lowercase: true,
         unique: true,
         min: 6,
-        max: 50
+        max: 50,
     },
+    // Contraseña del usuario
     password: {
         type: String,
         required: true,
         min: 10,
-        max: 50
+        max: 50,
     },
+    // Fecha del último cambio de contraseña
     lastPasswordRenewal: {
         type: Date,
         required: true,
-        default: Date.now()
+        default: Date.now(),
     },
+    // Número de notificaciones del usuario
     notifications: { 
         type: Number, 
         default: 0,
-        min: 0
+        min: 0,
     },
+    // Estado de la cuenta: "VERIFIED" para cuentas autenticadas y "UNVERIFIED" para aquellas que aún no han confirmado su correo
     account_status: {
         type: String,
         required: true,
-        default: "UNVERIFIED"
+        default: "UNVERIFIED",
     },
+    // Código de validación del correo electrónico
     code: {
-        type: String
+        type: String,
     },
+    // Tipos de notificaciones a las que el usuario se ha suscrito
+    email_notifications: [{
+        type: String,
+        enum: ["matches", "no gps"], // Si el array contiene la notificación, es que está suscrito
+        unique: true,
+    }],
 }, { 
     timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });

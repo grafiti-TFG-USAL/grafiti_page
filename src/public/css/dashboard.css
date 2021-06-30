@@ -1,0 +1,21 @@
+#misGrafitis {
+    text-decoration-style: solid;
+    text-decoration-color: #fff;
+}
+
+.card-body .row div {
+    position: relative;
+} 
+
+.card-body .row div a img {
+    display: block;
+}
+
+.card-body-dark {
+    background-color: rgb(109, 204, 204);
+    border-radius: 0 0 calc(.25rem - 1px) calc(.25rem - 1px);
+}
+/*
+.card-body-dark .row {
+    border-bottom: 1px dotted #000;
+}*/

@@ -142,8 +142,7 @@ function initMap() {
     // Evento de aplicación del filtro de búsqueda por zona
     document.getElementById("aplicar_filtro_zona").addEventListener("click", (event) => {
         event.preventDefault();
-        document.getElementById("spinner_zona").classList.remove("d-none"); 
-        const urlSearchParams = new URLSearchParams(window.location.search);
+        document.getElementById("spinner_zona").classList.remove("d-none"); const urlSearchParams = new URLSearchParams(window.location.search);
         const params = Object.fromEntries(urlSearchParams.entries());
         console.log("Params: ", params);
         var query = `?`;
@@ -213,4 +212,3 @@ document.getElementById("aplicar_filtro_fecha").addEventListener("click", (event
     window.location.href = query;
     document.getElementById("spinner_fecha").classList.add("d-none");
 });
-

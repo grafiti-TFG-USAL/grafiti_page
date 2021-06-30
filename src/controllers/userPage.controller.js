@@ -3,6 +3,7 @@ const Notification = require("../models/notification.model");
 const User = require("../models/user.model");
 const { 
     getIndexGrafitis, 
+    getIndexStats,
     getGrafitiById, 
     getGrafitiPage, 
     getNumberOfPages,
@@ -19,9 +20,11 @@ const { timeAgo } = require("../helpers/moment");
 const index = async (req, res) => {
 
     // Obtenemos las 20 imagenes más recientemente subidas
-    const images = await getIndexGrafitis(req.user._id, 24);
-
-    res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user, images });
+    const images = await getIndexGrafitis(req.user._id, 12);
+    
+    const stats = await getIndexStats(req.user._id);
+    console.log("STATS: ", stats);
+    res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user, images, stats });
 
 };
 
@@ -111,36 +114,35 @@ const showGrafiti = async (req, res) => {
 const showMatches = async (req, res) => {
 
     try {
+        
         // Buscamos el grafiti en la base
-        //var grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
-        var grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id }).populate("gps", { location: 1 });
+        var grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
 
         // Si el grafiti no existe, está borrado o no pertenece al usuario
         if (!grafiti) {
-            console.error("No grafiti");
-            return res.render("../views/404");
+            throw "El grafiti no existe";
         }
         else if (grafiti.deleted) {
-            console.error("Grafiti deleted");
-            return res.render("../views/404");
+            throw "El grafiti fue borrado";
         }
         else{
             
+            return res.status(200).render("user/matches.ejs", { titulo: "Matches", grafiti: req.params.grafiti_id, user: req.user });
             
-            
+            /*
             // Si el grafiti no es suyo, cargamos la página de descripción
             if (!grafiti.user.equals(req.user._id)) {
                 grafitiDesc(req, res);
             }
             // Si el grafiti es suyo, cargamos la página de edición
             else {
-                grafitiEdit(req, res); //TODO: falta el await?
-            }
+                grafitiEdit(req, res);
+            }*/
         } 
 
     } catch (error) {
-        console.error("Error en showGrafiti: ", error);
-        return null;
+        console.error("Error en showMatches: ", error);
+        return res.status(404).render("../views/404");
     }
 
 };
@@ -282,6 +284,37 @@ const userGrafitis = async (req, res) => {
 
 };
 
+/**
+ * Recoge los parámetros del usuario para mostrarlos en la página 
+ */
+const userProfile = async (req, res) => {
+    
+    try {
+        
+        const usuario = await User.findOne({ _id: req.user._id }, { email_notifications: 1 });
+        if (!usuario) {
+            throw "No se ha encontrado al usuario en la base de datos";
+        } else {
+            if(!usuario.email_notifications) {
+                throw "El usuario no tiene establecidas las notificaciones";
+            }
+        }
+        
+        return res.status(200).render("user/user-profile.ejs", { 
+            titulo: "Perfil de usuario", 
+            user: req.user, 
+            notification_config: usuario.email_notifications 
+        });
+        
+    } catch (error) {
+        console.error("Error al cargar la página de usuario: " + error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al cargar la página de usuario: " + error,
+        });
+    }
+}
+    
 /**
  * Muestra la Base de Datos de grafitis de todos los usuarios
  */
@@ -521,6 +554,7 @@ module.exports = {
     grafitiEdit,
     grafitiDesc,
     userGrafitis,
+    userProfile,
     grafitiDB,
     grafitiMap,
     notifications,

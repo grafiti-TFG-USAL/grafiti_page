@@ -1,0 +1,50 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: titulo , user, index: 0, cssFiles:
+    ["matches"] }) %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Aqui mostramos el grafiti -->
+            <div class="col-12 col-sm-6 mt-3">
+                <img src="/api/grafitis/get/<%= grafiti %>" class="w-100 img-thumbnail">
+            </div>
+            <!-- Aqui mostramos sus matches -->
+            <div class="col-12 col-sm-6 my-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="d-inline" id="matchesHeader">Matches <span id="numMatches"></span></h3>
+                        <div class="btn-group float-right">
+                            <button class="d-inline dropdown-toggle btn btn-secondary" type="button"
+                                data-toggle="dropdown">Ordenar <i class="fa fa-sort" aria-hidden="true"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item active text-white" type="button" id="sortSimilarity" data-toggle="modal" data-target="#filtro-similarity">por % de similitud <i class="fa fa-bullseye ml-1" aria-hidden="true"></i> <span class="ml-1 mb-1 badge badge-warning badge-pill" id="sortPill" data-toggle="tooltip" title="Invertir orden"> <i id="sortDataBadge" class="fa fa-sort-numeric-desc"></i></span>
+                                </a>
+                                <!--a class="dropdown-item" type="button" data-toggle="modal"
+                                    data-target="#filtro-distancia">por distancia <i class="fa fa-map-marker ml-1"
+                                        aria-hidden="true"></i>
+                                </a-->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body" id="cardBody" data-grafiti="<%= grafiti %>">
+                        <div class="row" id="matchesBody">
+                            <!-- matches.js rellena con las imágenes -->
+                        </div>
+                    </div>
+
+                    <div class="card-footer" id="cardFooter">
+                        <div id="paginacion" class="row justify-content-center align-items-center">
+                            <ul class="pagination" id="listPages">
+                                <!-- matches.js insertará las páginas -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/userPages/matches.js"></script>
+
+    <%- include("../templates/footer"); %>
