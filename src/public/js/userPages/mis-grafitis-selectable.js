@@ -3,7 +3,7 @@ const gallery = document.getElementById("gallery");
 
 // Variables
 var batch = 0;
-const imagesPBatch = 100;
+const imagesPBatch = 10;
 var nImages = 0;
 var limReached = false;
 
@@ -70,7 +70,10 @@ async function fetchNextImageBatch(batch, imagesPBatch) {
     const fetchURI = `/api/grafitis/get-grafiti-batch`;
     const data = await fetch(fetchURI, {
         method: "POST",
-        body,
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body),
     });
     if (!data) {
         throw "No se ha recibido respuesta de la API";
@@ -138,7 +141,9 @@ function addImagesToGallery(images) {
     
     for (const image of images) {
         const img = document.createElement("img");
+        img.loading = "lazy";
         img.src = `/api/grafitis/get-thumbnail/${image._id}`;
+        img.alt = image.description;
         gallery.appendChild(img);
     }
     

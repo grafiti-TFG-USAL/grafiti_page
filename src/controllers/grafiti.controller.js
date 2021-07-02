@@ -1249,35 +1249,43 @@ const getBatch = async (req, res) => {
 
         // Recogemos los parámetros de la consulta
         const body = req.body;
-        const { self, minDate, maxDate, searchZone, batch, images } = body;
+        console.log(req.body)
+        const { minDate, maxDate, searchZone, batch, images } = body;
 
-        const searchParams = {};
-        const selectAttributes = { _id: 1 };
-        const pipeline = [
+        // Creamos la pipeline para la aggregation
+        const pipeline = [];
         
-            { 
-                "$match" : { 
-                    "gps" : { 
-                        "$ne" : null
-                    }, 
-                    "deleted" : false
-                }
-            }, 
-            { 
-                "$unset" : [
-                    "featureMap", 
-                    "serverName", 
-                    "deleted", 
-                    "lastModified", 
-                    "relativePath", 
-                    "absolutePath", 
-                    "orientation", 
-                    "rotation", 
-                    "thumbnail", 
-                    "__v"
-                ]
-            }, 
-            { 
+        const match_filter = {};
+        match_filter["$match"] = { "deleted": false };
+        
+        // Si el grafiti debe ser del propio usuario
+        if(body.self) {
+            match_filter["$match"]["user"] = req.user._id;
+        }
+        // Si se filtra por fecha minima
+        if(minDate) {
+            match_filter["$match"]["uploadedAt"] = { $gte: minDate };
+        }
+        // Si se filtra por fecha máxima
+        if(maxDate) {
+            if(match_filter["$match"]["uploadedAt"]["$gte"]) {
+                match_filter["$match"]["uploadedAt"]["$lt"] = maxDate;
+            } else {
+                match_filter["$match"]["uploadedAt"] = { $lt: maxDate };
+            }
+        }
+        // Añadimos los filtros
+        pipeline.push(match_filter);
+        
+        // Descartamos los atributos irrelevantes
+        pipeline.push({ 
+            "$unset" : [ "featureMap", "serverName", "deleted", "lastModified", "relativePath", "absolutePath", "orientation", "rotation", "thumbnail", "__v" ]
+        });
+        
+        // Si se filtra por zona
+        if (searchZone) {
+            // Hacemos el left join
+            pipeline.push({ 
                 "$lookup" : { 
                     "from" : "locations", 
                     "let" : { 
@@ -1289,13 +1297,13 @@ const getBatch = async (req, res) => {
                                 "near" : { 
                                     "type" : "Point", 
                                     "coordinates" : [
-                                        -5.667642972222223, 
-                                        40.962468
+                                        searchZone.lng, 
+                                        searchZone.lat
                                     ]
                                 }, 
                                 "distanceField" : "distance.calculated", 
                                 "spherical" : true, 
-                                "maxDistance" : 5000.0, 
+                                "maxDistance" : (searchZone.radio * 1000), 
                                 "key" : "location", 
                                 "includeLocs" : "distance.point", 
                                 "uniqueDocs" : false
@@ -1314,77 +1322,43 @@ const getBatch = async (req, res) => {
                     ], 
                     "as" : "position"
                 }
-            }, 
-            { 
+            });
+            // Desplegamos el array
+            pipeline.push({ 
                 "$unwind" : { 
                     "path" : "$position", 
                     "preserveNullAndEmptyArrays" : false
                 }
-            }, 
-            { 
-                "$unset" : [
-                    "gps", 
-                    "position._id", 
-                    "position.location.type", 
-                    "position.grafiti", 
-                    "position.__v", 
-                    "position.createdAt"
-                ]
-            }
-        ];
-        
-        const grafitis = await Grafiti.aggregate(pipeline);
-        
-        /*// Hay filtro de zona?
-        if (searchZone) {
-            const locations = await Location.find({
-                location: {
-                    $near: {
-                        $geometry: {
-                            type: "Point",
-                            coordinates: [searchZone.lng, searchZone.lat],
-                        },
-                        $maxDistance: searchZone.radio * 1000,
-                        $minDistance: 0,
-                    }
-                }
-            }, { grafiti: 1 }).populate("grafiti");
-            
-        }
-
-
-        // Solo grafitis del propio usuario?
-        if (self) {
-            searchParams._id = req.user._id;
-        }
-        // Filtro por fecha inferior?
-        if (minDate) {
-            searchParams.uploadedAt = { $gte: minDate };
-        }
-        // Por fecha superior?
-        if (maxDate) {
-            if (searchParams.uploadedAt) {
-                searchParams.uploadedAt.$lte = maxDate;
-            } else {
-                searchParams.uploadedAt = { $lte: maxDate };
-            }
-        }
-
-        const query = Grafiti.find(searchParams, selectAttributes);
-
-        if (searchZone) {
-            query.populate("gps");
-        }
-
-        if (searchZone) {
-            grafitis = grafitis.filter((grafiti) => {
-                return
+            });
+            // Desechamos los atributos irrelevantes
+            pipeline.push({ 
+                "$unset" : [ "position._id", "position.location.type", "position.grafiti", "position.__v", "position.createdAt" ]
             });
         }
-*/
-
-        console.log(grafitis);
         
+        // Desechamos atributos irrelevantes
+        pipeline.push({ 
+            "$unset" : [ "gps" ]
+        });
+        
+        // Ordenamos por fecha de captura/subida
+        pipeline.push({ 
+            "$sort" : { "dateTimeOriginal" : -1 }
+        });
+        
+        console.log("SKIP: ", batch*images);
+        // Nos saltamos los ya obtenidos
+        pipeline.push({ "$skip" : batch*images });
+        
+        console.log("Limit: ", images);
+        // Limitamos los devueltos
+        pipeline.push({ "$limit" : images });
+        
+        // Ejecutamos la consulta
+        const grafitis = await Grafiti.aggregate(pipeline);
+        
+        console.log(grafitis);
+        // Devolvemos los resultados
         return res.status(201).json({
             success: true,
             message: "Consulta exitosa",
