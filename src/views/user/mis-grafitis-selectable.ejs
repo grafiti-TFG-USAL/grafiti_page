@@ -1,0 +1,46 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mis Grafitis" , user, index: 0,
+    cssFiles: ["mis-grafitis-selectable"] }) %>
+
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="d-inline">Mis Grafitis</h3>
+                        <!--div class="d-inline float-right">
+                            <a href="/usuario/subir-grafiti" class="d-inline btn-group">
+                                <button type="button" class="btn btn-success"><i class="fa fa-plus"
+                                        aria-hidden="true"></i> Añadir</button>
+                            </a>
+                            <div class="btn-group d-inline">
+                                <button class="d-inline dropdown-toggle btn btn-info" type="button"
+                                    data-toggle="dropdown">Filtrar <i class="fa fa-bars" aria-hidden="true"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" type="button" data-toggle="modal"
+                                        data-target="#filtro-zona">por zona <i class="fa fa-map-marker ml-1"
+                                            aria-hidden="true"></i>
+                                    </a>
+                                    <a class="dropdown-item" type="button" data-toggle="modal"
+                                        data-target="#filtro-fecha">por fecha <i class="fa fa-calendar ml-1"
+                                            aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div-->
+                    </div>
+
+                    <div class="card-body">
+                        <div id="gallery">
+                            <!-- El js rellenará las imágenes -->
+                        </div>
+                    </div><!-- Fin card-body -->
+
+                </div><!-- Fin card -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/userPages/mis-grafitis-selectable.js"></script>
+
+    <%- include("../templates/footer"); %>

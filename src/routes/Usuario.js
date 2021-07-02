@@ -29,8 +29,14 @@ router.get("/matches/:grafiti_id", userPageController.showMatches);
 // Grafitis del usuario (<host>/usuario/Mis-Grafitis)
 router.get("/Mis-Grafitis", userPageController.userGrafitis);
 
+// Grafitis del usuario, seleccionables (<host>/usuario/Mis-Grafitis/selectable)
+router.get("/Mis-Grafitis/selectable", userPageController.userGrafitis_selection);
+
 // Base de Datos de Grafitis (<host>/usuario/GrafitiDB)
 router.get("/GrafitiDB", userPageController.grafitiDB);
+
+// Base de Datos de Grafitis, selecionables(<host>/usuario/GrafitiDB/selectable)
+router.get("/GrafitiDB/selectable", userPageController.grafitiDB_selection);
 
 // Mapa de Grafitis de la BD (<host>/usuario/GrafitiMap)
 router.get("/GrafitiMap", userPageController.grafitiMap);

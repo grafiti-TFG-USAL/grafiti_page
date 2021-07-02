@@ -35,5 +35,8 @@ router.get("/get-grafitis-with-gps", estaAutenticado, grafitiController.getGrafi
 // Obtención de los matches de un grafiti (<host>/api/grafitis/get-matches/:grafiti_id)
 router.get("/get-matches/:grafiti_id", estaAutenticado, grafitiController.getMatches);
 
+// Devuelve un lote de imágenes (<host>/api/grafitis/get-grafiti-batch)
+router.post("/get-grafiti-batch", grafitiController.getBatch);
+
 
 module.exports = router;

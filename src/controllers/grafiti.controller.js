@@ -249,7 +249,7 @@ const upload = async (req, res) => {
                         seen: false,
                     });
                     const notificacionSaved = await notificacion.save();
-                    if(!notificacionSaved){
+                    if (!notificacionSaved) {
                         await fs.unlink(imgTempPath);
                         errores.push("No se ha podido  notificación al usuario");
                         fileErr.push(file.originalName);
@@ -353,8 +353,8 @@ const update = async (req, res) => {
                         const decrement = await User.updateOne({ _id: req.user._id }, {
                             $inc: { notifications: -1 },
                         })
-                        if(!removal || 
-                        !decrement){
+                        if (!removal ||
+                            !decrement) {
                             console.error("No se ha podido eliminar la notificación");
                         }
 
@@ -415,16 +415,16 @@ const update = async (req, res) => {
                     } else {
                         const eliminacion = await Location.deleteOne({ grafiti: req.params.grafiti_id });
                         if (eliminacion.deletedCount == 1 && eliminacion.ok == 1) {
-                            
+
                             const notificacion = new Notification({
                                 user: req.user.id,
                                 type: "Ubicación no establecida",
                                 grafiti: req.params.grafiti_id,
                                 seen: false,
                             });
-                            
+
                             const notificacionSaved = await notificacion.save();
-                            if(!notificacionSaved){
+                            if (!notificacionSaved) {
                                 console.error("Error, no se ha podido  notificación al usuario");
                                 return res.status(400).json({
                                     success: false,
@@ -436,7 +436,7 @@ const update = async (req, res) => {
                                 success: true,
                                 message: `Ubicación eliminada`
                             });
-                            
+
                         } else {
                             console.error("Error, no se ha podido eliminar el documento Location");
                             return res.status(400).json({
@@ -504,25 +504,13 @@ const remove = async (req, res) => {
 
     // Si el grafiti no existe, está borrado o no pertenece al usuario
     if (!grafiti) {
-        console.error("No grafiti")
-        return res.status(400).json({
-            success: false,
-            message: "Error: el grafiti no existe"
-        });
+        throw "El grafiti no existe";
     }
     else if (grafiti.deleted) {
-        console.error("Grafiti deleted")
-        return res.status(400).json({
-            success: false,
-            message: "Error: el grafiti ha sido borrado"
-        });
+        throw "El grafiti ha sido borrado";
     }
     else if (!grafiti.user.equals(req.user._id)) {
-        console.error("Not user")
-        return res.status(400).json({
-            success: false,
-            message: "Error: solo el usuario que ha subido el grafiti puede modificarlo"
-        });
+        throw "Solo el usuario que ha subido el grafiti puede eliminarlo";
     } else {
 
         try {
@@ -535,14 +523,15 @@ const remove = async (req, res) => {
                 $currentDate: { lastModified: 1 }
             });
             if (resultado.nModified < 1 || resultado.nModified > 1) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Error: no se ha podido eliminar la imagen"
-                });
+                throw "No se ha podido eliminar la imagen, " + resultado;
             } else {
 
                 // Eliminamos todas las notificaciones relativas a la imagen
                 await Notification.deleteMany({ grafiti: req.params.grafiti_id });
+
+                // Eliminamos los matches del grafiti
+                await Match.deleteMany({ $or: { grafiti_1: params.grafiti_id, grafiti_2: params.grafiti_id } });
+
                 return res.status(200).json({
                     success: true,
                     message: "Grafiti eliminado"
@@ -651,19 +640,19 @@ const getIndexGrafitis = async (user, limit = 20, getDeleted = false) => {
 const getIndexStats = async (user) => {
 
     try {
-        
+
         const stats = {};
-        
+
         // Recogemos el nº de grafitis del usuario
         const nUserGrafitis = await Grafiti.countDocuments({ user, deleted: false });
-        stats.nUserGrafitis = nUserGrafitis? nUserGrafitis : 0;
+        stats.nUserGrafitis = nUserGrafitis ? nUserGrafitis : 0;
         // Recogemos el nº de grafitis de la base
         const nGrafitis = await Grafiti.countDocuments({ deleted: false });
-        stats.nGrafitis = nGrafitis? nGrafitis : 0;
+        stats.nGrafitis = nGrafitis ? nGrafitis : 0;
         // Recogemos el nº de grafitis del usuario con gps
-        const nGPSUserGrafitis = await Grafiti.countDocuments({ deleted: false , user, gps: { $ne: null } });
+        const nGPSUserGrafitis = await Grafiti.countDocuments({ deleted: false, user, gps: { $ne: null } });
         stats.nGPSUserGrafitis = nGPSUserGrafitis ? nGPSUserGrafitis : 0;
-        
+
         return stats;
 
     } catch (error) {
@@ -824,8 +813,7 @@ const getGrafitisWithGPS = async (req, res) => {
                 success: false,
                 message: "Error al consultar el número de grafitis"
             });
-        } else
-        {
+        } else {
             if (grafitis.length == 0) {
                 return res.status(400).json({
                     success: false,
@@ -880,7 +868,7 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user 
             .skip((page - 1) * nGrafitis)
             .limit(nGrafitis);
 
-        const grafitiWithLocations = locations.filter((location) => { return location.grafiti? true : false; });
+        const grafitiWithLocations = locations.filter((location) => { return location.grafiti ? true : false; });
         const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
 
         var grafitis = null;
@@ -1073,7 +1061,7 @@ const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDat
                 select: { _id: 1 }
             });
 
-        const grafitiWithLocations = locations.filter((location) => { return location.grafiti? true : false; });
+        const grafitiWithLocations = locations.filter((location) => { return location.grafiti ? true : false; });
         const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
 
         // Filtramos a aquellos dentro del marco temporal
@@ -1202,38 +1190,38 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
  */
 const getMatches = async (req, res) => {
     try {
-        
+
         const grafitiId = req.params.grafiti_id;
         const coincidencias = await Match.countDocuments({
-            $or: [ { grafiti_1: grafitiId }, { grafiti_2: grafitiId } ],
+            $or: [{ grafiti_1: grafitiId }, { grafiti_2: grafitiId }],
         });
-        
+
         const query = req.query;
         console.log("Query: ", query);
-        var matches =  Match.find({ 
-            $or: [ { grafiti_1: grafitiId }, { grafiti_2: grafitiId } ],
+        var matches = Match.find({
+            $or: [{ grafiti_1: grafitiId }, { grafiti_2: grafitiId }],
         });
         // Si no hay parámetros de búsqueda
-        if(!req.query) {
+        if (!req.query) {
             // Consulta por defecto
             matches = matches.sort({ similarity: -1 });
         } else {
             // Ordenamos los resultados, default: similaridad descendente
-            matches = matches.sort({ similarity: query.order? Number.parseInt(query.order) : -1 });
+            matches = matches.sort({ similarity: query.order ? Number.parseInt(query.order) : -1 });
             //// Seleccionamos los grafitis correspondientes a la página
             // Saltamos las páginas anteriores, default: es la primera página
-            const page = query.page? Number.parseInt(query.page)-1 : 0;
+            const page = query.page ? Number.parseInt(query.page) - 1 : 0;
             // Limitamos los resultados a un número, default: sin límite = 0
-            const limPage = query.docsppage? Number.parseInt(query.docsppage) : 0;
+            const limPage = query.docsppage ? Number.parseInt(query.docsppage) : 0;
             matches = matches
-            .skip(page*limPage) // Si limPage es 0, skip no tendrá efecto
-            .limit(limPage);
+                .skip(page * limPage) // Si limPage es 0, skip no tendrá efecto
+                .limit(limPage);
         }
         // Ejecutamos la consulta
         matches = await matches.exec();
-        
+
         console.log({ matches, coincidencias });
-        
+
         const message = `Se han encontrado ${coincidencias} coincidencias`;
         const ret = {
             success: true,
@@ -1241,16 +1229,175 @@ const getMatches = async (req, res) => {
             matches,
             nMatches: coincidencias,
         };
-        
+
         return res.status(200).json(ret);
-        
+
     } catch (error) {
         console.error("Ha habido un error en getMatches: ", error);
         return res.status(400).json({
             success: false,
             message: error,
         });
-    }  
+    }
+};
+
+/**
+ * Devuelve un lote de imágenes
+ */
+const getBatch = async (req, res) => {
+    try {
+
+        // Recogemos los parámetros de la consulta
+        const body = req.body;
+        const { self, minDate, maxDate, searchZone, batch, images } = body;
+
+        const searchParams = {};
+        const selectAttributes = { _id: 1 };
+        const pipeline = [
+        
+            { 
+                "$match" : { 
+                    "gps" : { 
+                        "$ne" : null
+                    }, 
+                    "deleted" : false
+                }
+            }, 
+            { 
+                "$unset" : [
+                    "featureMap", 
+                    "serverName", 
+                    "deleted", 
+                    "lastModified", 
+                    "relativePath", 
+                    "absolutePath", 
+                    "orientation", 
+                    "rotation", 
+                    "thumbnail", 
+                    "__v"
+                ]
+            }, 
+            { 
+                "$lookup" : { 
+                    "from" : "locations", 
+                    "let" : { 
+                        "locationId" : "$gps"
+                    }, 
+                    "pipeline" : [
+                        { 
+                            "$geoNear" : { 
+                                "near" : { 
+                                    "type" : "Point", 
+                                    "coordinates" : [
+                                        -5.667642972222223, 
+                                        40.962468
+                                    ]
+                                }, 
+                                "distanceField" : "distance.calculated", 
+                                "spherical" : true, 
+                                "maxDistance" : 5000.0, 
+                                "key" : "location", 
+                                "includeLocs" : "distance.point", 
+                                "uniqueDocs" : false
+                            }
+                        }, 
+                        { 
+                            "$match" : { 
+                                "$expr" : { 
+                                    "$eq" : [
+                                        "$_id", 
+                                        "$$locationId"
+                                    ]
+                                }
+                            }
+                        }
+                    ], 
+                    "as" : "position"
+                }
+            }, 
+            { 
+                "$unwind" : { 
+                    "path" : "$position", 
+                    "preserveNullAndEmptyArrays" : false
+                }
+            }, 
+            { 
+                "$unset" : [
+                    "gps", 
+                    "position._id", 
+                    "position.location.type", 
+                    "position.grafiti", 
+                    "position.__v", 
+                    "position.createdAt"
+                ]
+            }
+        ];
+        
+        const grafitis = await Grafiti.aggregate(pipeline);
+        
+        /*// Hay filtro de zona?
+        if (searchZone) {
+            const locations = await Location.find({
+                location: {
+                    $near: {
+                        $geometry: {
+                            type: "Point",
+                            coordinates: [searchZone.lng, searchZone.lat],
+                        },
+                        $maxDistance: searchZone.radio * 1000,
+                        $minDistance: 0,
+                    }
+                }
+            }, { grafiti: 1 }).populate("grafiti");
+            
+        }
+
+
+        // Solo grafitis del propio usuario?
+        if (self) {
+            searchParams._id = req.user._id;
+        }
+        // Filtro por fecha inferior?
+        if (minDate) {
+            searchParams.uploadedAt = { $gte: minDate };
+        }
+        // Por fecha superior?
+        if (maxDate) {
+            if (searchParams.uploadedAt) {
+                searchParams.uploadedAt.$lte = maxDate;
+            } else {
+                searchParams.uploadedAt = { $lte: maxDate };
+            }
+        }
+
+        const query = Grafiti.find(searchParams, selectAttributes);
+
+        if (searchZone) {
+            query.populate("gps");
+        }
+
+        if (searchZone) {
+            grafitis = grafitis.filter((grafiti) => {
+                return
+            });
+        }
+*/
+
+        console.log(grafitis);
+        
+        return res.status(201).json({
+            success: true,
+            message: "Consulta exitosa",
+            images: grafitis,
+        });
+
+    } catch (error) {
+        console.error("Error en getBatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
 };
 
 
@@ -1275,4 +1422,5 @@ module.exports = {
     getGrafitisFilteredByGPSAndDate,
     getNumberOfGrafitisFilteredByGPSAndDate,
     getMatches,
+    getBatch,
 };

@@ -19,8 +19,6 @@ const locationSchema = mongoose.Schema({
   },
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
 });
 
 locationSchema.index({ location: "2dsphere" });

@@ -61,6 +61,7 @@ const grafitiSchema = mongoose.Schema({
     metadata: {
         type: Object,
     },
+    // Fecha de captura de la imagen
     dateTimeOriginal: {
         type: Date,
         default: Date.now(),
