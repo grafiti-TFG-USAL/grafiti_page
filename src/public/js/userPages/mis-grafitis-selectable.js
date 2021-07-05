@@ -3,15 +3,15 @@ const gallery = document.getElementById("gallery");
 
 // Variables
 var batch = 0;
-const imagesPBatch = 10;
+const imagesPBatch = 25;
 var nImages = 0;
 var limReached = false;
 
 // Parámetros de la query
 const urlSearchParams = new URLSearchParams(window.location.search);
 const params = Object.fromEntries(urlSearchParams.entries());
-const minDate = params.minDate ? Date(params.minDate) : null;
-const maxDate = params.maxDate ? Date(params.maxDate) : null;
+const minDate = params.minDate ? params.minDate : null;
+const maxDate = params.maxDate ? params.maxDate : null;
 var searchZone_ = null;
 if(params.lat && params.lng && params.radio) {
     searchZone_ = { 
@@ -23,8 +23,10 @@ if(params.lat && params.lng && params.radio) {
 const searchZone = searchZone_;
 
 // Rellena la galería
+var ejecutando = false;
 async function fillGallery() {
 
+    ejecutando = true;
     if (limReached) {
         console.log("Límite alcanzado");
         return;
@@ -33,10 +35,10 @@ async function fillGallery() {
     try {
 
         // Obtenemos la tanda de imágenes
-        const images = await fetchNextImageBatch(batch, imagesPBatch);
+        const images = await fetchNextImageBatch(batch++, imagesPBatch);
 
         // Rellenamos la galería con la tanda obtenida
-        if (images) {
+        if (images && images.length > 0) {
             addImagesToGallery(images);
         } else {
             limReached = true;
@@ -47,6 +49,8 @@ async function fillGallery() {
         console.error(msg);
         window.alert(msg);
     }
+    
+    ejecutando = false;
 
 }
 
@@ -65,7 +69,7 @@ async function fetchNextImageBatch(batch, imagesPBatch) {
         self: true, // Si devuelve grafitis propios o de toda la base
         minDate, maxDate, searchZone, // Filtros
     };
-
+    console.log("BODY: ", body)
     // Hacemos la consulta
     const fetchURI = `/api/grafitis/get-grafiti-batch`;
     const data = await fetch(fetchURI, {
@@ -88,12 +92,8 @@ async function fetchNextImageBatch(batch, imagesPBatch) {
         throw "Ha habido un fallo en la consulta: " + result.message;
     }
 
-    // Pasamos al siguiente lote
-    batch++;
-
     // LLevamos la cuenta del número de grafitis cargados
     nImages += result.images.length;
-    console.log(result);
     // Si no había grafitis que cargar
     if (nImages == 0) {
         limReached = true;
@@ -142,11 +142,23 @@ function addImagesToGallery(images) {
     for (const image of images) {
         const img = document.createElement("img");
         img.loading = "lazy";
+        img.classList.add("d-inline");
         img.src = `/api/grafitis/get-thumbnail/${image._id}`;
         img.alt = image.description;
         gallery.appendChild(img);
     }
     
+    if(batch==1) {
+        // Cuando el usuario esté cerca del límite cargamos
+        $(window).scroll(function() {
+            if(!limReached && !ejecutando){
+                if($(window).scrollTop() + $(window).height() > $(document).height() - 300) {
+                    fillGallery();
+                }
+            }
+        });
+    }
+    
 }
 
-fillGallery();
+//fillGallery();

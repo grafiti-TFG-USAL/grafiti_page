@@ -1264,14 +1264,14 @@ const getBatch = async (req, res) => {
         }
         // Si se filtra por fecha minima
         if(minDate) {
-            match_filter["$match"]["uploadedAt"] = { $gte: minDate };
+            match_filter["$match"]["uploadedAt"] = { $gte: new Date(minDate) };
         }
         // Si se filtra por fecha máxima
         if(maxDate) {
-            if(match_filter["$match"]["uploadedAt"]["$gte"]) {
-                match_filter["$match"]["uploadedAt"]["$lt"] = maxDate;
+            if(match_filter["$match"]["uploadedAt"]) {
+                match_filter["$match"]["uploadedAt"]["$lt"] = new Date(maxDate);
             } else {
-                match_filter["$match"]["uploadedAt"] = { $lt: maxDate };
+                match_filter["$match"]["uploadedAt"] = { $lt: new Date(maxDate) };
             }
         }
         // Añadimos los filtros
@@ -1374,6 +1374,118 @@ const getBatch = async (req, res) => {
     }
 };
 
+/**
+ * Devuelve un lote de imágenes
+ */
+const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId) => {
+    try {
+
+        // Creamos la pipeline para la aggregation
+        const pipeline = [];
+        
+        const match_filter = {};
+        match_filter["$match"] = { "deleted": false };
+        
+        // Si el grafiti debe ser del propio usuario
+        if(userId) {
+            match_filter["$match"]["user"] = userId;
+        }
+        // Si se filtra por fecha minima
+        if(minDate) {
+            match_filter["$match"]["uploadedAt"] = { $gte: new Date(minDate) };
+        }
+        // Si se filtra por fecha máxima
+        if(maxDate) {
+            if(match_filter["$match"]["uploadedAt"]) {
+                match_filter["$match"]["uploadedAt"]["$lt"] = new Date(maxDate);
+            } else {
+                match_filter["$match"]["uploadedAt"] = { $lt: new Date(maxDate) };
+            }
+        }
+        // Añadimos los filtros
+        pipeline.push(match_filter);
+        
+        // Descartamos los atributos irrelevantes
+        pipeline.push({ 
+            "$unset" : [ "featureMap", "serverName", "deleted", "lastModified", "relativePath", "absolutePath", "orientation", "rotation", "thumbnail", "__v" ]
+        });
+        
+        // Si se filtra por zona
+        if (searchZone) {
+            // Hacemos el left join
+            pipeline.push({ 
+                "$lookup" : { 
+                    "from" : "locations", 
+                    "let" : { 
+                        "locationId" : "$gps"
+                    }, 
+                    "pipeline" : [
+                        { 
+                            "$geoNear" : { 
+                                "near" : { 
+                                    "type" : "Point", 
+                                    "coordinates" : [
+                                        searchZone.lng, 
+                                        searchZone.lat
+                                    ]
+                                }, 
+                                "distanceField" : "distance.calculated", 
+                                "spherical" : true, 
+                                "maxDistance" : (searchZone.radio * 1000), 
+                                "key" : "location", 
+                                "includeLocs" : "distance.point", 
+                                "uniqueDocs" : false
+                            }
+                        }, 
+                        { 
+                            "$match" : { 
+                                "$expr" : { 
+                                    "$eq" : [
+                                        "$_id", 
+                                        "$$locationId"
+                                    ]
+                                }
+                            }
+                        }
+                    ], 
+                    "as" : "position"
+                }
+            });
+            // Desplegamos el array
+            pipeline.push({ 
+                "$unwind" : { 
+                    "path" : "$position", 
+                    "preserveNullAndEmptyArrays" : false
+                }
+            });
+            // Desechamos los atributos irrelevantes
+            pipeline.push({ 
+                "$unset" : [ "position._id", "position.location.type", "position.grafiti", "position.__v", "position.createdAt" ]
+            });
+        }
+        
+        // Desechamos atributos irrelevantes
+        pipeline.push({ 
+            "$unset" : [ "gps" ]
+        });
+        
+        // Ordenamos por fecha de captura/subida
+        pipeline.push({ 
+            "$sort" : { "dateTimeOriginal" : -1 }
+        });
+        
+        // Ejecutamos la consulta
+        const grafitis = await Grafiti.aggregate(pipeline);
+        
+        // Devolvemos los resultados
+        return grafitis;
+
+    } catch (error) {
+        console.error("Error en getBatch: " + error);
+        return null;
+    }
+};
+
 
 module.exports = {
     get,
@@ -1397,4 +1509,5 @@ module.exports = {
     getNumberOfGrafitisFilteredByGPSAndDate,
     getMatches,
     getBatch,
+    getFilteredGrafitis,
 };

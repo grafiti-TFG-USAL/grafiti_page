@@ -31,8 +31,25 @@
                     </div>
 
                     <div class="card-body">
-                        <div id="gallery">
+                        <div id="gallery" class="gallery">
                             <!-- El js rellenará las imágenes -->
+                            <% if (grafitis.length == 0) { %>
+                            <h3 class="display-4">No hay imágenes</h3>
+                            <% } else {%>
+                            <ul>
+                                <% for( let index = 0; index < grafitis.length; index++ ) { 
+                                    const grafiti = grafitis[index]; %>
+                                    
+                                    <li>
+                                    <input type="checkbox" class="checkbox" id="<%= grafiti._id %>" />
+                                    <label for="<%= grafiti._id %>">
+                                        <img src="/api/grafitis/get/<%= grafiti._id %>" class="gallery__img" alt="<%= grafiti.description %>">
+                                    </label>
+                                    </li>
+                                    
+                                <% } %>
+                            </ul>
+                            <% } %>
                         </div>
                     </div><!-- Fin card-body -->
 
@@ -40,7 +57,9 @@
             </div>
         </div>
     </div>
-
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"> 
+    </script> 
     <script src="/js/userPages/mis-grafitis-selectable.js"></script>
 
     <%- include("../templates/footer"); %>

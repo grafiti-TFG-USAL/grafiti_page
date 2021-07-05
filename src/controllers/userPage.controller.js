@@ -12,7 +12,8 @@ const {
     getGrafitisFilteredByDate,
     getNumberOfGrafitisFilteredByDate,
     getGrafitisFilteredByGPSAndDate,
-    getNumberOfGrafitisFilteredByGPSAndDate
+    getNumberOfGrafitisFilteredByGPSAndDate,
+    getFilteredGrafitis
 } = require("./grafiti.controller");
 const { timeAgo } = require("../helpers/moment");
 
@@ -288,11 +289,40 @@ const userGrafitis = async (req, res) => {
  * Muestra los grafitis del usuario, permite seleccionarlos
  */
 const userGrafitis_selection = async (req, res) => {
-    return res.render("user/mis-grafitis-selectable.ejs", { 
-        titulo: "Mis Grafitis", 
-        user: req.user, 
-        maps_key: process.env.GMAPS_API_KEY
-    });
+    
+    // Recogemos los parámetros de la consulta
+    const queryParams = req.query;
+    console.log(req.query);
+    var searchZone = null;
+    if (queryParams.lat && queryParams.lng && queryParams.radio) {
+        searchZone = {
+            lng: queryParams.lng,
+            lat: queryParams.lat,
+            radio: queryParams.radio,  
+        };
+    }
+    const minDate = queryParams.minDate ? queryParams.minDate : null;
+    const maxDate = queryParams.maxDate ? queryParams.maxDate : null;
+    const userId = req.user._id;
+    
+    try {
+        
+        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, userId);
+        if(!grafitis) {
+            throw "No se han encontrado grafitis";
+        }
+        
+        return res.render("user/mis-grafitis-selectable.ejs", { 
+            titulo: "Mis Grafitis", 
+            user: req.user, 
+            grafitis,
+            maps_key: process.env.GMAPS_API_KEY
+        });
+    
+    } catch (error) {
+        console.error("Error: " + error);
+        return;
+    }
 };
 
 /**
