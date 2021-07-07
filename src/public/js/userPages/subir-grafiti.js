@@ -285,7 +285,7 @@ form.addEventListener("submit", async (event) => {
 
         // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
         const data = await fetch("/api/grafitis/upload", {
-            method: "post",
+            method: "POST",
             body: formData
         });
 

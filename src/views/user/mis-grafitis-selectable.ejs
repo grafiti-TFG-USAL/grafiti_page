@@ -1,55 +1,27 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mis Grafitis" , user, index: 0,
-    cssFiles: ["selectable-gallery"] }) %>
+    cssFiles: ["selectable-gallery", "floating-buttons" ] }) %>
 
     <div class="container my-4">
         <div class="row">
             <div class="col">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="d-inline">Mis Grafitis</h3>
-                        <!--div class="d-inline float-right">
-                            <a href="/usuario/subir-grafiti" class="d-inline btn-group">
-                                <button type="button" class="btn btn-success"><i class="fa fa-plus"
-                                        aria-hidden="true"></i> Añadir</button>
-                            </a>
-                            <div class="btn-group d-inline">
-                                <button class="d-inline dropdown-toggle btn btn-info" type="button"
-                                    data-toggle="dropdown">Filtrar <i class="fa fa-bars" aria-hidden="true"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" type="button" data-toggle="modal"
-                                        data-target="#filtro-zona">por zona <i class="fa fa-map-marker ml-1"
-                                            aria-hidden="true"></i>
-                                    </a>
-                                    <a class="dropdown-item" type="button" data-toggle="modal"
-                                        data-target="#filtro-fecha">por fecha <i class="fa fa-calendar ml-1"
-                                            aria-hidden="true"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div-->
+                        <h3 class="d-inline"><a class="card-link back_link" href="/usuario/mis-grafitis">Mis Grafitis</a> <% if (grafitis.length > 0) { %>(<span id="nSelected">0</span>/<span id="nGrafitis"><%= nGrafitis %></span>)<% } %></h3>
+                        <% if (grafitis.length > 0) { %>  
+                        <div class="d-inline float-right">
+                            <button type="button" class="d-inline btn btn-primary" id="select_all">
+                            </button>
+                        </div>
+                        <% } %>
                     </div>
 
                     <div class="card-body">
-                        <div id="gallery" class="gallery">
-                            <!-- El js rellenará las imágenes -->
-                            <% if (grafitis.length == 0) { %>
+                        <div>
+                            <!-- El js rellenará las imágenes faltantes según el usuario avance -->
+                            <% if (grafitis.length==0) { %>
                             <h3 class="display-4">No hay imágenes</h3>
                             <% } else {%>
-                            <ul>
-                                <% for( let index = 0; index < grafitis.length; index++ ) { 
-                                    const grafiti = grafitis[index]; %>
-                                    
-                                    <li>
-                                    <input type="checkbox" class="checkbox" id="<%= grafiti._id %>" />
-                                    <label for="<%= grafiti._id %>">
-                                        <img src="/api/grafitis/get/<%= grafiti._id %>" class="gallery__img" alt="<%= grafiti.description %>">
-                                    </label>
-                                    </li>
-                                    
-                                <% } %>
-                            </ul>
-                            <% } %>
+                            <ul id="gallery" class="gallery row justify-content-around" data-limit="<%= grafitisFetchLimit %>"><% for( let index=0; index < grafitis.length; index++ ) { const grafiti=grafitis[index]; %><li><input type="checkbox" class="checkbox" id="<%= grafiti._id %>" /><label for="<%= grafiti._id %>" class="check_label"><img src="/api/grafitis/get-thumbnail/<%= grafiti._id %>" class="gallery__img" alt="<%= grafiti.description %>"></label></li><% } %></ul><% } %>
                         </div>
                     </div><!-- Fin card-body -->
 
@@ -58,8 +30,96 @@
         </div>
     </div>
     
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"> 
-    </script> 
+    <!-- Botones flotantes -->
+    <div id="floating-buttons" class="d-none">
+        
+        <div data-toggle="tooltip" title="Descargar las imágenes seleccionadas">
+            <button type="button" id="download" class="float btn-success"
+            data-toggle="modal" data-target="#modal_download">
+                <i class="fa fa-2x fa-download float-icon mx-auto"></i>
+            </button>
+        </div>
+        
+        <div data-toggle="tooltip" title="Eliminar las imágenes seleccionadas">
+            <button type="button" id="delete" class="float btn-danger"
+            data-toggle="modal" data-target="#modal_delete">
+                <i class="fa fa-2x fa-trash float-icon"></i>
+            </button>
+        </div>
+    </div>
+    <!-- Fin botones flotantes -->
+    
+    
+    <!-- Modal de descarga -->
+    <div class="modal fade" id="modal_download">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="content-download">
+                
+                <div class="modal-header bg-success">
+                    <h4 class="modal-title text-white">Descargar <span class="span-selected-download"></span></h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <h6 class="text">¿Está seguro de que desea descargar <span class="span-selected-download"></span>?</h6><br>
+                    <div class="row justify-content-around">
+
+                        <button type="button" data-dismiss="modal"
+                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
+                        <button class="btn btn-success col-12 col-sm-4" id="download-btn">Descargar <i
+                                class="fa fa-spinner d-none" id="spinner-download"></i></button>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <!-- Fin modal de descarga -->
+    
+    <!-- Modal de eliminación -->
+    <div class="modal fade" id="modal_delete">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="content-delete">
+                
+                <div class="modal-header bg-danger">
+                    <h4 class="modal-title text-white">Eliminar <span class="span-selected-delete"></span></h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body container-fluid">
+                    <div class="row justify-content-center my-2">
+                        <h6 class="text">¿Está seguro de que desea eliminar <span class="span-selected-delete"></span>?</h6>
+                    </div>
+                    
+                    <div class="row justify-content-center my-2" data-toggle="tooltip" title="Los grafitis no se eliminarán, se moverán a los grafitis de la comunidad.">
+                        <div class="col12">
+                            <input type="checkbox" class="form-check-input" id="community_checkbox">
+                            <label for="community_checkbox" class="form-check-label">Añadir los grafitis a los de la comunidad</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row justify-content-around my-2">
+
+                        <button type="button" data-dismiss="modal"
+                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
+                        <button class="btn btn-danger col-12 col-sm-4" id="delete-btn">Eliminar <i
+                                class="fa fa-spinner d-none" id="spinner-delete"></i></button>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <!-- Fin modal de eliminación -->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/js/userPages/mis-grafitis-selectable.js"></script>
+    <script src="/js/userPages/mis-grafitis-selectable-modales.js"></script>
 
     <%- include("../templates/footer"); %>

@@ -26,8 +26,11 @@ router.post("/upload", estaAutenticado, upload.array("imagenes"), grafitiControl
 // Actualización de un grafiti (<host>/api/grafitis/update/:grafiti_id)
 router.post("/update/:grafiti_id", estaAutenticado, grafitiController.update);
 
-// Subida de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
+// Eliminación de un grafiti (<host>/api/grafitis/remove/:grafiti_id)
 router.post("/remove/:grafiti_id", estaAutenticado, grafitiController.remove);
+
+// Eliminación de un lote de grafitis (<host>/api/grafitis/remove/:grafiti_id)
+router.post("/remove-batch", estaAutenticado, grafitiController.removeBatch);
 
 // Subida de un grafiti (<host>/api/grafitis/get-grafitis-with-gps)
 router.get("/get-grafitis-with-gps", estaAutenticado, grafitiController.getGrafitisWithGPS);

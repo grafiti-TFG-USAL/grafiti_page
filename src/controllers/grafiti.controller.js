@@ -59,6 +59,7 @@ const getThumbnail = async (req, res) => {
 };
 
 const thumbnails = require("../helpers/thumbnail");
+const { Mongoose } = require("mongoose");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -551,6 +552,52 @@ const remove = async (req, res) => {
 };
 
 /**
+ * Elimina un conjunto de documentos de la base
+ */
+const removeBatch = async (req, res) => {
+
+    // Obtenemos el body de la consulta
+    const { ids, community } = req.body;
+    try {
+
+        const action = {};
+        if(community) {
+            const communityUser = await User.findOne({ email: process.env.MAIL_USER });
+            if (!communityUser) {
+                throw "No se ha encontrado al usuario Community";
+            }
+            action["$set"] = { user: communityUser._id };
+        } else {
+            action["$set"] = { deleted: true };
+        }
+        
+        // Actualizamos los grafitis a eliminados
+        const result = await Grafiti.updateMany({
+            _id: { $in: ids },
+            deleted: false,
+            user: req.user._id,
+        }, action);
+        if(!result) {
+            throw "La eliminación no tuvo resultado";
+        }
+        console.log(result)
+
+        return res.status(200).json({
+            success: true,
+            message: "Grafitis eliminados"
+        });
+
+    } catch (error) {
+        console.error("No se han podido eliminar los grafitis: ", error);
+        return res.status(400).json({
+            success: false,
+            message: "No se han podido eliminar los grafitis: " + error,
+        });
+    }
+    
+};
+
+/**
  * Devuelve el número de grafitis de un usuario
  * @returns Entero con el número de grafitis del usuario o null si hay un error 
  */
@@ -692,7 +739,7 @@ const getGrafitiById = async (grafitiId) => {
  * @param {Number} page - Número de página
  * @param {Number} nGrafitis - Número de grafitis por página
  * @returns Grafitis
- */
+ *
 const getGrafitiPage = async (page, nGrafitis, user = null) => {
 
     try {
@@ -719,36 +766,6 @@ const getGrafitiPage = async (page, nGrafitis, user = null) => {
             console.error("No se han podido recuperar los grafitis en la consulta");
             return null;
         }
-        /*console.time("Bucle for");
-        const usuarios = {};
-        for (var grafiti of grafitis) {
-
-            if (!usuarios[grafiti.user.toString]) {
-
-                // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
-                const user = await User.findById(grafiti.user, {
-                    name: 1, surname: 1, email: 1
-                });
-                if (!user) {
-                    console.error("No he han podido consultar los datos del usuario");
-                    return null;
-                }
-
-                const username = {
-                    name: user.name,
-                    surname: user.surname,
-                    email: user.email,
-                };
-
-                grafiti["username"] = username;
-                usuarios[grafiti.user.toString] = username;
-
-            } else {
-                grafiti["username"] = usuarios[grafiti.user.toString];
-            }
-
-        }
-        console.timeEnd("Bucle for");*/
 
         return grafitis;
 
@@ -759,11 +776,11 @@ const getGrafitiPage = async (page, nGrafitis, user = null) => {
 
 };
 
-/**
+**
  * Devuelve el número de páginas totales dado el número de grafitis por página
  * @param {Number} n - Número de grafitis por página
  * @returns Número de páginas
- */
+ *
 const getNumberOfPages = async (n, user = null) => {
 
     try {
@@ -841,7 +858,7 @@ const getGrafitisWithGPS = async (req, res) => {
 /**
  * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio
  * @returns Grafitis filtrados por ubicación
- */
+ *
 const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user = null) => {
 
     try {
@@ -900,10 +917,10 @@ const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user 
 
 };
 
-/**
+**
  * Devuelve el número de grafitis totales dentro del radio de búsqueda
  * @returns Número de grafitis filtrados por ubicación
- */
+ *
 const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius, user = null) => {
 
     try {
@@ -943,10 +960,10 @@ const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius, user = null) =
 
 };
 
-/**
+**
  * Devuelve los grafitis de la base filtrados por fechas
  * @returns Grafitis filtrados por fecha
- */
+ *
 const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis, user = null) => {
 
     try {
@@ -993,10 +1010,10 @@ const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis, user
 
 };
 
-/**
+**
  * Devuelve el número de grafitis totales dentro del límite de fecha
  * @returns Número de grafitis filtrados por fecha
- */
+ *
 const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate, user = null) => {
 
     try {
@@ -1033,10 +1050,10 @@ const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate, user = null) 
 
 };
 
-/**
+**
  * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio y por fecha
  * @returns Grafitis filtrados por ubicación y fecha
- */
+ *
 const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate, page, nGrafitis, user = null) => {
 
     try {
@@ -1114,10 +1131,10 @@ const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDat
 
 };
 
-/**
+**
  * Devuelve el número de grafitis totales dentro del radio de búsqueda y un marco temporal
  * @returns Número de grafitis filtrados por ubicación y fecha
- */
+ *
 const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate, user = null) => {
 
     try {
@@ -1183,7 +1200,7 @@ const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate
         return 0;
     }
 
-};
+};*/
 
 /**
  * Devuelve los matches del grafiti indicado como parámetro en la URI y el número total de matches del grafiti
@@ -1249,120 +1266,19 @@ const getBatch = async (req, res) => {
 
         // Recogemos los parámetros de la consulta
         const body = req.body;
-        console.log(req.body)
-        const { minDate, maxDate, searchZone, batch, images } = body;
-
-        // Creamos la pipeline para la aggregation
-        const pipeline = [];
+        const { minDate, maxDate, searchZone, skip, limit } = body;
+        const userId = body.self ? req.user._id : null;
         
-        const match_filter = {};
-        match_filter["$match"] = { "deleted": false };
+        // Obtenemos los grafitis
+        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, userId, skip, limit);
         
-        // Si el grafiti debe ser del propio usuario
-        if(body.self) {
-            match_filter["$match"]["user"] = req.user._id;
-        }
-        // Si se filtra por fecha minima
-        if(minDate) {
-            match_filter["$match"]["uploadedAt"] = { $gte: new Date(minDate) };
-        }
-        // Si se filtra por fecha máxima
-        if(maxDate) {
-            if(match_filter["$match"]["uploadedAt"]) {
-                match_filter["$match"]["uploadedAt"]["$lt"] = new Date(maxDate);
-            } else {
-                match_filter["$match"]["uploadedAt"] = { $lt: new Date(maxDate) };
-            }
-        }
-        // Añadimos los filtros
-        pipeline.push(match_filter);
-        
-        // Descartamos los atributos irrelevantes
-        pipeline.push({ 
-            "$unset" : [ "featureMap", "serverName", "deleted", "lastModified", "relativePath", "absolutePath", "orientation", "rotation", "thumbnail", "__v" ]
-        });
-        
-        // Si se filtra por zona
-        if (searchZone) {
-            // Hacemos el left join
-            pipeline.push({ 
-                "$lookup" : { 
-                    "from" : "locations", 
-                    "let" : { 
-                        "locationId" : "$gps"
-                    }, 
-                    "pipeline" : [
-                        { 
-                            "$geoNear" : { 
-                                "near" : { 
-                                    "type" : "Point", 
-                                    "coordinates" : [
-                                        searchZone.lng, 
-                                        searchZone.lat
-                                    ]
-                                }, 
-                                "distanceField" : "distance.calculated", 
-                                "spherical" : true, 
-                                "maxDistance" : (searchZone.radio * 1000), 
-                                "key" : "location", 
-                                "includeLocs" : "distance.point", 
-                                "uniqueDocs" : false
-                            }
-                        }, 
-                        { 
-                            "$match" : { 
-                                "$expr" : { 
-                                    "$eq" : [
-                                        "$_id", 
-                                        "$$locationId"
-                                    ]
-                                }
-                            }
-                        }
-                    ], 
-                    "as" : "position"
-                }
-            });
-            // Desplegamos el array
-            pipeline.push({ 
-                "$unwind" : { 
-                    "path" : "$position", 
-                    "preserveNullAndEmptyArrays" : false
-                }
-            });
-            // Desechamos los atributos irrelevantes
-            pipeline.push({ 
-                "$unset" : [ "position._id", "position.location.type", "position.grafiti", "position.__v", "position.createdAt" ]
-            });
-        }
-        
-        // Desechamos atributos irrelevantes
-        pipeline.push({ 
-            "$unset" : [ "gps" ]
-        });
-        
-        // Ordenamos por fecha de captura/subida
-        pipeline.push({ 
-            "$sort" : { "dateTimeOriginal" : -1 }
-        });
-        
-        console.log("SKIP: ", batch*images);
-        // Nos saltamos los ya obtenidos
-        pipeline.push({ "$skip" : batch*images });
-        
-        console.log("Limit: ", images);
-        // Limitamos los devueltos
-        pipeline.push({ "$limit" : images });
-        
-        // Ejecutamos la consulta
-        const grafitis = await Grafiti.aggregate(pipeline);
-        
-        console.log(grafitis);
         // Devolvemos los resultados
         return res.status(201).json({
             success: true,
             message: "Consulta exitosa",
-            images: grafitis,
+            images: grafitis.grafitis,
+            nGrafitis: grafitis.nGrafitis,
+            limitReached: grafitis.limitReached,
         });
 
     } catch (error) {
@@ -1376,8 +1292,17 @@ const getBatch = async (req, res) => {
 
 /**
  * Devuelve un lote de imágenes
+ * @param {String|Date} minDate - Límite inferior de fecha de captura, puede estar a null.
+ * @param {String|Date} maxDate - Límite superior de fecha de captura, puede estar a null.
+ * @param {Object} searchZone - Objeto que incluye los atributos lng, lat y radio (kms), puede estar a null.
+ * @param {String|Mongoose.Schema.ObjectId} userId - Usuario del que recoger los grafitis, si es null, se recogerán de toda la BD.
+ * @param {Number} skp - Cuántos grafitis saltarnos, 0 o null para ninguno.
+ * @param {Number} lim - Límite de grafitis a devolver, 0 o null para devolver los restantes.
+ * @returns Objeto con los atributos grafitis y nGrafitis
  */
-const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId) => {
+const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, lim) => {
+    const skip = skp? skp : 0;
+    const limit = lim? lim : 0;
     try {
 
         // Creamos la pipeline para la aggregation
@@ -1474,14 +1399,37 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId) => {
             "$sort" : { "dateTimeOriginal" : -1 }
         });
         
+        const skip_limit = [{ "$skip": skip }];
+        if(limit > 0) {
+            skip_limit.push({"$limit": limit})
+        }
+        // Generamos el resultado y el total
+        pipeline.push({
+            "$facet" : {
+                "nGrafitis": [{ "$count": "count"}],
+                "grafitis" : skip_limit,
+            } 
+        });
+        
         // Ejecutamos la consulta
         const grafitis = await Grafiti.aggregate(pipeline);
         
+        var results = null;
+        if(!grafitis) {
+            throw "Sin resultados";
+        }
+        if(grafitis.length == 1) {
+            // Incluimos los grafitis en el resultado
+            results = grafitis[0]; 
+            // Incluimos el número total de grafitis que cumplen el filtro de búsqueda
+            results.nGrafitis = results.nGrafitis.length == 1? results.nGrafitis[0].count : 0;
+        }
+        
         // Devolvemos los resultados
-        return grafitis;
+        return results;
 
     } catch (error) {
-        console.error("Error en getBatch: " + error);
+        console.error("Error en getFilteredGrafitis: " + error);
         return null;
     }
 };
@@ -1493,20 +1441,21 @@ module.exports = {
     upload,
     update,
     remove,
+    removeBatch,
     countOf,
     deleteUserGrafitis,
     getIndexGrafitis,
     getIndexStats,
     getGrafitiById,
-    getNumberOfPages,
-    getGrafitiPage,
     getGrafitisWithGPS,
+    /*getNumberOfPages,
+    getGrafitiPage,
     getGrafitisFilteredByGPS,
     getNumberOfGrafitisFilteredByGPS,
     getGrafitisFilteredByDate,
     getNumberOfGrafitisFilteredByDate,
     getGrafitisFilteredByGPSAndDate,
-    getNumberOfGrafitisFilteredByGPSAndDate,
+    getNumberOfGrafitisFilteredByGPSAndDate,*/
     getMatches,
     getBatch,
     getFilteredGrafitis,
