@@ -24,7 +24,7 @@ li {
 .check_label {
     border: 1px solid #fff;
     padding: 10px;
-    margin: 10px;
+    margin: 7px;
     display: block;
     position: relative;
     cursor: pointer;
@@ -55,14 +55,16 @@ li {
 }
   
 .check_label img {
-    height: 100px;
-    width: 100px;
+    height: 125px;
+    border-radius: 3px;
+    width: 125px;
     transition-duration: 0.2s;
     transform-origin: 50% 50%;
 }
   
 .checkbox:checked+.check_label {
     border-color: #ddd;
+    border-radius: 3px;
 }
   
 .checkbox:checked+.check_label::before {
@@ -74,5 +76,6 @@ li {
 .checkbox:checked+.check_label img {
     transform: scale(0.9);
     box-shadow: 0 0 5px rgb(51, 51, 51);
+    border-radius: 15px;
     z-index: -1;
 }

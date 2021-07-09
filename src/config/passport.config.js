@@ -77,8 +77,10 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
 }
 ));
 
-const estaAutenticado = (req, res, next) => {
+const { comprobarUsuario } = require("../controllers/user.controller");
+const estaAutenticado = async (req, res, next) => {
     if(req.isAuthenticated()){
+        await comprobarUsuario(req.user._id);
         return next(); // Es un middleware, por lo que se coloca entre la peticion y el acceso a la página, a la que redirige next()
     }else{
         // Añadimos un parámetro para advertir de la necesidad de iniciar sesión en el login

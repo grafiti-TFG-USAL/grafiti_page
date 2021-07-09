@@ -1,11 +1,11 @@
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs-extra");
+const archiver = require("archiver");
 const exifr = require("exifr");
 const imageThumbnail = require("image-thumbnail");
 
 const Grafiti = require("../models/grafiti.model");
-//const User = require("../models/user.model");
 const Location = require("../models/location.model");
 const Notification = require("../models/notification.model");
 const User = require("../models/user.model");
@@ -72,7 +72,6 @@ const upload = async (req, res) => {
     var errores = [];
     var fileErr = [];
 
-    //
     const nFiles = files.length;
     const step = 100.0 / nFiles;
     const socketid = Sockets.connectedUsers[req.user.id].id;
@@ -531,7 +530,10 @@ const remove = async (req, res) => {
                 await Notification.deleteMany({ grafiti: req.params.grafiti_id });
 
                 // Eliminamos los matches del grafiti
-                await Match.deleteMany({ $or: { grafiti_1: params.grafiti_id, grafiti_2: params.grafiti_id } });
+                await Match.deleteMany({ $or: [
+                    { grafiti_1: req.params.grafiti_id },
+                    { grafiti_2: req.params.grafiti_id }
+                ] });
 
                 return res.status(200).json({
                     success: true,
@@ -557,30 +559,44 @@ const remove = async (req, res) => {
 const removeBatch = async (req, res) => {
 
     // Obtenemos el body de la consulta
-    const { ids, community } = req.body;
+    const { ids } = req.body;
+    console.log({ids})
     try {
-
-        const action = {};
-        if(community) {
-            const communityUser = await User.findOne({ email: process.env.MAIL_USER });
-            if (!communityUser) {
-                throw "No se ha encontrado al usuario Community";
-            }
-            action["$set"] = { user: communityUser._id };
-        } else {
-            action["$set"] = { deleted: true };
-        }
         
         // Actualizamos los grafitis a eliminados
         const result = await Grafiti.updateMany({
             _id: { $in: ids },
             deleted: false,
             user: req.user._id,
-        }, action);
+        }, { $set: { deleted: true }});
         if(!result) {
             throw "La eliminación no tuvo resultado";
         }
-        console.log(result)
+        
+        // Obtenemos los ids de aquellos que cumplan requisitos
+        const matches = await Grafiti.find({
+            _id: { $in: ids },
+            user: req.user._id,
+        },  { _id: 1 });
+        console.log({ matches })
+        const matchesIds = matches.map(function (obj) {
+            return `${obj._id}`;
+        });
+        console.log({ matchesIds });
+        
+        // Eliminamos también de matches
+        await Match.deleteMany({
+            $or: [
+                { grafiti_1: { $in: matchesIds } },
+                { grafiti_2: { $in: matchesIds } },
+            ],
+        });
+        
+        // Eliminamos también las notificaciones
+        await Notification.deleteMany({
+            grafiti: { $in: matchesIds },
+            user: req.user._id,
+        });
 
         return res.status(200).json({
             success: true,
@@ -856,353 +872,6 @@ const getGrafitisWithGPS = async (req, res) => {
 };
 
 /**
- * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio
- * @returns Grafitis filtrados por ubicación
- *
-const getGrafitisFilteredByGPS = async (lat, lng, radius, page, nGrafitis, user = null) => {
-
-    try {
-
-        const locations = await Location.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat],
-                    },
-                    $maxDistance: radius * 1000,
-                    $minDistance: 0,
-                }
-            }
-        }, { grafiti: 1 })
-            .populate({
-                path: "grafiti",
-                model: Grafiti,
-                match: { deleted: false },
-                select: { _id: 1, uploadedAt: 1 }
-            })
-            .sort({ uploadedAt: -1 })
-            .skip((page - 1) * nGrafitis)
-            .limit(nGrafitis);
-
-        const grafitiWithLocations = locations.filter((location) => { return location.grafiti ? true : false; });
-        const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
-
-        var grafitis = null;
-        if (!user) {
-            grafitis = await Grafiti.find({
-                _id: {
-                    $in: grafitiIds
-                }
-            });
-        } else {
-            grafitis = await Grafiti.find({
-                _id: {
-                    $in: grafitiIds
-                },
-                user
-            });
-        }
-
-        if (!grafitis) {
-            return null;
-        }
-
-        return grafitis;
-
-    } catch (error) {
-        console.error("Error en getGrafitisFilteredByGPS: ", error);
-        return null;
-    }
-
-};
-
-**
- * Devuelve el número de grafitis totales dentro del radio de búsqueda
- * @returns Número de grafitis filtrados por ubicación
- *
-const getNumberOfGrafitisFilteredByGPS = async (lat, lng, radius, user = null) => {
-
-    try {
-
-        const locations = await Location.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat],
-                    },
-                    $maxDistance: radius * 1000,
-                    $minDistance: 0,
-                }
-            }
-        }, { grafiti: 1 })
-            .populate({ path: "grafiti", model: Grafiti, select: { deleted: 1, user: 1 } });
-
-        if (!locations) {
-            return 0;
-        }
-
-        const nGrafitis = locations.filter((grafiti) => {
-            if (!user) {
-                return !grafiti.grafiti.deleted;
-            } else {
-                return (!grafiti.grafiti.deleted && user.equals(grafiti.grafiti.user));
-            }
-        });
-
-        return nGrafitis.length;
-
-    } catch (error) {
-        console.error("Error en getNumberOfGrafitisFilteredByGPS: ", error);
-        return 0;
-    }
-
-};
-
-**
- * Devuelve los grafitis de la base filtrados por fechas
- * @returns Grafitis filtrados por fecha
- *
-const getGrafitisFilteredByDate = async (minDate, maxDate, page, nGrafitis, user = null) => {
-
-    try {
-
-        const min_date = minDate ? minDate : new Date(-8640000000000000);
-        const max_date = maxDate ? maxDate : new Date(8640000000000000);
-
-        var grafitis = null;
-        if (!user) {
-            grafitis = await Grafiti.find({
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                deleted: false
-            })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis)
-                .limit(nGrafitis);
-        } else {
-            grafitis = await Grafiti.find({
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                user,
-                deleted: false
-            })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis)
-                .limit(nGrafitis);
-        }
-
-        if (!grafitis) {
-            return null;
-        }
-
-        return grafitis;
-
-    } catch (error) {
-        console.error("Error en getGrafitisFilteredByDate: ", error);
-        return null;
-    }
-
-};
-
-**
- * Devuelve el número de grafitis totales dentro del límite de fecha
- * @returns Número de grafitis filtrados por fecha
- *
-const getNumberOfGrafitisFilteredByDate = async (minDate, maxDate, user = null) => {
-
-    try {
-
-        const min_date = minDate ? minDate : new Date(-8640000000000000);
-        const max_date = maxDate ? maxDate : new Date(8640000000000000);
-
-        var nGrafitis = 0;
-        if (!user) {
-            nGrafitis = await Grafiti.countDocuments({
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                deleted: false
-            });
-        } else {
-            nGrafitis = await Grafiti.countDocuments({
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                user,
-                deleted: false
-            });
-        }
-
-        return nGrafitis ? nGrafitis : 0;
-
-    } catch (error) {
-        console.error("Error en getNumberOfGrafitisFilteredByDate: ", error);
-        return 0;
-    }
-
-};
-
-**
- * Devuelve los grafitis de la base filtrados por sus coordenadas en un radio y por fecha
- * @returns Grafitis filtrados por ubicación y fecha
- *
-const getGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate, page, nGrafitis, user = null) => {
-
-    try {
-
-        // Obtenemos todos los grafitis dentro del radio de búsqueda
-        const locations = await Location.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat],
-                    },
-                    $maxDistance: radius * 1000,
-                    $minDistance: 0,
-                }
-            }
-        }, { grafiti: 1 })
-            .populate({
-                path: "grafiti",
-                model: Grafiti,
-                match: { deleted: false },
-                select: { _id: 1 }
-            });
-
-        const grafitiWithLocations = locations.filter((location) => { return location.grafiti ? true : false; });
-        const grafitiIds = grafitiWithLocations.map((location) => { return location.grafiti._id; });
-
-        // Filtramos a aquellos dentro del marco temporal
-        const min_date = minDate ? minDate : new Date(-8640000000000000);
-        const max_date = maxDate ? maxDate : new Date(8640000000000000);
-
-        var grafitis = null;
-        if (!user) {
-            grafitis = await Grafiti.find({
-                _id: {
-                    $in: grafitiIds
-                },
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                deleted: false
-            })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis)
-                .limit(nGrafitis);
-        } else {
-            grafitis = await Grafiti.find({
-                _id: {
-                    $in: grafitiIds
-                },
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                user,
-                deleted: false
-            })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis)
-                .limit(nGrafitis);
-        }
-
-
-        if (!grafitis) {
-            return null;
-        }
-
-        return grafitis;
-
-    } catch (error) {
-        console.error("Error en getGrafitisFilteredByGPSAndDate: ", error);
-        return null;
-    }
-
-};
-
-**
- * Devuelve el número de grafitis totales dentro del radio de búsqueda y un marco temporal
- * @returns Número de grafitis filtrados por ubicación y fecha
- *
-const getNumberOfGrafitisFilteredByGPSAndDate = async (lat, lng, radius, minDate, maxDate, user = null) => {
-
-    try {
-
-        const locations = await Location.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat],
-                    },
-                    $maxDistance: radius * 1000,
-                    $minDistance: 0,
-                }
-            }
-        }, { grafiti: 1 })
-            .populate({ path: "grafiti", model: Grafiti, select: "deleted" });
-
-        if (!locations) {
-            return 0;
-        }
-
-        const grafitis = locations.filter((grafiti) => {
-            return (!grafiti.grafiti.deleted && grafiti.gps);
-        });
-
-        const grafitiIds = locations.map((location) => { return location.grafiti._id; });
-
-        // Filtramos a aquellos dentro del marco temporal
-        const min_date = minDate ? minDate : new Date(-8640000000000000);
-        const max_date = maxDate ? maxDate : new Date(8640000000000000);
-
-        var nGrafitis = null;
-        if (!user) {
-            nGrafitis = await Grafiti.countDocuments({
-                _id: {
-                    $in: grafitiIds
-                },
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                deleted: false
-            });
-        } else {
-            nGrafitis = await Grafiti.countDocuments({
-                _id: {
-                    $in: grafitiIds
-                },
-                uploadedAt: {
-                    $gte: min_date,
-                    $lte: max_date,
-                },
-                user,
-                deleted: false
-            });
-        }
-
-        return nGrafitis ? nGrafitis : 0;
-
-    } catch (error) {
-        console.error("Error en getNumberOfGrafitisFilteredByGPSAndDate: ", error);
-        return 0;
-    }
-
-};*/
-
-/**
  * Devuelve los matches del grafiti indicado como parámetro en la URI y el número total de matches del grafiti
  */
 const getMatches = async (req, res) => {
@@ -1434,6 +1103,91 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
     }
 };
 
+/** Función que empaqueta las imágenes seleccionadas y un archivo csv con sus datos y lo almacena temporalmente
+*/ 
+const prepareDownloadBatch = async (req, res) => {
+    console.log("Prepara descarga");
+    
+    try {
+        
+        // Comprobamos la información recibida
+        const body = req.body;
+        if(!body) {
+            throw "Falta el cuerpo del mensaje";
+        }
+        if(!body.ids) {
+            throw "No se han especificado los archivos a descargar";
+        }
+        const ids = body.ids;
+        if(ids.length < 1) {
+            throw "El array de ids no puede estar vacío";
+        }
+        
+        // Obtenemos los grafitis de la BD
+        const files = await Grafiti.find({
+            deleted: false,
+            _id: { $in: ids },
+        }, { originalName: 1, absolutePath: 1, serverName: 1 });
+        if(!files) {
+            throw "No se han encontrado";
+        }
+        
+        // Creamos un nombre temporal para el archivo
+        var fileName, fileTmpPath, filePath;
+        do {
+            fileName = uuidv4();
+            fileTmpPath = path.resolve(`src/tempfiles/downloads/temp/${fileName}`);
+            filePath = path.resolve(`src/tempfiles/downloads/${fileName}.zip`);
+            // Comprobamos que sea único
+        } while (fs.existsSync(filePath) || fs.existsSync(fileTmpPath));
+        
+        // Iniciamos los objetos de compresión
+        var output = fs.createWriteStream(filePath);
+        var archive = archiver("zip", {
+            gzip: true,
+            zlib: { level: 9 } // Nivel de compresión
+        });
+        archive.on("error", function(error) {
+            output.end
+            fs.removeSync(filePath);
+            throw error;
+        });
+        // Conectamos la entrada al fichero de salida
+        archive.pipe(output);
+        
+        // Metemos todos los archivos en el paquete
+        for(const file of files) {
+            archive.file(file.absolutePath, { name: file.serverName });
+        }
+        
+        // Finalizamos
+        archive.finalize();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Archivo listo",
+            fileId: fileName,
+        });
+    
+    } catch (error) {
+        const message = `Error preparando la descarga: ` + error;
+        return res.status(400).json({
+            success: false,
+            message,
+        });
+    }
+};
+
+/** Función que devuelve el paquete creado para que el usuario lo descargue
+*/ 
+const downloadBatch = (req, res) => {
+    console.log("Descarga")
+    const filePath = path.resolve(`${req.params.file_id}.zip`);
+    
+    
+    res.download(path.resolve("src/public/images/image_not_found.png"))
+};
+
 
 module.exports = {
     get,
@@ -1448,15 +1202,9 @@ module.exports = {
     getIndexStats,
     getGrafitiById,
     getGrafitisWithGPS,
-    /*getNumberOfPages,
-    getGrafitiPage,
-    getGrafitisFilteredByGPS,
-    getNumberOfGrafitisFilteredByGPS,
-    getGrafitisFilteredByDate,
-    getNumberOfGrafitisFilteredByDate,
-    getGrafitisFilteredByGPSAndDate,
-    getNumberOfGrafitisFilteredByGPSAndDate,*/
     getMatches,
     getBatch,
     getFilteredGrafitis,
+    prepareDownloadBatch,
+    downloadBatch,
 };

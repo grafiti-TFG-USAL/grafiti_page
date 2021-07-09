@@ -571,8 +571,21 @@ const logOut = (req, res) => {
     return res.redirect("/bienvenido");
 };
 
+/**
+ * Actualiza las notificaciones del usuario
+ */
+const comprobarUsuario = async (userId) => {
+    const notifications = await Notification.count({ user: userId });
+    const user = await User.findById(userId);
+    if (user.notifications != notifications) {
+        user.notifications = notifications;
+        user.save();
+    }
+};
+
 const { countOf, deleteUserGrafitis } = require("./grafiti.controller");
 const { Mongoose } = require("mongoose");
+const { findById } = require("../models/user.model");
 // Finalizar la sesión
 const removeUser = async (req, res) => {
 
@@ -752,6 +765,7 @@ module.exports = {
     changeNotificationConfig,
     logIn,
     logOut,
+    comprobarUsuario,
     removeUser,
     eliminarUsuariosSinVerificar,
     getUsernameById,

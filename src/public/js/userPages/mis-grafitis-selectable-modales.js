@@ -20,23 +20,58 @@ const download_images = document.getElementById("download-btn");
 download_images.addEventListener("click", async (event) => {
     event.preventDefault();
     
+    const spinner_download = document.getElementById("spinner-download");
     const ids = await getSelected();
-    /*try {
+    try {
         
-        const fetchURI = `/api/grafitis/download-batch`;
+        spinner_download.classList.remove("d-none");
+        
+        const fetchURI = `/api/grafitis/prepare-download-batch`;
         const data = await fetch(fetchURI, {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
                 ids
             }),
         });
+        if (!data) {
+            throw "No se ha recibido respuesta a la consulta";
+        }
+        const result = await data.json();
+        if (!result) {
+            throw "No se puede interpretar la respuesta del servidor";
+        }
+        if (!result.success) {
+            throw result.message;
+        }
+        if(!result.fileId) {
+            throw "No se ha recuperado el identificador del archivo de descarga";
+        }
+        
+        console.log(result.message);
+        
+        spinner_download.classList.add("d-none");
+        //download(`/api/grafitis/download-batch/${result.fileId}`, "grafitis.zip");
+        document.getElementById("download_close").click();
         
     } catch (error) {
+        spinner_download.classList.add("d-none");
         console.error("Fallo al descargar: "+error);
         window.alert("Fallo al descargar: "+error);
-    }*/
+    }
     
 });
+
+// Descarga un archivo
+function download(fileUrl, fileName) {
+    const a = document.createElement("a");
+    a.href = fileUrl;
+    //a.target = "_blank";
+    a.setAttribute("download", fileName);
+    a.click();
+}
 
 // Eliminación de imágenes
 const delete_images = document.getElementById("delete-btn");
@@ -44,7 +79,6 @@ delete_images.addEventListener("click", async (event) => {
     event.preventDefault();
     
     const ids = await getSelected();
-    const community_checkbox = document.getElementById("community_checkbox");
     const spinner_delete = document.getElementById("spinner-delete");
     try {
         
@@ -58,7 +92,6 @@ delete_images.addEventListener("click", async (event) => {
             },
             body: JSON.stringify({
                 ids,
-                community: community_checkbox.checked,
             }),
         });
         if (!data) {
@@ -70,10 +103,10 @@ delete_images.addEventListener("click", async (event) => {
         }
         if(!result.success) {
             throw result.message;
-        } else {
-            spinner_delete.classList.add("d-none");
-            window.location.reload();
         }
+        
+        spinner_delete.classList.add("d-none");
+        window.location.reload();
         
     } catch (error) {
         spinner_delete.classList.add("d-none");

@@ -95,4 +95,4 @@ grafitiSchema.virtual("stringId").get(function () {
 });
 
 //mongoose.model() busca en la base la coleccion "grafitis" (automaticamente ya pone en lowercase y busca el plural)
-module.exports = mongoose.model(process.env.GRAFITI_COLLECTION_NAME, grafitiSchema);
+module.exports = mongoose.model("grafitis", grafitiSchema);

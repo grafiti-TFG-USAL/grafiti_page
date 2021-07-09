@@ -1,3 +1,9 @@
 #filtrar-btn {
     vertical-align: top;
 }
+
+.selectable-icon {
+    border-width: 3px;
+    border-radius: 3px;
+    border-color: black;
+}

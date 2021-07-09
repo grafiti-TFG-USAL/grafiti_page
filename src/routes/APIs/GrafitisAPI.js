@@ -41,5 +41,11 @@ router.get("/get-matches/:grafiti_id", estaAutenticado, grafitiController.getMat
 // Devuelve un lote de imágenes (<host>/api/grafitis/get-grafiti-batch)
 router.post("/get-grafiti-batch", grafitiController.getBatch);
 
+// Prepara un paquete para su descarga (<host>/api/grafitis/prepare-download-batch)
+router.post("/prepare-download-batch", estaAutenticado, grafitiController.prepareDownloadBatch);
+
+// Descarga el paquete creado (<host>/api/grafitis/download-batch/:file_id)
+router.get("/download-batch/:file_id", estaAutenticado, grafitiController.downloadBatch);
+
 
 module.exports = router;

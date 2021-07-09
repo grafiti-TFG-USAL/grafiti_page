@@ -6,7 +6,7 @@ const nGrafitis_span = document.getElementById("nGrafitis");
 // Variables
 var batch = 1;
 const imagesPBatch = gallery? Number.parseInt(gallery.dataset.limit) : 0;
-var nImages = 0;
+var nImages = imagesPBatch * batch;
 var limReached = false;
 var selectAll = false; // Esta indica si están TODAS seleccionadas
 var allSelected = false; // Esta indica si se han seleccionado todas anteriormente (para incluir las no cargadas)

@@ -1,5 +1,5 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Subir grafitis" , user,
-    index: 0, cssFiles: [] }) %>
+    index: 0, cssFiles: ["subir-grafiti"] }) %>
 
 
     <div class="container pt-3">
@@ -31,7 +31,7 @@
                                 type="submit" disabled>
                                 <i class="fa fa-upload"></i> Listo <i class="d-none ml-2 fa fa-spinner fa-pulse"
                                     id="spinner"></i></button>
-                            <div id="progress" class=" col-12 progress mt-3 d-none"
+                            <div id="progress" class="col-12 progress mt-3 d-none"
                                 style="height: 30px; background-color: white; padding: 0;">
                                 <div id="progressbar"
                                     class="progress-bar progress-bar-striped progress-bar-animated bg-success"></div>
