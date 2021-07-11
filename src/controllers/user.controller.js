@@ -575,7 +575,7 @@ const logOut = (req, res) => {
  * Actualiza las notificaciones del usuario
  */
 const comprobarUsuario = async (userId) => {
-    const notifications = await Notification.count({ user: userId });
+    const notifications = await Notification.countDocuments({ user: userId });
     const user = await User.findById(userId);
     if (user.notifications != notifications) {
         user.notifications = notifications;

@@ -1,4 +1,7 @@
 #progress {
     box-shadow: 2px 2px 3px #999;
     white-space: nowrap;
+    height: 30px; 
+    background-color: white; 
+    padding: 0;
 }

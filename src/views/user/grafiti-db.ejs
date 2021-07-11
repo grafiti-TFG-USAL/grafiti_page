@@ -1,5 +1,5 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti DB" , user,
-    index: 2, cssFiles: [] }) %>
+    index: 2, cssFiles: ["mis-grafitis"] }) %>
 
     <div class="container-fluid my-4">
         <div class="row">
@@ -7,51 +7,36 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="d-inline">Grafiti DB</h3>
-                        <div class="btn-group float-right">
-                            <button class="d-inline dropdown-toggle btn btn-info" type="button"
-                                data-toggle="dropdown">Filtrar
-                                <!--span class="material-icons-outlined">filter_list</span--> <i class="fa fa-bars"
-                                    aria-hidden="true"></i>
+                        <div class="d-inline float-right align-content-top">
+                            <button type="submit" class="btn" id="selectable"
+                            data-toggle="tooltip" title="Seleccionar imágenes">
+                                <div class="selectable-icon"><i class="fa fa-mouse-pointer" aria-hidden="true"></i></div>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item" type="button" data-toggle="modal"
-                                    data-target="#filtro-zona">por zona <i class="fa fa-map-marker ml-1"
+                            <div class="btn-group float-right ml-2">
+                                <button class="d-inline dropdown-toggle btn btn-info" type="button"
+                                    data-toggle="dropdown">Filtrar
+                                    <!--span class="material-icons-outlined">filter_list</span--> <i class="fa fa-bars"
                                         aria-hidden="true"></i>
-                                </a>
-                                <a class="dropdown-item" type="button" data-toggle="modal"
-                                    data-target="#filtro-fecha">por fecha <i class="fa fa-calendar ml-1"
-                                        aria-hidden="true"></i>
-                                </a>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" type="button" data-toggle="modal"
+                                        data-target="#filtro-zona">por zona <i class="fa fa-map-marker ml-1"
+                                            aria-hidden="true"></i>
+                                    </a>
+                                    <a class="dropdown-item" type="button" data-toggle="modal"
+                                        data-target="#filtro-fecha">por fecha <i class="fa fa-calendar ml-1"
+                                            aria-hidden="true"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body">
-                        <% if (grafitis.length> 0) { %>
-                            <div class="row">
-                                <% for(const image of grafitis) { %>
-                                    <div class="col-4 col-sm-3 col-lg-2 mb-2" style="position: relative">
-                                        <a class="" href="/usuario/grafiti/<%= image._id %>">
-                                            <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
-                                                alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
-                                                style="display: block">
-                                            <%# if (image.gps) { %>
-                                                <!--i class="fa fa-map-marker-alt"
-                                                    style="position: absolute; bottom:0; left:0;"></i-->
-                                                <%# } %>
-                                        </a>
-                                        <!--div class="row">
-                                            <a class="card-link col" href="">
-                                                <span class="text-dark small float-right"><#%= image.user.email %></span>
-                                            </a>
-                                        </div-->
-                                    </div>
-                                    <% } %>
-                            </div>
-                            <% } else { %>
-                                <h3 class="display-4 text-center justify-content-center">No hay grafitis</h3>
-                                <% } %>
-                    </div>
+                        <% if (grafitis.length> 0) { %><ul id="gallery" class="gallery row justify-content-around mx-auto"><% for(const grafiti of grafitis) { %><li><a href="/usuario/grafiti/<%= grafiti._id %>"><img src="/api/grafitis/get-thumbnail/<%= grafiti._id %>" class="gallery-img" alt="<%= grafiti.description %>"></a></li><% } %></ul><% } else { %>
+                            <h3 class="display-4 text-center justify-content-center">No hay grafitis</h3>
+                        <% } %>
+                </div>
 
                     <div class="card-footer">
                         <!-- ELEMENTO DE PAGINACIÓN -->
@@ -131,7 +116,7 @@
         </div>
     </div>
 
-    <script src="/js/userPages/grafiti-db-modal.js"></script>
+    <script src="/js/userPages/grafiti-db/grafiti-db-modal.js"></script>
 
     <%# Script de la api de maps; debe ir tras la función initMap %>
         <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"

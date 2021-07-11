@@ -19,10 +19,17 @@ const init = (server, app) => {
         console.log("Usuario conectado", socket.id);
         
         socket.on("upload:init", (data) => {
-            connectedUsers[data.userId] = socket;
+            connectedUsers[data.userId+":upload"] = socket;
         });
         socket.on("upload:finish", (data) => {
-            delete connectedUsers[data.userId];
+            delete connectedUsers[data.userId+":upload"];
+        });
+        
+        socket.on("download-batch:init", (data) => {
+            connectedUsers[data.userId+":download-batch"] = socket;
+        });
+        socket.on("download-batch:finish", (data) => {
+            delete connectedUsers[data.userId+":download-batch"];
         });
         
     });

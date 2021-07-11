@@ -1,5 +1,5 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mis Grafitis" , user, index: 0,
-    cssFiles: ["selectable-gallery", "floating-buttons" ] }) %>
+    cssFiles: ["selectable-gallery", "floating-buttons", "download" ] }) %>
 
     <div class="container my-4">
         <div class="row">
@@ -64,13 +64,22 @@
                 
                 <div class="modal-body">
                     <h6 class="text">¿Está seguro de que desea descargar <span class="span-selected-download"></span>?</h6><br>
-                    <div class="row justify-content-around">
+                    <div class="row justify-content-around px-2">
 
                         <button type="button" data-dismiss="modal"
                             class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
-                        <button class="btn btn-success col-12 col-sm-4" id="download-btn">Descargar <i
-                                class="fa fa-spinner d-none" id="spinner-download"></i></button>
+                        <button data-user="<%= user._id %>" class="btn btn-success mt-2 mt-sm-0 col-12 col-sm-4" id="download-btn">Descargar <i
+                                class="fa fa-spinner fa-pulse d-none" id="spinner-download"></i></button>
 
+                    </div>
+                </div>
+                
+                <div id="download-footer" class="modal-footer d-none container-fluid">
+                    <div class="row justify-content-center px-3">
+                        <span id="download-info" class="col-12">Iniciando</span>
+                        <div id="download-progress" class="col-12 progress my-3">
+                            <div id="download-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -112,7 +121,8 @@
     <!-- Fin modal de eliminación -->
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="/js/userPages/mis-grafitis-selectable.js"></script>
-    <script src="/js/userPages/mis-grafitis-selectable-modales.js"></script>
+    <script src="/js/userPages/mis-grafitis/mis-grafitis-selectable.js"></script>
+    <script src="/socket.io/socket.io.js" charset="utf-8"></script>
+    <script src="/js/userPages/mis-grafitis/mis-grafitis-selectable-modales.js"></script>
 
     <%- include("../templates/footer"); %>

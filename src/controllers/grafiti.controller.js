@@ -4,6 +4,7 @@ const fs = require("fs-extra");
 const archiver = require("archiver");
 const exifr = require("exifr");
 const imageThumbnail = require("image-thumbnail");
+const ObjectsToCsv = require("objects-to-csv");
 
 const Grafiti = require("../models/grafiti.model");
 const Location = require("../models/location.model");
@@ -74,7 +75,7 @@ const upload = async (req, res) => {
 
     const nFiles = files.length;
     const step = 100.0 / nFiles;
-    const socketid = Sockets.connectedUsers[req.user.id].id;
+    const socketid = Sockets.connectedUsers[req.user.id+":upload"].id;
     function emitStep(index) {
         req.app.io.to(socketid).emit("upload:step", { percentage: (index * step).toFixed(2) });
     }
@@ -560,29 +561,16 @@ const removeBatch = async (req, res) => {
 
     // Obtenemos el body de la consulta
     const { ids } = req.body;
-    console.log({ids})
     try {
-        
-        // Actualizamos los grafitis a eliminados
-        const result = await Grafiti.updateMany({
-            _id: { $in: ids },
-            deleted: false,
-            user: req.user._id,
-        }, { $set: { deleted: true }});
-        if(!result) {
-            throw "La eliminación no tuvo resultado";
-        }
         
         // Obtenemos los ids de aquellos que cumplan requisitos
         const matches = await Grafiti.find({
             _id: { $in: ids },
             user: req.user._id,
         },  { _id: 1 });
-        console.log({ matches })
         const matchesIds = matches.map(function (obj) {
             return `${obj._id}`;
         });
-        console.log({ matchesIds });
         
         // Eliminamos también de matches
         await Match.deleteMany({
@@ -597,6 +585,16 @@ const removeBatch = async (req, res) => {
             grafiti: { $in: matchesIds },
             user: req.user._id,
         });
+        
+        // Actualizamos los grafitis a eliminados
+        const result = await Grafiti.updateMany({
+            _id: { $in: matchesIds },
+            deleted: false,
+            user: req.user._id,
+        }, { $set: { deleted: true }});
+        if(!result) {
+            throw "La eliminación no tuvo resultado";
+        }
 
         return res.status(200).json({
             success: true,
@@ -745,81 +743,6 @@ const getGrafitiById = async (grafitiId) => {
 
     } catch (error) {
         console.error("Error en getGrafitiById: ", error);
-        return null;
-    }
-
-};
-
-/**
- * Devuelve n grafitis de la base de datos
- * @param {Number} page - Número de página
- * @param {Number} nGrafitis - Número de grafitis por página
- * @returns Grafitis
- *
-const getGrafitiPage = async (page, nGrafitis, user = null) => {
-
-    try {
-
-        var grafitis = null;
-        if (!user) {
-            grafitis = await Grafiti.find({ deleted: false })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis).limit(nGrafitis)
-                .populate("user", { name: 1, surname: 1, email: 1 })
-                .populate("gps", { location: 1 });
-        } else {
-            grafitis = await Grafiti.find({
-                deleted: false,
-                user
-            })
-                .sort({ uploadedAt: -1 })
-                .skip((page - 1) * nGrafitis).limit(nGrafitis)
-                .populate("user", { name: 1, surname: 1, email: 1 })
-                .populate("gps", { location: 1 });
-        }
-
-        if (!grafitis) {
-            console.error("No se han podido recuperar los grafitis en la consulta");
-            return null;
-        }
-
-        return grafitis;
-
-    } catch (error) {
-        console.error("Error en getGrafitiPage: ", error);
-        return null;
-    }
-
-};
-
-**
- * Devuelve el número de páginas totales dado el número de grafitis por página
- * @param {Number} n - Número de grafitis por página
- * @returns Número de páginas
- *
-const getNumberOfPages = async (n, user = null) => {
-
-    try {
-
-        var nGrafitis = 0;
-        if (!user) {
-            nGrafitis = await Grafiti.countDocuments({ deleted: false });
-        } else {
-            nGrafitis = await Grafiti.countDocuments({
-                deleted: false,
-                user
-            });
-        }
-
-        if (!nGrafitis) {
-            console.error("Error al consultar el número de grafitis");
-            return null;
-        }
-
-        return Math.ceil(nGrafitis / n);
-
-    } catch (error) {
-        console.error("Error en getNumberOfPages: ", error);
         return null;
     }
 
@@ -1006,6 +929,7 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
         
         // Si se filtra por zona
         if (searchZone) {
+            console.log(searchZone);
             // Hacemos el left join
             pipeline.push({ 
                 "$lookup" : { 
@@ -1109,7 +1033,7 @@ const prepareDownloadBatch = async (req, res) => {
     console.log("Prepara descarga");
     
     try {
-        
+    
         // Comprobamos la información recibida
         const body = req.body;
         if(!body) {
@@ -1123,11 +1047,41 @@ const prepareDownloadBatch = async (req, res) => {
             throw "El array de ids no puede estar vacío";
         }
         
+        // Preparamos las variables del socket
+        const prevPerc = 10.0;
+        const step = 90.0 / (ids.length); // Sumamos los pasos extra
+        var index = 1;
+        // Iniciamos el socket
+        const socketid = Sockets.connectedUsers[req.user.id+":download-batch"].id;
+        function emitStep(index, info = null) {
+            req.app.io.to(socketid).emit("download-batch:step", 
+            { 
+                percentage: ((index * step)+prevPerc).toFixed(2),
+                info
+            });
+        }
+        function emitSemiStep(index, percentage, info = null) {
+            req.app.io.to(socketid).emit("download-batch:step", 
+            { 
+                percentage: (((index - 1) * step + percentage * step)+prevPerc).toFixed(2),
+                info,
+            });
+        }
+        function emitPercentage(percentage, info = null) {
+            req.app.io.to(socketid).emit("download-batch:step", 
+            { 
+                percentage: (percentage).toFixed(2),
+                info,
+            });
+        }
+        
+        emitPercentage(5, "Recopilando información");
+        
         // Obtenemos los grafitis de la BD
         const files = await Grafiti.find({
             deleted: false,
             _id: { $in: ids },
-        }, { originalName: 1, absolutePath: 1, serverName: 1 });
+        }, /*{ originalName: 1, absolutePath: 1, serverName: 1 }*/);
         if(!files) {
             throw "No se han encontrado";
         }
@@ -1155,14 +1109,37 @@ const prepareDownloadBatch = async (req, res) => {
         // Conectamos la entrada al fichero de salida
         archive.pipe(output);
         
+        // Cuando un archivo se agregue notificamos al usuario
+        emitPercentage(9, "Comprimiendo archivos");
+        archive.on("entry", (entry) => {
+            emitStep(index, `Comprimiendo imagen ${index-1}/${ids.length}`);
+            index++;
+        });
+        
         // Metemos todos los archivos en el paquete
         for(const file of files) {
             archive.file(file.absolutePath, { name: file.serverName });
         }
         
-        // Finalizamos
-        archive.finalize();
+        /*
+        // Añadimos el CSV con la información de los grafitis descargados
+        const csv = new ObjectsToCsv(files);
+        archive.append(await csv.toString(), { name: "info.csv" });
+        */
         
+        // Esperamos a que la compresión acabe
+        await archive.finalize();
+        
+        // Establecemos el temporizador para eliminar los archivos temporales
+        const timeOutHrs = 2; // Dos horas
+        setTimeout(() => {
+            console.log(`Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
+            fs.removeSync(filePath);
+        }, (1000 * 3600 * timeOutHrs));
+        
+        emitPercentage(100, "Finalizado");
+        
+        // Devolvemos el id del archivo generado
         return res.status(200).json({
             success: true,
             message: "Archivo listo",
@@ -1171,6 +1148,7 @@ const prepareDownloadBatch = async (req, res) => {
     
     } catch (error) {
         const message = `Error preparando la descarga: ` + error;
+        console.error(message);
         return res.status(400).json({
             success: false,
             message,
@@ -1182,10 +1160,27 @@ const prepareDownloadBatch = async (req, res) => {
 */ 
 const downloadBatch = (req, res) => {
     console.log("Descarga")
-    const filePath = path.resolve(`${req.params.file_id}.zip`);
+    const filePath = path.resolve(`src/tempfiles/downloads/${req.params.file_id}.zip`);
     
+    if(!fs.existsSync(filePath)){
+        console.error("Archivo de descarga no encontrado");
+        return res.status(404).render("404.ejs", { titulo: "Error 404", user: req.user? req.user : null, index: 0 });
+    }
     
-    res.download(path.resolve("src/public/images/image_not_found.png"))
+    return res.download(path.resolve(filePath));
+};
+
+/** Función que devuelve el paquete creado para que el usuario lo descargue
+*/ 
+const removeTemporaryDownloadFiles = () => {
+    const tmpDownloadDir = path.resolve("src/tempfiles/downloads/");
+    const files = fs.readdirSync(tmpDownloadDir);
+    
+    for(const file of files) {
+        const filePath = path.join(tmpDownloadDir, file);
+        console.log("=> Eliminando fichero temporal ", file, " ["+filePath+"]");
+        fs.removeSync(filePath);
+    }
 };
 
 
@@ -1207,4 +1202,5 @@ module.exports = {
     getFilteredGrafitis,
     prepareDownloadBatch,
     downloadBatch,
+    removeTemporaryDownloadFiles,
 };

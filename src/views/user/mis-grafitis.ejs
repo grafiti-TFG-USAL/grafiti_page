@@ -33,30 +33,9 @@
                     </div>
 
                     <div class="card-body">
-                        <% if (grafitis.length> 0) { %>
-                            <div class="row">
-                                <% for(const image of grafitis) { %>
-                                    <div class="col-4 col-sm-3 col-lg-2 mb-2" style="position: relative">
-                                        <a class="" href="/usuario/grafiti/<%= image._id %>">
-                                            <img src="/api/grafitis/get-thumbnail/<%= image._id %>"
-                                                alt="<%= image.description %>" class="w-100 h-100 img img-thumbnail"
-                                                style="display: block">
-                                            <%# if (image.gps) { %>
-                                                <!--i class="fa fa-map-marker-alt"
-                                                    style="position: absolute; bottom:0; left:0;"></i-->
-                                                <%# } %>
-                                        </a>
-                                        <!--div class="row">
-                                            <a class="card-link col" href="">
-                                                <span class="text-dark small float-right"><#%= image.user.email %></span>
-                                            </a>
-                                        </div-->
-                                    </div>
-                                    <% } %>
-                            </div>
-                            <% } else { %>
+                        <% if (grafitis.length> 0) { %><ul id="gallery" class="gallery row justify-content-around mx-auto"><% for(const grafiti of grafitis) { %><li><a href="/usuario/grafiti/<%= grafiti._id %>"><img src="/api/grafitis/get-thumbnail/<%= grafiti._id %>" class="gallery-img" alt="<%= grafiti.description %>"></a></li><% } %></ul><% } else { %>
                                 <h3 class="display-4 text-center justify-content-center">No hay grafitis</h3>
-                                <% } %>
+                            <% } %>
                     </div>
 
                     <div class="card-footer">
@@ -137,8 +116,8 @@
         </div>
     </div>
 
-    <script src="/js/userPages/mis-grafitis-modal-filtro.js"></script>
-    <script src="/js/userPages/mis-grafitis.js"></script>
+    <script src="/js/userPages/mis-grafitis/mis-grafitis-modal-filtro.js"></script>
+    <script src="/js/userPages/mis-grafitis/mis-grafitis.js"></script>
 
     <%# Script de la api de maps; debe ir tras la función initMap %>
         <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"

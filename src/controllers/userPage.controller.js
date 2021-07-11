@@ -7,12 +7,6 @@ const {
     getGrafitiById,
     getGrafitiPage,
     getNumberOfPages,
-    getGrafitisFilteredByGPS,
-    getNumberOfGrafitisFilteredByGPS,
-    getGrafitisFilteredByDate,
-    getNumberOfGrafitisFilteredByDate,
-    getGrafitisFilteredByGPSAndDate,
-    getNumberOfGrafitisFilteredByGPSAndDate,
     getFilteredGrafitis,
     getBatch
 } = require("./grafiti.controller");
@@ -41,9 +35,9 @@ const grafitiEdit = async (req, res) => {
 
     // Si no existe el grafiti cargamos la 404
     if (!grafiti)
-        res.render("../views/404.ejs");
+        res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     else if (grafiti.deleted)
-        res.render("../views/404.ejs");
+        res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     // Si existe cargamos la página descriptiva
     else
         res.render("../views/user/grafiti-edit.ejs", { user: req.user, grafiti, maps_key: process.env.GMAPS_API_KEY });
@@ -61,9 +55,9 @@ const grafitiDesc = async (req, res) => {
 
     // Si no existe el grafiti cargamos la 404
     if (!grafiti)
-        res.render("../views/404.ejs");
+        res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     else if (grafiti.deleted)
-        res.render("../views/404.ejs");
+        res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     // Si existe cargamos la página descriptiva
     else {
         const time = timeAgo(grafiti.uploadedAt);
@@ -85,11 +79,11 @@ const showGrafiti = async (req, res) => {
         // Si el grafiti no existe, está borrado o no pertenece al usuario
         if (!grafiti) {
             console.error("No grafiti");
-            return res.render("../views/404");
+            return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
         }
         else if (grafiti.deleted) {
             console.error("Grafiti deleted");
-            return res.render("../views/404");
+            return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
         }
         else {
 
@@ -130,21 +124,12 @@ const showMatches = async (req, res) => {
         else {
 
             return res.status(200).render("user/matches.ejs", { titulo: "Matches", grafiti: req.params.grafiti_id, user: req.user });
-
-            /*
-            // Si el grafiti no es suyo, cargamos la página de descripción
-            if (!grafiti.user.equals(req.user._id)) {
-                grafitiDesc(req, res);
-            }
-            // Si el grafiti es suyo, cargamos la página de edición
-            else {
-                grafitiEdit(req, res);
-            }*/
+            
         }
 
     } catch (error) {
         console.error("Error en showMatches: ", error);
-        return res.status(404).render("../views/404");
+        return res.status(404).render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     }
 
 };
@@ -154,7 +139,7 @@ const showMatches = async (req, res) => {
  */
 const userGrafitis = async (req, res) => {
 
-    const resultsPerPage = 12;
+    const resultsPerPage = 20;
 
     // Recogemos el número de página
     var pagina;
@@ -184,105 +169,13 @@ const userGrafitis = async (req, res) => {
     }
 
     try {
-        /*
-        // Resultados filtrados por zona y fecha
-        if ((req.query.lat && req.query.lng && req.query.radio) && (req.query.minDate || req.query.maxDate)) {
-
-            const lat = req.query.lat;
-            const lng = req.query.lng;
-            const radio = req.query.radio;
-
-            const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-            const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-            const grafitis = await getGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate, pagina, resultsPerPage, req.user._id);
-            if (!grafitis) {
-                return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const nGrafitis = await getNumberOfGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate, req.user._id);
-            if (nGrafitis < 1) {
-                return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-            //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-            return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-        } else
-            // Resultados filtrados por zona
-            if (req.query.lat && req.query.lng && req.query.radio) {
-
-                const lat = req.query.lat;
-                const lng = req.query.lng;
-                const radio = req.query.radio;
-
-                const grafitis = await getGrafitisFilteredByGPS(lat, lng, radio, pagina, resultsPerPage, req.user._id);
-                if (!grafitis) {
-                    return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const nGrafitis = await getNumberOfGrafitisFilteredByGPS(lat, lng, radio, req.user._id);
-                if (nGrafitis < 1) {
-                    return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-            } else
-                // Resultados filtrados por fecha
-                if (req.query.minDate || req.query.maxDate) {
-
-                    const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-                    const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-                    const grafitis = await getGrafitisFilteredByDate(minDate, maxDate, pagina, resultsPerPage, req.user._id);
-                    if (!grafitis) {
-                        return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const nGrafitis = await getNumberOfGrafitisFilteredByDate(minDate, maxDate, req.user._id);
-                    if (nGrafitis < 1) {
-                        return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                    //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                    return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-                // Resultados sin filtrar 
-                else {
-
-                    // Pedimos los grafitis de la página
-                    const grafitis = await getGrafitiPage(pagina, resultsPerPage, req.user._id);
-                    if (!grafitis) {
-                        console.error("No se han podido recuperar los grafitis");
-                        return res.status(400).render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    // Pedimos el paginas que podemos mostrar
-                    const limPages = await getNumberOfPages(resultsPerPage, req.user._id);
-                    if (!limPages) {
-                        console.error("No se han podido contar los grafitis");
-                        return res.status(400).render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    //console.log("Pagina ", pagina, " de ", limPages);
-                    return res.render("user/mis-grafitis.ejs", { titulo: "Mis Grafitis", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-                }
-*/
+        
         var searchZone = null;
         if(query.lng && query.lat && query.radio) {
             searchZone = {
-                lng: query.lng,
-                lat: query.lat,
-                radio: query.radio,
+                lng: Number.parseFloat(query.lng),
+                lat: Number.parseFloat(query.lat),
+                radio: Number.parseFloat(query.radio),  
             };
         }
         
@@ -315,9 +208,9 @@ const userGrafitis_selection = async (req, res) => {
     var searchZone = null;
     if (queryParams.lat && queryParams.lng && queryParams.radio) {
         searchZone = {
-            lng: queryParams.lng,
-            lat: queryParams.lat,
-            radio: queryParams.radio,  
+            lng: Number.parseFloat(query.lng),
+            lat: Number.parseFloat(query.lat),
+            radio: Number.parseFloat(query.radio),  
         };
     }
     const minDate = queryParams.minDate ? queryParams.minDate : null;
@@ -339,8 +232,7 @@ const userGrafitis_selection = async (req, res) => {
             user: req.user, 
             grafitis: grafitis.grafitis,
             nGrafitis: grafitis.nGrafitis,
-            grafitisFetchLimit,
-            maps_key: process.env.GMAPS_API_KEY
+            grafitisFetchLimit
         });
     
     } catch (error) {
@@ -385,7 +277,7 @@ const userProfile = async (req, res) => {
  */
 const grafitiDB = async (req, res) => {
 
-    const resultsPerPage = 12;
+    const resultsPerPage = 20;
 
     // Recogemos el número de página
     var pagina;
@@ -398,7 +290,6 @@ const grafitiDB = async (req, res) => {
 
     // Recogemos el resto de elementos de la consulta para mantenerlo en la paginación
     const query = req.query;
-    //console.log("Query: ", query);
     if (query.page) delete query.page;
     const queryKeys = Object.keys(query);
     var queryString = "";
@@ -412,102 +303,31 @@ const grafitiDB = async (req, res) => {
         }
         queryString += `${key}=${element}`;
     }
-    //console.log("QueryLength: ", queryKeys.length);
-    //console.log("QueryString: ", queryString);
+    
+    // Establecemos las variables del filtro
+    var searchZone = null;
+    if (query.lat && query.lng && query.radio) {
+        searchZone = {
+            lng: Number.parseFloat(query.lng),
+            lat: Number.parseFloat(query.lat),
+            radio: Number.parseFloat(query.radio),  
+        };
+    }
+    const minDate = query.minDate ? query.minDate : null;
+    const maxDate = query.maxDate ? query.maxDate : null;
 
     try {
 
         // Resultados filtrados por zona y fecha
-        if ((req.query.lat && req.query.lng && req.query.radio) && (req.query.minDate || req.query.maxDate)) {
-
-            const lat = req.query.lat;
-            const lng = req.query.lng;
-            const radio = req.query.radio;
-
-            const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-            const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-            const grafitis = await getGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate, pagina, resultsPerPage);
-            if (!grafitis) {
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const nGrafitis = await getNumberOfGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate);
-            if (nGrafitis < 1) {
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-            //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-            return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-        } else
-            // Resultados filtrados por zona
-            if (req.query.lat && req.query.lng && req.query.radio) {
-
-                const lat = req.query.lat;
-                const lng = req.query.lng;
-                const radio = req.query.radio;
-
-                const grafitis = await getGrafitisFilteredByGPS(lat, lng, radio, pagina, resultsPerPage);
-                if (!grafitis) {
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const nGrafitis = await getNumberOfGrafitisFilteredByGPS(lat, lng, radio);
-                if (nGrafitis < 1) {
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-            } else
-                // Resultados filtrados por fecha
-                if (req.query.minDate || req.query.maxDate) {
-
-                    const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-                    const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-                    const grafitis = await getGrafitisFilteredByDate(minDate, maxDate, pagina, resultsPerPage);
-                    if (!grafitis) {
-                        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const nGrafitis = await getNumberOfGrafitisFilteredByDate(minDate, maxDate);
-                    if (nGrafitis < 1) {
-                        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                    //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-                // Resultados sin filtrar 
-                else {
-
-                    // Pedimos los grafitis de la página
-                    const grafitis = await getGrafitiPage(pagina, resultsPerPage);
-                    if (!grafitis) {
-                        console.error("No se han podido recuperar los grafitis");
-                        return res.status(400).redirect("../usuario");
-                    }
-
-                    // Pedimos el paginas que podemos mostrar
-                    const limPages = await getNumberOfPages(resultsPerPage);
-                    if (!limPages) {
-                        console.error("No se han podido contar los grafitis");
-                        return res.status(400).redirect("../usuario");
-                    }
-
-                    //console.log("Pagina ", pagina, " de ", limPages);
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-                }
+        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, null, (pagina-1)*resultsPerPage, resultsPerPage);
+        
+        return res.render("user/grafiti-db.ejs", { 
+            titulo: "Grafiti DB", 
+            pagina, grafitis: grafitis.grafitis, 
+            limPages: Math.ceil(grafitis.nGrafitis / resultsPerPage), 
+            user: req.user, 
+            maps_key: process.env.GMAPS_API_KEY, 
+            query: queryString });
 
     } catch (error) {
         console.error("Ha habido un error en GrafitiDB: ", error);
@@ -520,122 +340,42 @@ const grafitiDB = async (req, res) => {
  * Muestra la Base de Datos de grafitis de todos los usuarios, permite seleccionarlos
  */
 const grafitiDB_selection = async (req, res) => {
-
-    // Recogemos el resto de elementos de la consulta para mantenerlo en la paginación
-    const query = req.query;
-    if (query.page) delete query.page;
-    const queryKeys = Object.keys(query);
-    var queryString = "";
-    for (let index = 0; index < queryKeys.length; index++) {
-        const key = queryKeys[index];
-        const element = query[key];
-        if (index == 0) {
-            queryString = "?";
-        } else {
-            queryString += "&";
-        }
-        queryString += `${key}=${element}`;
+    
+    // Recogemos los parámetros de la consulta
+    const queryParams = req.query;
+    // Establecemos las variables del filtro
+    var searchZone = null;
+    if (queryParams.lat && queryParams.lng && queryParams.radio) {
+        searchZone = {
+            lng: Number.parseFloat(queryParams.lng),
+            lat: Number.parseFloat(queryParams.lat),
+            radio: Number.parseFloat(queryParams.radio),   
+        };
     }
-
+    const minDate = queryParams.minDate ? queryParams.minDate : null;
+    const maxDate = queryParams.maxDate ? queryParams.maxDate : null;
+    
+    // De cuántos en cuántos grafitis cargará la página
+    const grafitisFetchLimit = 25;
     try {
-
-        // Resultados filtrados por zona y fecha
-        if ((req.query.lat && req.query.lng && req.query.radio) && (req.query.minDate || req.query.maxDate)) {
-
-            const lat = req.query.lat;
-            const lng = req.query.lng;
-            const radio = req.query.radio;
-
-            const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-            const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-            const grafitis = await getGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate, pagina, resultsPerPage);
-            if (!grafitis) {
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const nGrafitis = await getNumberOfGrafitisFilteredByGPSAndDate(lat, lng, radio, minDate, maxDate);
-            if (nGrafitis < 1) {
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-            }
-
-            const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-            //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-            return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-        } else
-            // Resultados filtrados por zona
-            if (req.query.lat && req.query.lng && req.query.radio) {
-
-                const lat = req.query.lat;
-                const lng = req.query.lng;
-                const radio = req.query.radio;
-
-                const grafitis = await getGrafitisFilteredByGPS(lat, lng, radio, pagina, resultsPerPage);
-                if (!grafitis) {
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const nGrafitis = await getNumberOfGrafitisFilteredByGPS(lat, lng, radio);
-                if (nGrafitis < 1) {
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-
-                const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-            } else
-                // Resultados filtrados por fecha
-                if (req.query.minDate || req.query.maxDate) {
-
-                    const minDate = req.query.minDate ? new Date(req.query.minDate) : null;
-                    const maxDate = req.query.maxDate ? new Date(req.query.maxDate) : null;
-
-                    const grafitis = await getGrafitisFilteredByDate(minDate, maxDate, pagina, resultsPerPage);
-                    if (!grafitis) {
-                        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const nGrafitis = await getNumberOfGrafitisFilteredByDate(minDate, maxDate);
-                    if (nGrafitis < 1) {
-                        return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis: [], limPages: 0, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                    }
-
-                    const limPages = Math.ceil(nGrafitis / resultsPerPage);
-
-                    //console.log("Pagina ", pagina, " de ", limPages, " - Hay ", nGrafitis, " grafitis");
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-                }
-                // Resultados sin filtrar 
-                else {
-
-                    // Pedimos los grafitis de la página
-                    const grafitis = await getGrafitiPage(pagina, resultsPerPage);
-                    if (!grafitis) {
-                        console.error("No se han podido recuperar los grafitis");
-                        return res.status(400).redirect("../usuario");
-                    }
-
-                    // Pedimos el paginas que podemos mostrar
-                    const limPages = await getNumberOfPages(resultsPerPage);
-                    if (!limPages) {
-                        console.error("No se han podido contar los grafitis");
-                        return res.status(400).redirect("../usuario");
-                    }
-
-                    //console.log("Pagina ", pagina, " de ", limPages);
-                    return res.render("user/grafiti-db.ejs", { titulo: "Grafiti DB", pagina, grafitis, limPages, user: req.user, maps_key: process.env.GMAPS_API_KEY, query: queryString });
-
-                }
-
+        
+        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, null, 0, grafitisFetchLimit);
+        if(!grafitis) {
+            throw "No se han encontrado grafitis";
+        }
+        
+        return res.render("user/grafiti-db-selectable.ejs", { 
+            titulo: "Grafiti DB", 
+            user: req.user, 
+            grafitis: grafitis.grafitis,
+            nGrafitis: grafitis.nGrafitis,
+            grafitisFetchLimit,
+        });
+    
     } catch (error) {
-        console.error("Ha habido un error en GrafitiDB: ", error);
-        return res.redirect("../usuario");
+        console.error("Error: " + error);
+        return;
     }
-
 };
 
 /**

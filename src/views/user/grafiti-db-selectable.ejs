@@ -1,0 +1,90 @@
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti DB" , user, index: 2,
+    cssFiles: ["selectable-gallery", "floating-buttons", "download" ] }) %>
+
+    <div class="container my-4">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="d-inline"><a class="card-link back_link" href="/usuario/GrafitiDB">Grafiti DB</a> <% if (grafitis.length > 0) { %>(<span id="nSelected">0</span>/<span id="nGrafitis"><%= nGrafitis %></span>)<% } %></h3>
+                        <% if (grafitis.length > 0) { %>  
+                        <div class="d-inline float-right pt-2 pt-sm-0">
+                            <button type="button" class="d-inline btn btn-primary" id="select_all">
+                            </button>
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <div class="card-body">
+                        <div>
+                            <!-- El js rellenará las imágenes faltantes según el usuario avance -->
+                            <% if (grafitis.length==0) { %>
+                            <h3 class="display-4">No hay imágenes</h3>
+                            <% } else {%>
+                            <ul id="gallery" class="gallery row justify-content-around" data-limit="<%= grafitisFetchLimit %>"><% for( let index=0; index < grafitis.length; index++ ) { const grafiti=grafitis[index]; %><li><input type="checkbox" class="checkbox" id="<%= grafiti._id %>" /><label for="<%= grafiti._id %>" class="check_label"><img src="/api/grafitis/get-thumbnail/<%= grafiti._id %>" class="gallery__img" alt="<%= grafiti.description %>"></label></li><% } %></ul><% } %>
+                        </div>
+                    </div><!-- Fin card-body -->
+
+                </div><!-- Fin card -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botones flotantes -->
+    <div id="floating-buttons" class="d-none">
+        
+        <div data-toggle="tooltip" title="Descargar las imágenes seleccionadas">
+            <button type="button" id="download" class="float btn-success"
+            data-toggle="modal" data-target="#modal_download">
+                <i class="fa fa-2x fa-download float-icon mx-auto"></i>
+            </button>
+        </div>
+        
+    </div>
+    <!-- Fin botones flotantes -->
+    
+    
+    <!-- Modal de descarga -->
+    <div class="modal fade" id="modal_download">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="content-download">
+                
+                <div class="modal-header bg-success">
+                    <h4 class="modal-title text-white">Descargar <span class="span-selected-download"></span></h4>
+                    <button type="button" class="close" id="download_close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <h6 class="text">¿Está seguro de que desea descargar <span class="span-selected-download"></span>?</h6><br>
+                    <div class="row justify-content-around px-2">
+
+                        <button type="button" data-dismiss="modal"
+                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
+                        <button data-user="<%= user._id %>" class="btn btn-success mt-2 mt-sm-0 col-12 col-sm-4" id="download-btn">Descargar <i
+                                class="fa fa-spinner fa-pulse d-none" id="spinner-download"></i></button>
+
+                    </div>
+                </div>
+                
+                <div id="download-footer" class="modal-footer d-none container-fluid">
+                    <div class="row justify-content-center px-3">
+                        <span id="download-info" class="col-12">Iniciando</span>
+                        <div id="download-progress" class="col-12 progress my-3">
+                            <div id="download-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"></div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <!-- Fin modal de descarga -->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/js/userPages/grafiti-db/grafiti-db-selectable.js"></script>
+    <script src="/socket.io/socket.io.js" charset="utf-8"></script>
+    <script src="/js/userPages/grafiti-db/grafiti-db-selectable-modales.js"></script>
+
+    <%- include("../templates/footer"); %>

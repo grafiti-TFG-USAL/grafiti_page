@@ -65,8 +65,11 @@ routes(app);
 
 // Configuramos la página 404
 app.use((req, res) => {
-    res.status(404).render("404.ejs", { titulo: "Error 404" });
+    return res.status(404).render("404.ejs", { titulo: "Error 404", user: req.user? req.user : null, index: 0 });
 });
+
+// Comprobamos que no haya archivos temporales en el directorio de archivos temporales
+require("./controllers/grafiti.controller").removeTemporaryDownloadFiles();
 
 // Si el hosting no lo asigna, se usa la variable de entorno
 const port = process.env.PORT || 3000;

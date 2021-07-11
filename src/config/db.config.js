@@ -70,7 +70,6 @@ const inicializarBase = async () => {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
         }
-        
 
     } catch (error) {
         console.log("Se ha producido un error al inicializar la base de datos: ", error);
