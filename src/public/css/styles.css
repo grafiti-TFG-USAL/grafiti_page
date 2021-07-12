@@ -1,6 +1,7 @@
 body {
     background: #dcdde1;
     min-height: 100vh;
+    min-width: 325px;
     position: relative;
     margin: 0;
     padding-bottom: 56px; /*Altura del footer*/

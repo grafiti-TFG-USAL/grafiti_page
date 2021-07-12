@@ -50,3 +50,13 @@ li {
     -ms-user-select: none;
     user-select: none;
 }
+
+@media (max-width: 600px) {
+    .gallery-img {
+        height: 125px;
+        width: 125px;
+        padding: 7px;
+        margin: 2px;
+    }
+  }
+  
