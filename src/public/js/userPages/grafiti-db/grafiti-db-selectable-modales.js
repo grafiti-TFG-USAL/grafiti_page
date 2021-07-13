@@ -28,6 +28,7 @@ socket.on("download-batch:step", data => {
     if(data.info) {
         downloadInfo.innerText = `${data.info}`;
     }
+    console.log(data.info);
 });
 
 // Descarga de imágenes
@@ -76,9 +77,10 @@ download_images.addEventListener("click", async (event) => {
         console.log(result.message);
         
         downloadFooter.classList.replace("d-block", "d-none");
+        spinner_download.classList.add("d-none");
         download(`/api/grafitis/download-batch/${result.fileId}`, "grafitis.zip");
+        //window.location.reload();
         document.getElementById("download_close").click();
-        window.location.reload();
         
     } catch (error) {
         spinner_download.classList.add("d-none");
@@ -94,6 +96,7 @@ download_images.addEventListener("click", async (event) => {
 function download(fileUrl, fileName) {
     const a = document.createElement("a");
     a.href = fileUrl;
+    a.target = "_blank";
     a.click();
 }
 

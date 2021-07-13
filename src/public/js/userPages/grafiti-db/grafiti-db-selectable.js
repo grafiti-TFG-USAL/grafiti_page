@@ -285,6 +285,7 @@ div_select_all.appendChild(icon_select_all);
 if(btn_select_all) {
     btn_select_all.appendChild(div_select_all);
 }
+btn_select_all.classList.replace("d-none", "d-inline");
 // Creamos el contenido alternativo
 const div_unselect_all = document.createElement("div");
 const span_unselect_all = document.createElement("span");

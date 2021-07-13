@@ -69,7 +69,8 @@ const signUp = async (req, res) => {
                 message: "Error interno: incapaz de asegurar la contraseña del usuario, operación abortada por seguridad"
             });
         }
-
+        
+        console.log(1);
         // Creamos el nuevo usuario
         const user = new User({
             name: req.body.name,
@@ -80,21 +81,14 @@ const signUp = async (req, res) => {
             email_notifications: [],
         });
 
+        console.log(2);
         // Generamos el token
         const token = getToken({
             email: user.email,
             code: user.code
         }, "2d"); //Que dure dos días
 
-        // Obtenemos el template
-        const template = getConfirmTemplate(req.body.name, token, req.headers.host)
-
-        // Enviamos el email
-        await sendEmail(
-            user.email,
-            "Confirme su cuenta",
-            template);
-
+        console.log(3);
         // Almacenamos el usuario en la base de datos
         const userDB = await user.save();
         if (!userDB) {
@@ -105,7 +99,19 @@ const signUp = async (req, res) => {
                 message: "Ha habido un error al almacenar al usuario en la base de datos"
             });
         }
+        console.log(4);
+        
+        // Obtenemos el template
+        const template = getConfirmTemplate(req.body.name, token, req.headers.host)
 
+        // Enviamos el email
+        await sendEmail(
+            user.email,
+            "Confirme su cuenta",
+            template
+        );
+
+        console.log(5);
         return res.status(200).json({
             success: true,
             validationPending: true,
@@ -477,7 +483,6 @@ const changeNotificationConfig = async (req, res) => {
                 notification_array.push(keys[index]);
             }
         }
-        
         const results = await User.updateOne({ _id: userId }, {
             $set: {
                 email_notifications: notification_array,

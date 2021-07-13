@@ -1052,6 +1052,7 @@ const prepareDownloadBatch = async (req, res) => {
         const step = 90.0 / (ids.length); // Sumamos los pasos extra
         var index = 1;
         // Iniciamos el socket
+        console.log("USER: ", req.user);
         const socketid = Sockets.connectedUsers[req.user.id+":download-batch"].id;
         function emitStep(index, info = null) {
             req.app.io.to(socketid).emit("download-batch:step", 
@@ -1112,7 +1113,7 @@ const prepareDownloadBatch = async (req, res) => {
         // Cuando un archivo se agregue notificamos al usuario
         emitPercentage(9, "Comprimiendo archivos");
         archive.on("entry", (entry) => {
-            emitStep(index, `Comprimiendo imagen ${index-1}/${ids.length}`);
+            emitStep(index, `Comprimiendo imagen ${index}/${ids.length}`);
             index++;
         });
         

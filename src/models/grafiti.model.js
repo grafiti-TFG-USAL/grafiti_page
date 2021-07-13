@@ -3,16 +3,16 @@ const path = require("path");
 
 const grafitiSchema = mongoose.Schema({
 
-    // El nombre original del archivo
-    originalname: {
-        type: String,
-        required: true,
-    },
     // El usuario que subió la imagen
     user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: "User", // Esto nos permite hacer un populate
+    },
+    // El nombre original del archivo
+    originalName: {
+        type: String,
+        required: true,
     },
     // El nombre del archivo en el servidor
     serverName: {

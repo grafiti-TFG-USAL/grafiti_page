@@ -59,4 +59,13 @@ li {
         margin: 2px;
     }
   }
+
+  @media (max-width: 350px) {
+      .gallery-img {
+          height: 100px;
+          width: 100px;
+          padding: 2px;
+          margin: 10px 2px;
+      }
+    }
   

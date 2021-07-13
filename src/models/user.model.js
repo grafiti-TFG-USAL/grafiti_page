@@ -24,6 +24,7 @@ const userSchema  = mongoose.Schema({
         unique: true,
         min: 6,
         max: 50,
+        index: true,
     },
     // Contraseña del usuario
     password: {
@@ -55,11 +56,15 @@ const userSchema  = mongoose.Schema({
         type: String,
     },
     // Tipos de notificaciones a las que el usuario se ha suscrito
-    email_notifications: [{
-        type: String,
-        enum: ["matches", "no gps"], // Si el array contiene la notificación, es que está suscrito
-        unique: true,
-    }],
+    email_notifications: {
+        type: [{
+            type: String,
+            enum: ["matches", "no gps"], // Si el array contiene la notificación, es que está suscrito
+        }],
+        default: [],
+        index: false,
+    }
+    ,
 }, { 
     timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });

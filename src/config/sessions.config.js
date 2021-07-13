@@ -20,7 +20,7 @@ module.exports = (app, session) => {
             collectionName: "sessions",
             ttl: (4 * 365 + 1) * 24 * 60 * 60, // 4 años
             autoReconnect: true,
-            //crypto: { secret: process.env.MONGO_SESSION_SECRET }, //TODO: reactivar al final
+            crypto: { secret: process.env.MONGO_SESSION_SECRET },
             autoRemove: 'interval',
             autoRemoveInterval: 10 //borrar sesiones expiradas cada 10 minutos
         })
