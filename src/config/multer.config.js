@@ -6,6 +6,11 @@ const path = require("path");
 // uuid para generar un código aleatorio
 const { v4: uuidv4 } = require("uuid");
 
+const fs = require("fs-extra");
+if(!fs.existsSync(path.resolve("src/public/uploads/temp"))){
+    fs.mkdirSync(path.resolve("src/public/uploads/temp"));
+}
+
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
         // Los archivos se subirán a la carpeta temporal
