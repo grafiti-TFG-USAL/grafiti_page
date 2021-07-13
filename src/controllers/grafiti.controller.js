@@ -1175,6 +1175,9 @@ const downloadBatch = (req, res) => {
 */ 
 const removeTemporaryDownloadFiles = () => {
     const tmpDownloadDir = path.resolve("src/tempfiles/downloads/");
+    if (!fs.existsSync(tmpDownloadDir)){
+        fs.mkdirSync(tmpDownloadDir);
+    }
     const files = fs.readdirSync(tmpDownloadDir);
     
     for(const file of files) {
