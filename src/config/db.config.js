@@ -15,6 +15,7 @@ const DB_uri = process.env.DB_URI;
 
 const connectDB = async () => {
 
+console.log("DBURI", DB_uri);
     try {
 
         const connection = await mongoose.connect(DB_uri, {
