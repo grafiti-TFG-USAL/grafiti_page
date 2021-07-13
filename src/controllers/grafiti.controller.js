@@ -112,7 +112,7 @@ const upload = async (req, res) => {
                 const stats = fs.statSync(imgTargetPath);
                 if (!buffer || !stats) {
                     errores.push(`No se han podido extraer los metadatos de ${file.originalname}, imagen no almacenada.`);
-                    fileErr.push(file.originalName);
+                    fileErr.push(file.originalname);
                     success = false;
                     message = "Fallo al obtener metadatos de imagen";
                     console.error("Error al extraer metadatos: ", message);
@@ -186,7 +186,7 @@ const upload = async (req, res) => {
                 emitSemiStep(index, 0.7);
 
                 const image = new Grafiti({
-                    originalname: file.originalname,
+                    originalName: file.originalname,
                     user: req.user._id,
                     serverName: imgUniqueName + imgExt,
                     relativePath: imgRelativePath,
@@ -222,7 +222,7 @@ const upload = async (req, res) => {
                     const locationSaved = await location.save();
                     if (!locationSaved) {
                         errores.push(`La ubicación de la imagen ${file.originalname} no se ha podido almacenar en la base de datos.`);
-                        fileErr.push(file.originalName);
+                        fileErr.push(file.originalname);
                         success = false;
                         message = "Error al subir las imágenes a la base: ubicación de la imagen no almacenada";
                         console.error(message);
@@ -275,7 +275,7 @@ const upload = async (req, res) => {
 
         } catch (error) {
             errores.push(`Error al tratar de subir ${file.originalname}: ${error}`);
-            fileErr.push(file.originalName);
+            fileErr.push(file.originalname);
             success = false;
             message = "Error al subir las imágenes a la base => " + error;
             console.error(message);
