@@ -7,8 +7,11 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 const fs = require("fs-extra");
-if(!fs.existsSync(path.resolve("src/public/uploads/temp"))){
-    fs.mkdirSync(path.resolve("src/public/uploads/temp"));
+if(!fs.existsSync(path.resolve("src/public/uploads/temp/"))){
+    if(!fs.existsSync(path.resolve("src/public/uploads/"))){
+        fs.mkdirSync(path.resolve("src/public/uploads/"));
+    }
+    fs.mkdirSync(path.resolve("src/public/uploads/temp/"));
 }
 
 const storage = multer.diskStorage({
