@@ -1,3 +1,5 @@
 node_modules
 .env
 src/public/uploads/*
+!src/public/uploads
+!src/public/uploads/temp
