@@ -47,7 +47,7 @@
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de captura</label>
                                 <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
-                                    readonly value="<%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %>">
+                                    readonly value="<% if(grafiti.dateTimeOriginal) { %><%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %><% } else { %>Unknown<% } %>">
                             </div>
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de subida</label>
