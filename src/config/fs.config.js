@@ -13,6 +13,7 @@ const initFS = async () => {
 }
 
 const initUploads = async () => {
+    console.log("Comprobando",path.resolve("src/public/uploads/temp".toString()));
     await fs.ensureDir(path.resolve("src/public/uploads/temp".toString()));
 }
 
