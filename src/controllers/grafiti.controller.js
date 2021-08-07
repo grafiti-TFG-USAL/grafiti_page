@@ -182,6 +182,8 @@ const upload = async (req, res) => {
                 var dateTimeOriginal = null;
                 if (meta.DateTimeOriginal) {
                     dateTimeOriginal = meta.DateTimeOriginal;
+                } else {
+                    dateTimeOriginal = new Date.now();
                 }
                 emitSemiStep(index, 0.7);
 

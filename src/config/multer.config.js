@@ -10,6 +10,7 @@ const fs = require("fs-extra");
 if(!fs.existsSync(path.resolve("src/public/uploads/temp/"))){
     if(!fs.existsSync(path.resolve("src/public/uploads/"))){
         fs.mkdirSync(path.resolve("src/public/uploads/"));
+        console.log("Creada carpeta: ", path.resolve("src/public/uploads/"));
     }
     fs.mkdirSync(path.resolve("src/public/uploads/temp/"));
 }
