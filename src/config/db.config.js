@@ -15,7 +15,6 @@ const DB_uri = process.env.DB_URI;
 
 const connectDB = async () => {
 
-console.log("DBURI", DB_uri);
     try {
 
         const connection = await mongoose.connect(DB_uri, {
@@ -50,7 +49,8 @@ const inicializarBase = async () => {
         const User = require("../models/user.model");
 
         const userCommunity = await User.findOne({ email: process.env.MAIL_USER });
-
+        
+        // Comprobamos que el usuario comunidad exista
         if (!userCommunity) {
             console.log("Base de Datos => No existe usuario comunidad, lo creamos");
             const bcrypt = require("bcrypt");
@@ -65,15 +65,16 @@ const inicializarBase = async () => {
             });
             const creado = await community.save();
             if (!creado) {
-                console.log("No se ha podido crear el usuario comunidad, finalizando servicio...")
+                console.error("No se ha podido crear el usuario comunidad, finalizando servicio...")
                 process.exit(1);
             } else {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
         }
+        
 
     } catch (error) {
-        console.log("Se ha producido un error al inicializar la base de datos: ", error);
+        console.error("Se ha producido un error al inicializar la base de datos: ", error);
         console.log("Finalizando servicio...");
         process.exit(1);
     }

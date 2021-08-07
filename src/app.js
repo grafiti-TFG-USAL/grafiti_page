@@ -35,6 +35,10 @@ app.use(express.json()) // Lo que antes se hacía con body-parser
 const { connectDB } = require("./config/db.config.js");
 connectDB();
 
+// Comprobar el sistema de archivos
+const { initFS } = require("./config/fs.config.js");
+initFS();
+
 // Configuramos los cors
 const allowedOrigins = [`http://localhost:${process.env.PORT}`, 'https://grafiti-page.herokuapp.com'];
 /*app.use(cors({
