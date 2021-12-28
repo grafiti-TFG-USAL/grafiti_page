@@ -1,19 +1,33 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Grafiti" , user, index: 0, cssFiles: ["matches-carousel"]}) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: titulo , user, index: 0, cssFiles: []}) %>
 
     <div class="container-fluid my-3">
         <div class="row">
 
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-4">
                 <img id="grafitiImg" src="/api/grafitis/get/<%= grafiti.id %>" data-grafiti="<%= grafiti.id %>" class="w-100 img-thumbnail">
                 
-                <%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px" }) %>
+                <!--%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px" }) %-->
         
             </div>
 
-            <div class="col-12 col-sm-6 my-3 my-sm-0">
+            <div class="col-6 col-sm-4 my-3 my-sm-0">
+                <div class="card">
+                    
+                    <div class="card-header">
+                        <h5><i class="fa fa-map-marker"></i> Ubicación</h5>
+                    </div>
+                    
+                    <div class="card-body">
+                        aqui irá
+                    </div>
+                    
+                </div>
+            </div>
+                
+            <div class="col-6 col-sm-4 my-3 my-sm-0">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Detalles</h5>
+                        <h5><i class="fa fa-cog" aria-hidden="true"></i> Ajustes</h5>
                     </div>
                     <div class="card-body">
                         <form id="desc_form" class="form">
@@ -27,7 +41,8 @@
                                     autocapitalize="sentences" resize="none"
                                     placeholder="Detalles de la imagen..."><% if (grafiti.description) { %><%= grafiti.description %><% } %></textarea>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group row">
+                                
                                 <label for="map">Ubicación</label>
                                 <button class="btn btn-sm btn-outline-primary float-right" id="coords_btn" type="button"
                                     data-toggle="modal" data-target="#ubicacion">Seleccionar
@@ -46,11 +61,13 @@
                                 <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
                                     readonly value="<% if(grafiti.dateTimeOriginal) { %><%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %><% } else { %>Unknown<% } %>">
                             </div>
+                            
                             <div class="form-group row">
                                 <label class="col-5" for="">Fecha de subida</label>
                                 <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
                                     readonly value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
                             </div>
+                            
                         </form>
                     </div>
                     <div class="card-footer">
@@ -98,31 +115,6 @@
         </div>
     </div>
 
-    <!-- CODIGO DEL MODAL DE ELIMINACIÓN -->
-    <div class="modal fade" id="eliminacion">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title text-danger">Eliminar Grafiti</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h6 class="text">¿Está seguro de que desea eliminar el grafiti?</h6><br>
-                    <div class="row justify-content-around">
-
-                        <button type="button" data-dismiss="modal"
-                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
-                        <button class="btn btn-danger col-12 col-sm-4" id="remove_def">Eliminar <i
-                                class="d-none fa fa-spinner fa-pulse" id="spinner_remove"></i></button>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- CÓDIGO DEL MODAL DE ERROR -->
     <div class="modal" id="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
@@ -142,10 +134,9 @@
     </div>
 
 
-    <script src="/js/userPages/grafiti-edit/grafiti-edit.js"></script>
-    <script src="/js/userPages/grafiti-edit/grafiti-edit-modals.js"></script>
+    <!--script src="/js/userPages/grafiti-edit/grafiti-edit.js"></script>
+    <script src="/js/userPages/grafiti-edit/grafiti-edit-modals.js"></script-->
     <%# Script de la api de maps; debe ir tras la función initMap %>
-        <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly"
-            async></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly" async></script>
 
-        <%- include('../templates/footer'); %>
+<%- include('../templates/footer'); %>

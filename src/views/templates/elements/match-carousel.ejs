@@ -1,12 +1,22 @@
-<div class=" row d-none col-12 mx-auto py-2 px-0" id="carouselContainer">
+<div class="row d-none col-12 mx-auto py-2 px-0" id="carouselContainer">
   
     <div class="card col-12 offset-lg-3 col-lg-6 p-0">
         
-        <a id="linkToMatches" href="">
         <div class="card-header" id="matchesCardHeader">
-            <h5 id="matchesHeader" class="text-success text-center mb-0"><i class="fa fa-bullseye" aria-hidden="true"></i> Matches <span id="nMatches"></span></h5>
+            <a id="linkToMatches" href="">
+                <h3 id="matchesHeader" class="d-inline text-success">
+                    <i class="fa fa-bullseye" aria-hidden="true"></i> Matches <span id="nMatches"></span>
+                </h3>
+            </a>
+            <a id="imageReverseSearch" href="/usuario/grafiti/reverse-search/<%= grafiti.id %>" class="d-inline float-right">
+                <button type="button" class="btn btn-primary"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
+            </a>
         </div>
-        </a>
+        <!--a id="linkToMatches" href="">
+        <div class="card-header" id="matchesCardHeader">
+            <h5 id="matchesHeader" class="text-success text-center"><i class="fa fa-bullseye" aria-hidden="true"></i> Matches <span id="nMatches"></span></h5>
+        </div>
+        </a-->
         
         <div class="card-body p-0" id="matchesCardBody">
             

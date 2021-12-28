@@ -105,6 +105,40 @@ const showGrafiti = async (req, res) => {
 };
 
 /**
+* Si hay un grafiti_id en req.params, busca que el grafiti se corresponda con el usuario que tiene la sesión loggeada.
+*/
+const reverseSearch = async (req, res) => {
+    
+    try {
+        
+        // Buscamos el grafiti en la base
+        const grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id }).populate("gps", { location: 1 });
+        
+        // Si el grafiti no existe, está borrado o no pertenece al usuario
+        if (!grafiti) {
+            console.error("No grafiti");
+            return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
+        }
+        else if (grafiti.deleted) {
+            console.error("Grafiti deleted");
+            return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
+        }
+        else if (!grafiti.user.equals(req.user._id)) {
+            console.error("Not user");
+            return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
+        } else {
+            // Renderizamos la página de búsqueda inversa de grafitis
+            return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", grafiti: grafiti, user: req.user, maps_key: process.env.GMAPS_API_KEY });
+        }
+        
+    } catch (error) {
+        console.error("Error en image reverse search: ", error);
+        return null;
+    }
+
+}
+    
+/**
  * Si hay un grafiti_id en req.params, busca los matches que se hayan detectado
  */
 const showMatches = async (req, res) => {
@@ -477,6 +511,7 @@ const switchAllNotificationsSeenState = async (req, res) => {
 module.exports = {
     index,
     showGrafiti,
+    reverseSearch,
     showMatches,
     grafitiEdit,
     grafitiDesc,

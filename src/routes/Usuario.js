@@ -23,6 +23,9 @@ router.get("/", userPageController.index);
 // Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
 router.get("/grafiti/:grafiti_id", userPageController.showGrafiti);
 
+// Acceso a la página de búsqueda de imágenes similares de un grafiti (<host>/usuario/grafiti/reverse-search/:grafiti_id)
+router.get("/grafiti/reverse-search/:grafiti_id", userPageController.reverseSearch);
+
 // Acceso a los matches de un grafiti (<host>/usuario/matches/:grafiti_id)
 router.get("/matches/:grafiti_id", userPageController.showMatches);
 

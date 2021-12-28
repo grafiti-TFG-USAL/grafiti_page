@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const getToken = (payload, expires = "1d") => {
     return jwt.sign({
         data: payload,
-        date: Date.now
+        date: Date.now()
     }, 
     process.env.TOKEN_SECRET,
     { expiresIn: expires});

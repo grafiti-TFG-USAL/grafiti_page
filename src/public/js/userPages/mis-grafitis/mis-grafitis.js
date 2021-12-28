@@ -20,12 +20,12 @@ selectable_btn.addEventListener("click", (event) => {
     }
     if (params.minDate) {
         query += precedentes ? "&" : "";
-        query += `minDate=${minDate}`;
+        query += `minDate=${params.minDate}`;
         precedentes = true;
     }
     if (params.maxDate) {
         query += precedentes ? "&" : "";
-        query += `maxDate=${maxDate}`;
+        query += `maxDate=${params.maxDate}`;
         precedentes = true;
     }
     console.log("Query: " + query);
