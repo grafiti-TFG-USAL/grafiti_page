@@ -26,6 +26,12 @@ const matchSchema = mongoose.Schema({
         type: Boolean,
         required: true,
     },
+    // El usuario que estableció el match
+    establishedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: "User", // Esto nos permite hacer un populate
+    },
     // Si el/los usuarios han confirmado el match
     confirmed: {
         type: Boolean,
