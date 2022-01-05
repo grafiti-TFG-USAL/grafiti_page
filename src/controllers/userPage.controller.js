@@ -24,7 +24,7 @@ const index = async (req, res) => {
 
 };
 
-// Lleva al usuario a la página descriptiva del grafiti seleccionado
+// Lleva al usuario a la página de edición del grafiti seleccionado
 const grafitiEdit = async (req, res) => {
 
     // Obtenemos el id de los parámetros
@@ -73,7 +73,6 @@ const showGrafiti = async (req, res) => {
 
     try {
         // Buscamos el grafiti en la base
-        //var grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id });
         var grafiti = await Grafiti.findOne({ _id: req.params.grafiti_id }).populate("gps", { location: 1 });
 
         // Si el grafiti no existe, está borrado o no pertenece al usuario

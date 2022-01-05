@@ -1,12 +1,5 @@
 // Conexión con la base de datos MongoDB
 const mongoose = require("mongoose");
-/* 
-const Grid = require("gridfs-stream");
-const GridFsStorage = require("multer-gridfs-storage");
-
-const crypto = require("crypto");
-const path = require("path");
-const multer = require("multer"); */
 
 const { scheduleUnverifiedUsersRemover } = require("./cron.config.js");
 const { eliminarUsuariosSinVerificar } = require("../controllers/user.controller.js");

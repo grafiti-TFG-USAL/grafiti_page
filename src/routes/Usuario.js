@@ -20,7 +20,7 @@ router.use("/", passportConf.estaAutenticado);
 // Página de bienvenida al usuario (<host>/usuario)
 router.get("/", userPageController.index);
 
-// Acceso a un grafiti propio (<host>/usuario/grafiti/:grafiti_id)
+// Acceso a un grafiti (<host>/usuario/grafiti/:grafiti_id)
 router.get("/grafiti/:grafiti_id", userPageController.showGrafiti);
 
 // Acceso a la página de búsqueda de imágenes similares de un grafiti (<host>/usuario/grafiti/reverse-search/:grafiti_id)

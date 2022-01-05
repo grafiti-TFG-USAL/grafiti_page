@@ -79,8 +79,8 @@ const getMatchNotificationTemplate = (name, grafitiID, host) => {
     return `
         <div>
             <h4>Hola, ${name}</h4>
-            <p>¡Estás de suerte!</p>
-            <p>Nuestro sistema ha detectado que uno de tus grafitis tiene una coincidencia con otro de nuestra base de datos.</p>
+            <p>¡Buenas noticias!</p>
+            <p>Un usuario ha detectado que uno de tus grafitis tiene una coincidencia con uno de los suyos.</p>
             <a href="" target="_blank"><img src="http://${host}/api/grafitis/get/${grafitiID}"></a>
             <br><br><br>
             <p>Puede ver el match haciendo click <a href="http://${host}/usuario/matches/${grafitiID}" target="_blank">AQUÍ</a>.</p>

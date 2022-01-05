@@ -3,6 +3,7 @@ const label = document.getElementById("label");
 const input = document.getElementById("archivo");
 const preview = document.getElementById("preview");
 const boton = document.getElementById("subir");
+const subir_text = document.getElementById("subir_text");
 const userId = boton.dataset.user;
 
 var curFiles = [];
@@ -258,6 +259,10 @@ const progress = document.getElementById("progress");
 const progressbar = document.getElementById("progressbar");
 
 socket.on("upload:step", data => {
+    if(progress.classList.contains("d-none")) {
+        progress.classList.remove("d-none");
+        subir_text.innerText ="Procesando";
+    }
     progressbar.innerText = `${data.percentage}%`;
     progressbar.style.width = `${data.percentage}%`;
 });
@@ -268,6 +273,7 @@ form.addEventListener("submit", async (event) => {
 
     //Efectos
     spinner.classList.remove("d-none");
+    subir_text.innerText ="Subiendo";
 
     try {
 
@@ -277,11 +283,10 @@ form.addEventListener("submit", async (event) => {
         curFiles.forEach(file => {
             formData.append("imagenes", file);
         });
+        
+        progressbar.style.width = "0%";
 
         socket.emit("upload:init", { userId });
-
-        progressbar.style.width = "1%";
-        progress.classList.remove("d-none");
 
         // Enviamos la consulta POST a la api de registro con los datos del usuario a registrar
         const data = await fetch("/api/grafitis/upload", {
@@ -289,10 +294,12 @@ form.addEventListener("submit", async (event) => {
             body: formData
         });
 
+
         const respuesta = await data.json();
 
         socket.emit("upload:finish", { userId });
         spinner.classList.add("d-none");
+        subir_text.innerText ="Listo";
         progressbar.classList.remove("progress-bar-striped", "progress-bar-animated");
         progressbar.classList.replace("bg-success", "bg-principal");
 

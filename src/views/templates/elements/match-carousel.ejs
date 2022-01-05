@@ -8,9 +8,11 @@
                     <i class="fa fa-bullseye" aria-hidden="true"></i> Matches <span id="nMatches"></span>
                 </h3>
             </a>
+            <% if (propio) { %>
             <a id="imageReverseSearch" href="/usuario/grafiti/reverse-search/<%= grafiti.id %>" class="d-inline float-right">
                 <button type="button" class="btn btn-primary"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
             </a>
+            <% } %>
         </div>
         <!--a id="linkToMatches" href="">
         <div class="card-header" id="matchesCardHeader">
