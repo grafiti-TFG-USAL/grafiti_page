@@ -39,8 +39,10 @@ const grafitiEdit = async (req, res) => {
     else if (grafiti.deleted)
         res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     // Si existe cargamos la página descriptiva
-    else
-        res.render("../views/user/grafiti-edit.ejs", { user: req.user, grafiti, maps_key: process.env.GMAPS_API_KEY });
+    else {
+        const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
+        res.render("../views/user/grafiti-edit.ejs", { user: req.user, timeAgo: time, grafiti, maps_key: process.env.GMAPS_API_KEY });
+    }
 
 };
 
@@ -60,7 +62,7 @@ const grafitiDesc = async (req, res) => {
         res.render("../views/404.ejs", { title: "Página 404", user: req.user? req.user : null, index: 0 });
     // Si existe cargamos la página descriptiva
     else {
-        const time = timeAgo(grafiti.uploadedAt);
+        const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
         res.render("../views/user/grafiti-desc.ejs", { user: req.user, timeAgo: time, grafiti, maps_key: process.env.GMAPS_API_KEY });
     }
 
@@ -127,7 +129,8 @@ const reverseSearch = async (req, res) => {
             return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
         } else {
             // Renderizamos la página de búsqueda inversa de grafitis
-            return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", grafiti: grafiti, user: req.user, maps_key: process.env.GMAPS_API_KEY });
+            const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
+            return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", timeAgo: time, grafiti: grafiti, user: req.user, maps_key: process.env.GMAPS_API_KEY });
         }
         
     } catch (error) {

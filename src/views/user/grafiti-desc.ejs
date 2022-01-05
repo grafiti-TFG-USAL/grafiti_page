@@ -5,7 +5,7 @@
 
             <div class="col-12 col-sm-6">
                 <img src="/api/grafitis/get/<%= grafiti.id %>" class="w-100 img-thumbnail">
-                <span class="float-right"><i class="fa fa-clock-o"></i> Subido <%= timeAgo %></span>
+                <span class="float-right"><i class="fa fa-clock-o"></i> de <%= timeAgo %></span>
                 
                 <%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px", propio: false }) %>
         

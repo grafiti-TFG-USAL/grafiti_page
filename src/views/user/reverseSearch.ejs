@@ -5,6 +5,7 @@
 
             <div class="col-12 col-sm-4">
                 <img id="grafitiImg" src="/api/grafitis/get/<%= grafiti.id %>" data-grafiti="<%= grafiti.id %>" class="w-100 img-thumbnail">
+                <span class="float-right"><i class="fa fa-clock-o"></i> de <%= timeAgo %></span>
                 
                 <!--%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px" }) %-->
         
@@ -18,7 +19,10 @@
                     </div>
                     
                     <div class="card-body">
-                        aqui irá
+                        <div id="map" class="img-thumbnail w-100" style="height: 180px;"
+                            data-lng="<%= grafiti.gps.location.coordinates[0] %>"
+                            data-lat="<%= grafiti.gps.location.coordinates[1] %>">
+                        </div>
                     </div>
                     
                 </div>
@@ -136,6 +140,8 @@
 
     <!--script src="/js/userPages/grafiti-edit/grafiti-edit.js"></script>
     <script src="/js/userPages/grafiti-edit/grafiti-edit-modals.js"></script-->
+    <!-- Script que ubica en el mapa el punto designado del grafiti -->
+    <script src="/js/userPages/map-grafiti-desc.js"></script>
     <%# Script de la api de maps; debe ir tras la función initMap %>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly" async></script>
 
