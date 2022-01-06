@@ -130,7 +130,7 @@ const reverseSearch = async (req, res) => {
         } else {
             // Renderizamos la página de búsqueda inversa de grafitis
             const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
-            return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", timeAgo: time, grafiti: grafiti, user: req.user, maps_key: process.env.GMAPS_API_KEY });
+            return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", timeAgo: time, grafiti: grafiti, grafitisFetchLimit: 25, user: req.user, maps_key: process.env.GMAPS_API_KEY });
         }
         
     } catch (error) {

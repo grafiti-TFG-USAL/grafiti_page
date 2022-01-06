@@ -48,20 +48,12 @@ async function initMap() {
 
     grafitis.forEach(grafiti => {
 
-        /*const userId = `/* user._id *//*`;
-        if (grafiti.user === userId) {
-            svgMarker["fillColor"] = "green";
-        } else {
-            svgMarker["fillColor"] = "blue";
-        }*/
-
         const marker = new google.maps.Marker({
             map: map,
             position: {
                 lat: grafiti.gps.location.coordinates[1],
                 lng: grafiti.gps.location.coordinates[0],
             },
-            //icon: svgMarker,
             url: "/usuario/grafiti/" + grafiti._id,
         });
         google.maps.event.addListener(marker, "click", () => {

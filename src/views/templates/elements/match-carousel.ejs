@@ -1,7 +1,9 @@
-<div class="row d-none col-12 mx-auto py-2 px-0" id="carouselContainer">
-  
-    <div class="card col-12 offset-lg-3 col-lg-6 p-0">
-        
+<% if (encolumnar) { %>
+    <div class="row d-none col-12 mx-auto py-2 px-0" id="carouselContainer">
+        <div class="card col-12 offset-lg-3 col-lg-6 p-0">
+<% } else { %>
+    <div class="card d-none" id="carouselContainer">
+<% } %>
         <div class="card-header" id="matchesCardHeader">
             <a id="linkToMatches" href="">
                 <h3 id="matchesHeader" class="d-inline text-success">

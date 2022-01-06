@@ -1,86 +1,75 @@
-<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: titulo , user, index: 0, cssFiles: []}) %>
+<%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: titulo , user, index: 0, cssFiles: ["matches-carousel", "reverse-gallery"]}) %>
 
     <div class="container-fluid my-3">
         <div class="row">
 
-            <div class="col-12 col-sm-4">
+            <div class="col-12 col-sm-4 px-1">
                 <img id="grafitiImg" src="/api/grafitis/get/<%= grafiti.id %>" data-grafiti="<%= grafiti.id %>" class="w-100 img-thumbnail">
                 <span class="float-right"><i class="fa fa-clock-o"></i> de <%= timeAgo %></span>
-                
-                <!--%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px" }) %-->
-        
             </div>
 
-            <div class="col-6 col-sm-4 my-3 my-sm-0">
+            <div class="col-6 col-sm-4 my-3 my-sm-0 px-1">
                 <div class="card">
                     
-                    <div class="card-header">
-                        <h5><i class="fa fa-map-marker"></i> Ubicación</h5>
+                    <div class="card-header pb-1 pl-3">
+                        <h5><i class="fa fa-info-circle mr-1"></i> Detalles</h5>
                     </div>
                     
-                    <div class="card-body">
-                        <div id="map" class="img-thumbnail w-100" style="height: 180px;"
+                    <div class="card-body p-2">
+                        <div id="map" class="img-thumbnail w-100" style="height: 160px;"
                             data-lng="<%= grafiti.gps.location.coordinates[0] %>"
                             data-lat="<%= grafiti.gps.location.coordinates[1] %>">
+                        </div>
+                        
+                        <div class="pt-2 px-2">
+                            <div class="form-group">
+                                <label for="description">Descripción</label>
+                                <% if (grafiti.description==="") { %>
+                                <div id="description">
+                                    <h6 class="text-secondary">Sin descripción</h6>
+                                </div>
+                                <% } else { %>
+                                <textarea id="description" class="form-control-plaintext" readonly rows="2"
+                                    autocapitalize="sentences" resize="none"
+                                    placeholder="Detalles de la imagen..."><% if (grafiti.description) { %><%= grafiti.description %><% } %></textarea>
+                                <% } %>
+                            </div>
+                            
+                            <div class="form-group row mb-0">
+                                <label class="col-5" for="">Fecha de captura</label>
+                                <input type="text" class="col-6 form-control-plaintext p-0" style="text-align: center;"
+                                    readonly value="<% if(grafiti.dateTimeOriginal) { %><%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %><% } else { %>Unknown<% } %>">
+                            </div>
                         </div>
                     </div>
                     
                 </div>
             </div>
-                
-            <div class="col-6 col-sm-4 my-3 my-sm-0">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fa fa-cog" aria-hidden="true"></i> Ajustes</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="desc_form" class="form">
-                            <div class="form-group">
-                                <label for="description">Descripción</label>
-                                <button class="d-none btn btn-sm btn-success float-right" id="desc_btn"
-                                    type="button"><span id="btn_text">Guardar</span> <i
-                                        class="d-none fa fa-spinner fa-pulse" id="spinner_desc"></i><i
-                                        class="d-none fa fa-check" id="check_desc"></i></button>
-                                <textarea id="description" name="description" class="form-control" rows="2"
-                                    autocapitalize="sentences" resize="none"
-                                    placeholder="Detalles de la imagen..."><% if (grafiti.description) { %><%= grafiti.description %><% } %></textarea>
-                            </div>
-                            <div class="form-group row">
-                                
-                                <label for="map">Ubicación</label>
-                                <button class="btn btn-sm btn-outline-primary float-right" id="coords_btn" type="button"
-                                    data-toggle="modal" data-target="#ubicacion">Seleccionar
-                                    ubicación</button>
-
-                                <div id="map" class="img-thumbnail w-100 d-none" style="height: 200px;"
-                                <% if (grafiti.gps) { %>
-                                    data-lng="<%= grafiti.gps.location.coordinates[0] %>"
-                                    data-lat="<%= grafiti.gps.location.coordinates[1] %>"
-                                <% } %>></div>
-
-                            </div>
-
-                            <div class="form-group row">
-                                <label class="col-5" for="">Fecha de captura</label>
-                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
-                                    readonly value="<% if(grafiti.dateTimeOriginal) { %><%= grafiti.dateTimeOriginal.toLocaleString('es-ES') %><% } else { %>Unknown<% } %>">
-                            </div>
-                            
-                            <div class="form-group row">
-                                <label class="col-5" for="">Fecha de subida</label>
-                                <input type="text" class="col-6 form-control-plaintext" style="text-align: center;"
-                                    readonly value="<%= grafiti.uploadedAt.toLocaleString('es-ES') %>">
-                            </div>
-                            
-                        </form>
-                    </div>
-                    <div class="card-footer">
-                        <button id="remove" class="col-12 btn btn-danger" type="button" data-toggle="modal"
-                            data-target="#eliminacion">Eliminar grafiti</button>
-                    </div>
-                </div>
+            
+            <div class="col-6 col-sm-4 my-3 my-sm-0 px-1">
+                <%- include("../templates/elements/match-carousel.ejs", { grafiti, imagesHeight: "200px", encolumnar: false, propio: false }) %>
             </div>
         </div>
+        
+            <div class="row">
+                <div class="col">
+                    <div class="card mx-2">
+                        <div class="card-header">
+                            <h3 class="d-inline">Resultados</h3>
+                        </div>
+    
+                        <div class="card-body">
+                            <div>
+                                <ul id="gallery" class="gallery row justify-content-around" data-limit="<%= grafitisFetchLimit %>">
+                                </ul>
+                            </div>
+                        </div><!-- Fin card-body -->
+    
+                    </div><!-- Fin card -->
+                </div>
+                
+            </div>
+        
     </div>
 
     <!-- CODIGO DEL MODAL DE UBICACIÓN -->
@@ -137,11 +126,10 @@
         </div>
     </div>
 
-
-    <!--script src="/js/userPages/grafiti-edit/grafiti-edit.js"></script>
-    <script src="/js/userPages/grafiti-edit/grafiti-edit-modals.js"></script-->
     <!-- Script que ubica en el mapa el punto designado del grafiti -->
     <script src="/js/userPages/map-grafiti-desc.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/js/userPages/reverseSearch/reverseSearch-fetch.js"></script>
     <%# Script de la api de maps; debe ir tras la función initMap %>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly" async></script>
 
