@@ -133,7 +133,7 @@ const upload = async (req, res) => {
 
             } while (images.length > 0);
 
-            const filetypes = /jpeg|jpg|png/;
+            const filetypes = /jpeg|jpg/;
             if (filetypes.test(file.mimetype) || filetypes.test(imgExt)) {
 
                 // Movemos el archivo a la carpeta objetivo

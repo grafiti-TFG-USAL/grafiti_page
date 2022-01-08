@@ -20,7 +20,6 @@ const deleteFile = (event) => {
 // Establecemos los tipos de imágenes válidos
 const fileTypes = [
     "image/jpeg",
-    "image/png",
 ];
 function validFileType(file) {
     return fileTypes.includes(file.type);
@@ -164,7 +163,7 @@ function updateImageDisplay() {
 
                 // Añadimos el nombre del archivo
                 const td_error = document.createElement("td");
-                td_error.innerText = `El archivo "${file.name}" no coincide con el formato de archivo requerido (.jpg / .jpeg / .png)`;
+                td_error.innerText = `El archivo "${file.name}" no coincide con el formato de archivo requerido (.jpg / .jpeg)`;
                 td_error.colSpan = 3;
                 trow.appendChild(td_error);
 
@@ -203,7 +202,7 @@ function updateImageDisplay() {
         input_anadir.required = false;
         input_anadir.name = "anadir";
         input_anadir.id = "anadir";
-        input_anadir.accept = "image/png, image/jpeg";
+        input_anadir.accept = "image/jpeg";
         input_anadir.multiple = true;
 
         input_anadir.addEventListener('change', () => {
