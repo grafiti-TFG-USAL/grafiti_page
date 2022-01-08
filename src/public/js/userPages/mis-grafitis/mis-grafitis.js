@@ -28,7 +28,7 @@ selectable_btn.addEventListener("click", (event) => {
         query += `maxDate=${params.maxDate}`;
         precedentes = true;
     }
-    console.log("Query: " + query);
+    
     window.location.href = "mis-grafitis/selectable" + (query === "?" ? "" : query);
     
-})
+});

@@ -22,3 +22,17 @@
 #sortPill {
     cursor: pointer;
 }
+
+.delete-button {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 22px;
+    width: 24px;
+    height: 27px;
+    text-align: center;
+}
+
+.div-match:hover .delete-button {
+    display: block;
+}

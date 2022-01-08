@@ -29,6 +29,10 @@ const notificationSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Grafiti",
     },
+    grafiti_2: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Grafiti",
+    },
 
 });
 
@@ -41,7 +45,6 @@ notificationSchema.post("save", async function (doc) {
             const updateDec = await User.findOneAndUpdate({ _id: doc.user }, {
                 $inc: { notifications: -1 },
             });
-            console.log("UpdateDec: ", updateDec);
             if (!updateDec) {
                 throw "(dec) El update no se ha llegado a ejecutar";
             }

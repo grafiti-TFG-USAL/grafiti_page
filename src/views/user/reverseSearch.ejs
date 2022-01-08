@@ -16,10 +16,15 @@
                     </div>
                     
                     <div class="card-body p-2">
-                        <div id="map" class="img-thumbnail w-100" style="height: 160px;"
+                        <div id="map"  style="height: 160px;"
+                        <% if(grafiti.gps) { %>
                             data-lng="<%= grafiti.gps.location.coordinates[0] %>"
-                            data-lat="<%= grafiti.gps.location.coordinates[1] %>">
-                        </div>
+                            data-lat="<%= grafiti.gps.location.coordinates[1] %>"
+                            class="img-thumbnail w-100"></div>
+                        <% } else { %>
+                            class="d-none img-thumbnail w-100"></div>
+                            <h6 class="ml-2 mt-2 text-secondary">Sin ubicación</h6>
+                        <% } %> 
                         
                         <div class="pt-2 px-2">
                             <div class="form-group">
@@ -61,6 +66,7 @@
                         <div class="card-body">
                             <div>
                                 <ul id="gallery" class="gallery row justify-content-around" data-limit="<%= grafitisFetchLimit %>">
+                                    <!-- El js rellena las imágenes -->
                                 </ul>
                             </div>
                         </div><!-- Fin card-body -->
@@ -72,41 +78,56 @@
         
     </div>
 
-    <!-- CODIGO DEL MODAL DE UBICACIÓN -->
-    <div class="modal fade" id="ubicacion">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Seleccione la ubicación</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div id="floating-panel">
-                        <div class="row mx-2">
-                            <div class="input-group">
-                                <input id="direccion" type="text" class="form-control" placeholder="Dirección">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-secondary"
-                                        id="buscar_direccion">Buscar</button>
-                                </div>
-                            </div>
+    <!-- CÓDIGO DEL MODAL DE MATCH -->
+    <div class="modal fade match-modal" id="match-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+              
+            <div class="modal-header">
+                <h4 class="modal-title">Confirmar match</h4>
+                <button type="button" class="close" id="match_modal_close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body pb-0 pt-2">
+                <div class="row">
+                    
+                    <!-- IMAGEN 1 -->
+                    <div id="image_box_1" class="col-12 mb-2 col-md-6">
+                        <div id="imagen_1" class="p-1 img-thumbnail mb-1">
+                            
+                        </div>
+                        
+                        <div id="mapa_1" class="img-thumbnail mx-auto" style="height: 180px; width: 90%;">
                         </div>
                     </div>
-                    <hr>
-                    <div id="modalmap" class="img-thumbnail w-100" style="height: 300px;"></div>
-                </div>
-                <div class="modal-footer">
                     
-                    <button id="eliminar_ubicacion" type="button" class="btn btn-outline-danger <% if(!grafiti.gps) { %>d-none<% } %>">Eliminar
-                        ubicación</button>
-                    <button id="guardar_ubicacion" type="button" class="btn btn-success">Guardar ubicación <i
-                            class="d-none fa fa-spinner fa-pulse" id="spinner"></i></button>
+                    <div id="division"></div>
+                    
+                    <!-- IMAGEN 2 -->
+                    <div id="image_box_2" class="col-12 mb-2 col-md-6">
+                        <div id="imagen_2" class="p-1 img-thumbnail mb-1">
+                            
+                        </div>
+                        <div id="mapa_2" class="img-thumbnail mx-auto" style="height: 180px; width: 90%;">
+                        </div>
+                        
+                    </div>
+                    
                 </div>
             </div>
+            
+            <div class="modal-footer">
+                
+                <button id="establecer_match" type="button" class="btn btn-success"><span id="establecer_match_text">Confirmar match</span> <i class="d-none fa fa-spinner fa-pulse" id="spinner_establecer"></i>
+                </button>
+                
+            </div>
+            
+          </div>
         </div>
-    </div>
+      </div>      
 
     <!-- CÓDIGO DEL MODAL DE ERROR -->
     <div class="modal" id="modal" tabindex="-1" role="dialog">
@@ -129,6 +150,7 @@
     <!-- Script que ubica en el mapa el punto designado del grafiti -->
     <script src="/js/userPages/map-grafiti-desc.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/js/userPages/reverseSearch/reverseSearch.js"></script>
     <script src="/js/userPages/reverseSearch/reverseSearch-fetch.js"></script>
     <%# Script de la api de maps; debe ir tras la función initMap %>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly" async></script>

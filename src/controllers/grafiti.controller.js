@@ -59,8 +59,40 @@ const getThumbnail = async (req, res) => {
     }
 };
 
+/**
+ * Devuelve la información del grafiti de la base de datos
+ */
+const getInfo = async (req, res) => {
+
+    // Buscamos el grafiti indicado en la base de datos (no me gusta devolver el user id)
+    const { grafiti_id } = req.params;
+    const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { user:1, description:1, gps:1, orientation:1, rotation:1, thumbnail:1, dateTimeOriginal:1,  }).populate("gps", { location: 1 });
+
+    // Si la imagen no existe o está eliminada cargamos el image not found
+    if (!image)
+        return res.status(404).json({
+            success: false,
+            message: "Error: La imagen no existe"
+        });
+    else if (image.deleted)
+        return res.status(404).json({
+            success: false,
+            message: "Error: La imagen no existe"
+        });
+    // Si existe la devolvemos
+    else {
+        return res.status(200).json({
+            image,
+            success: true,
+            message: "Devolviendo datos de la imagen"
+        });
+    }
+};
+
 const thumbnails = require("../helpers/thumbnail");
 const { Mongoose } = require("mongoose");
+const { random } = require("faker");
+const { findOneAndDelete } = require("../models/user.model");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -153,7 +185,6 @@ const upload = async (req, res) => {
                     }
                 }
                 var gps = await exifr.gps(buffer);
-                //console.log("GPS: ", gps);
                 if (!gps) {
                     gps = null;
                 } else {
@@ -715,6 +746,13 @@ const getIndexStats = async (user) => {
         // Recogemos el nº de grafitis del usuario con gps
         const nGPSUserGrafitis = await Grafiti.countDocuments({ deleted: false, user, gps: { $ne: null } });
         stats.nGPSUserGrafitis = nGPSUserGrafitis ? nGPSUserGrafitis : 0;
+        // Recogemos el nº de grafitis del usuario con gps
+        const nUserMatches = await Match.countDocuments({ establishedBy: user });
+        stats.nUserMatches = nUserMatches ? nUserMatches : 0;
+        const nOthers = await Match.countDocuments({ otherUser: user });
+        if(nOthers) {
+            stats.nUserMatches += nOthers;
+        }
 
         return stats;
 
@@ -808,7 +846,6 @@ const getMatches = async (req, res) => {
         });
 
         const query = req.query;
-        console.log("Query: ", query);
         var matches = Match.find({
             $or: [{ grafiti_1: grafitiId }, { grafiti_2: grafitiId }],
         });
@@ -831,8 +868,6 @@ const getMatches = async (req, res) => {
         // Ejecutamos la consulta
         matches = await matches.exec();
 
-        console.log({ matches, coincidencias });
-
         const message = `Se han encontrado ${coincidencias} coincidencias`;
         const ret = {
             success: true,
@@ -850,6 +885,325 @@ const getMatches = async (req, res) => {
             message: error,
         });
     }
+};
+
+/**
+ * Crea un match entre dos grafitis
+ */
+ const setMatch = async (req, res) => {
+
+    try {
+        
+        const user = req.user;
+        const { grafiti_1, grafiti_2/*, percentage*/ } = req.body;
+        //TODO usar percentage original
+        const percentage = Math.random() * 100;
+        
+        if(!user || !grafiti_1 || !grafiti_2 || !percentage) {
+            throw "Error: el formato recibido es incorrecto";
+        }
+        if(percentage < 0 || percentage > 100) {
+            throw "Error: la similitud indicada no es porcentual";
+        }
+        
+        const grafiti1 = await Grafiti.findById(grafiti_1);
+        const grafiti2 = await Grafiti.findById(grafiti_2);
+        if(!grafiti1 || !grafiti2) {
+            throw "Error, el grafiti no está en la base de datos";
+        }
+        const user1 = grafiti1.user;
+        const user2 = grafiti2.user;
+        
+        // Comprobamos que no exista ya un match entre ambas imágenes
+        const queryMatch1 = await Match.findOne({ 
+            grafiti_1, grafiti_2
+        });
+        const queryMatch2 = await Match.findOne({ 
+            grafiti_1: grafiti_2, grafiti_2: grafiti_1
+        });
+        if(queryMatch1 || queryMatch2){
+            throw "Error: ya existe un match entre ambas imágenes";
+        }
+        
+        if(!user1.equals(user._id)) {
+            throw "Error, el usuario no corresponde con el propietario de la imagen";
+        }
+        
+        // Si el propietario de ambas imágenes es el mismo
+        if(user1.equals(user2)) {
+            
+            const create = new Match({
+                grafiti_1: grafiti1._id,
+                grafiti_2: grafiti2._id,
+                similarity: percentage.toFixed(2),
+                sameUser: true,
+                establishedBy: user1,
+                confirmed: true,
+            });
+            
+            const matchSaved = await create.save();
+            if(!matchSaved) {
+                throw "Error: no se ha podido insertar el match en la base de datos";
+            }
+            
+        } // Si la imagen pertenece a otro
+        else {
+            
+            const createMatch = new Match({
+                grafiti_1: grafiti1._id,
+                grafiti_2: grafiti2._id,
+                similarity: percentage,
+                sameUser: false,
+                establishedBy: user1,
+                confirmed: false,
+            })
+            
+            const matchSaved = await createMatch.save();
+            if(!matchSaved) {
+                throw "Error: no se ha podido insertar el match en la base de datos";
+            }
+            
+            const notificacion = new Notification({
+                user: user2,
+                type: "Grafiti similar detectado",
+                grafiti: grafiti2._id,
+                grafiti_2: grafiti1._id,
+                seen: false,
+            });
+
+            const notificacionSaved = await notificacion.save();
+            if (!notificacionSaved) {
+                throw "Se ha podido guardar el match, pero no se ha podido  notificación al usuario";
+            }
+            
+        }
+        
+        console.error("Listo");
+        return res.status(200).json({
+            success: true,
+            message: "Se ha creado el match exitosamente",
+        });
+        
+    } catch (error) {
+        console.error("Error en setMatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
+
+};
+
+/**
+ * Confirma el match indicado
+ */
+ const confirmMatch = async (req, res) => {
+
+    try {
+        
+        const user = req.user;
+        const { grafiti_1, grafiti_2 } = req.body;
+        
+        if(!user || !grafiti_1 || !grafiti_2) {
+            throw "Error: el formato recibido es incorrecto";
+        }
+        
+        const grafiti1 = await Grafiti.findById(grafiti_1);
+        const grafiti2 = await Grafiti.findById(grafiti_2);
+        if(!grafiti1 || !grafiti2) {
+            throw "Error: el grafiti no está en la base de datos";
+        }
+        const user1 = grafiti1.user;
+        const user2 = grafiti2.user;
+        
+        // Comprobamos que el usuario que confirma el match sea el propietario de la imagen a confirmar
+        if(!user1.equals(user._id)) {
+            throw "Error: el usuario no corresponde con el propietario de la imagen";
+        }
+        
+        // Actualizamos el match
+        const match = await Match.updateOne({ // Filtro de búsqueda 
+            grafiti_1: grafiti2._id,
+            grafiti_2: grafiti1._id,
+            sameUser: false,
+            establishedBy: user2._id,
+            confirmed: false,
+        }, { // Actualizaciones
+            confirmed: true,
+        });
+        if (!match || match.nModified != 1) {
+            throw "No se ha modificado ningún match";
+        }
+        
+        // Eliminamos la notificación
+        const removal = await Notification.deleteOne({
+            type: "Grafiti similar detectado",
+            grafiti: grafiti1._id,
+            grafiti_2: grafiti2._id
+        });
+        const decrement = await User.updateOne({ _id: user._id }, {
+            $inc: { notifications: -1 },
+        })
+        if (!removal ||
+            !decrement) {
+            console.error("No se ha podido eliminar la notificación");
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "Se ha confirmado el match exitosamente",
+        });
+        
+    } catch (error) {
+        console.error("Error en setMatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
+
+};
+
+
+/**
+ * Elimina el match sin confirmar
+ */
+ const notConfirmMatch = async (req, res) => {
+
+    try {
+        
+        const user = req.user;
+        const { grafiti_1, grafiti_2 } = req.body;
+        
+        if(!user || !grafiti_1 || !grafiti_2) {
+            throw "Error: el formato recibido es incorrecto";
+        }
+        
+        const grafiti1 = await Grafiti.findById(grafiti_1);
+        const grafiti2 = await Grafiti.findById(grafiti_2);
+        if(!grafiti1 || !grafiti2) {
+            throw "Error: el grafiti no está en la base de datos";
+        }
+        const user1 = grafiti1.user;
+        const user2 = grafiti2.user;
+        
+        // Comprobamos que el usuario que confirma el match sea el propietario de la imagen a confirmar
+        if(!user1.equals(user._id)) {
+            throw "Error: el usuario no corresponde con el propietario de la imagen";
+        }
+        
+        // Eliminamos el match
+        const match = await Match.deleteOne({ // Filtro de búsqueda 
+            grafiti_1: grafiti2._id,
+            grafiti_2: grafiti1._id,
+            sameUser: false,
+            establishedBy: user2._id,
+            confirmed: false,
+        });
+        if (!match) {
+            throw "Error: No se ha podido eliminar ningún match";
+        }
+        
+        // Eliminamos la notificación
+        const removal = await Notification.deleteOne({
+            type: "Grafiti similar detectado",
+            grafiti: grafiti1._id,
+            grafiti_2: grafiti2._id
+        });
+        const decrement = await User.updateOne({ _id: user._id }, {
+            $inc: { notifications: -1 },
+        })
+        if (!removal ||
+            !decrement) {
+            console.error("No se ha podido eliminar la notificación");
+        }
+        
+        console.error("Listo");
+        return res.status(200).json({
+            success: true,
+            message: "Se ha eliminado el match exitosamente",
+        });
+        
+    } catch (error) {
+        console.error("Error en notConfirmMatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
+
+};
+
+
+/**
+ * Elimina un match
+ */
+ const removeMatch = async (req, res) => {
+
+    try {
+        
+        const user = req.user;
+        const { match_id } = req.params;
+        
+        if(!user || !match_id) {
+            throw "Error: el formato recibido es incorrecto";
+        }
+        
+        const match = await Match.findById(match_id);
+        if(!match) {
+            throw "Error: el match no está en la base de datos";
+        }
+        const user1 = match.establishedBy;
+        const user2 = match.otherUser;
+        
+        // Comprobamos que el usuario que elimina el match sea un propietario del match
+        if(!user1.equals(user._id) && !user2.equals(user._id)) {
+            throw "Error: el usuario no corresponde con ningun participante del match";
+        }
+        
+        // Eliminamos el match
+        const matchRemoved = await Match.findByIdAndDelete(match_id);
+        if (!matchRemoved) {
+            throw "Error: No se ha podido eliminar ningún match";
+        }
+        
+        if(!match.confirmed) {
+            console.log("Eliminamos la notificacion 0")
+            // Eliminamos la notificación
+            console.log(match.grafiti_2);
+            console.log(match.grafiti_1);
+            const removal = await Notification.deleteOne({
+                type: "Grafiti similar detectado",
+                grafiti: match.grafiti_2,
+                grafiti_2: match.grafiti_1
+            });
+            const decrement = await User.updateOne({ _id: user._id }, {
+                $inc: { notifications: -1 },
+            });
+            console.log("Eliminada la notificacion 1");
+            if (!removal ||
+                !decrement) {
+                console.error("NO SE HA ELIMINADO")
+                throw "No se ha podido eliminar la notificación";
+            }
+            console.log(removal);
+            console.log(decrement);
+        }
+        
+        console.error("Listo");
+        return res.status(200).json({
+            success: true,
+            message: "Se ha eliminado el match exitosamente",
+        });
+        
+    } catch (error) {
+        console.error("Error en removeMatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
+
 };
 
 /**
@@ -931,7 +1285,6 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
         
         // Si se filtra por zona
         if (searchZone) {
-            console.log(searchZone);
             // Hacemos el left join
             pipeline.push({ 
                 "$lookup" : { 
@@ -1136,7 +1489,7 @@ const prepareDownloadBatch = async (req, res) => {
         // Establecemos el temporizador para eliminar los archivos temporales
         const timeOutHrs = 2; // Dos horas
         setTimeout(() => {
-            console.log(`Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
+            console.log(`FS + Cron     => Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
             fs.removeSync(filePath);
         }, (1000 * 3600 * timeOutHrs));
         
@@ -1162,7 +1515,6 @@ const prepareDownloadBatch = async (req, res) => {
 /** Función que devuelve el paquete creado para que el usuario lo descargue
 */ 
 const downloadBatch = (req, res) => {
-    console.log("Descarga")
     const filePath = path.resolve(`src/tempfiles/downloads/${req.params.file_id}.zip`);
     
     if(!fs.existsSync(filePath)){
@@ -1196,6 +1548,7 @@ const removeTemporaryDownloadFiles = () => {
 module.exports = {
     get,
     getThumbnail,
+    getInfo,
     upload,
     update,
     remove,
@@ -1207,6 +1560,10 @@ module.exports = {
     getGrafitiById,
     getGrafitisWithGPS,
     getMatches,
+    setMatch,
+    confirmMatch,
+    notConfirmMatch,
+    removeMatch,
     getBatch,
     getFilteredGrafitis,
     prepareDownloadBatch,

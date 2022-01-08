@@ -20,6 +20,9 @@ router.get("/get/:grafiti_id", grafitiController.get);
 // Obtención de la miniatura de un grafiti (<host>/api/grafitis/get-thumbnail/:grafiti_id)
 router.get("/get-thumbnail/:grafiti_id", grafitiController.getThumbnail);
 
+// Obtención de información de un grafiti (<host>/api/grafitis/get-info/:grafiti_id)
+router.get("/get-info/:grafiti_id", grafitiController.getInfo);
+
 // Subida de un grafiti (<host>/api/grafitis/upload)
 router.post("/upload", estaAutenticado, upload.array("imagenes"), grafitiController.upload);
 
@@ -37,6 +40,18 @@ router.get("/get-grafitis-with-gps", estaAutenticado, grafitiController.getGrafi
 
 // Obtención de los matches de un grafiti (<host>/api/grafitis/get-matches/:grafiti_id)
 router.get("/get-matches/:grafiti_id", estaAutenticado, grafitiController.getMatches);
+
+// Establece una relación match entre dos grafitis (<host>/api/grafitis/set-match)
+router.post("/set-match", estaAutenticado, grafitiController.setMatch);
+
+// Confirmación del match por parte del usuario que no lo identificó (<host>/api/grafitis/confirm-match)
+router.post("/confirm-match", estaAutenticado, grafitiController.confirmMatch);
+
+// Elimina el match por parte del usuario que no lo identificó (<host>/api/grafitis/not-confirm-match)
+router.post("/not-confirm-match", estaAutenticado, grafitiController.notConfirmMatch);
+
+// Elimina un match (<host>/api/grafitis/remove-match/:match_id)
+router.post("/remove-match/:match_id", estaAutenticado, grafitiController.removeMatch);
 
 // Devuelve un lote de imágenes (<host>/api/grafitis/get-grafiti-batch)
 router.post("/get-grafiti-batch", grafitiController.getBatch);

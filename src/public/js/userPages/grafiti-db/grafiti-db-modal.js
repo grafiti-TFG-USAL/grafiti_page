@@ -166,7 +166,6 @@ function initMap() {
         query += `lat=${coords.lat}&lng=${coords.lng}&radio=${radio}`;
         precedentes = true;
 
-        console.log("Query: " + query);
         window.location.href = query;
         document.getElementById("spinner_zona").classList.add("d-none");
     });
@@ -208,7 +207,7 @@ document.getElementById("aplicar_filtro_fecha").addEventListener("click", (event
         query += `maxDate=${maxDate}`;
         precedentes = true;
     }
-    console.log("Query: " + query);
+    
     window.location.href = query;
     document.getElementById("spinner_fecha").classList.add("d-none");
 });
@@ -238,7 +237,7 @@ selectable_btn.addEventListener("click", (event) => {
         query += `maxDate=${maxDate}`;
         precedentes = true;
     }
-    console.log("Query: " + query);
+    
     window.location.href = "GrafitiDB/selectable" + (query === "?" ? "" : query);
     
 })

@@ -2,6 +2,7 @@
 const gallery = document.getElementById("gallery");
 
 // Variables
+const grafitiPpalId = document.getElementById("grafitiImg").dataset.grafiti;
 var batch = 0;
 const imagesPBatch = gallery? Number.parseInt(gallery.dataset.limit) : 0;
 var nImages = imagesPBatch * batch;
@@ -81,7 +82,6 @@ async function fetchNextImageBatch(skip, limit) {
     };
     console.log("BODY: ", body)
     // Hacemos la consulta
-    //const fetchURI = `/api/grafitis/get-search-batch`;
     const fetchURI = `/api/grafitis/get-grafiti-batch`;
     const data = await fetch(fetchURI, {
         method: "POST",
@@ -145,13 +145,6 @@ function displayNoGrafitis() {
 
 }
 
-// Manejadora del evento de selección de un grafiti
-function selectEventHandler(event) {
-    
-    // TODO: abrir modal y tal
-    
-}
-
 /**
  * Añade el array de imágenes recibido al final de la galería
  * @param {Array} images - Array con las imágenes
@@ -166,13 +159,14 @@ function addImagesToGallery(images) {
     for (const image of images) {
         
         const li = document.createElement("li");
+        li.id = `li_${image._id}`;
         gallery.appendChild(li);
         
         const input = document.createElement("img");
         input.classList.add("gallery-img");
         input.addEventListener("click", selectEventHandler);
         input.id = `${image._id}`;
-        //li.appendChild(input);
+        
         const label = document.createElement("label");
         label.setAttribute("for", `${image._id}`);
         label.classList.add("percentage");
@@ -180,7 +174,7 @@ function addImagesToGallery(images) {
         input.loading = "lazy";
         input.classList.add("gallery-img");
         input.src = `/api/grafitis/get/${image._id}`;
-        //TODO pongo aqui la puntuación?
+        //TODO poner aqui la puntuación
         input.alt = `${image.description}`;
         label.appendChild(input);
     }
@@ -198,4 +192,5 @@ $(window).scroll(function () {
 
 window.onload = function() {
     fillGallery();
+    fillImage1();
 };

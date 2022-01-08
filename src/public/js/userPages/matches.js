@@ -119,6 +119,7 @@ function adaptHeader(nMatches, order) {
     
 }
 
+// función que rellena de matches el campo específico
 function fillBody(matches_, grafitiID, body, matchesPPage) {
     const matches = matches_;
     
@@ -130,7 +131,6 @@ function fillBody(matches_, grafitiID, body, matchesPPage) {
             break;
         }
         
-        
         // Nos quedamos con el id del otro grafiti
         var grafiti = null;
         if(match.grafiti_1 === grafitiID){
@@ -140,18 +140,35 @@ function fillBody(matches_, grafitiID, body, matchesPPage) {
         }
         
         const div = document.createElement("div");
-        div.classList.add("col-6", "col-lg-4", "mb-2");
+        div.classList.add("col-6", "col-lg-4", "mb-2", "div-match");
         body.appendChild(div);
         const a = document.createElement("a");
         a.href = `/usuario/grafiti/${ grafiti }`;
+        a.id = `${ grafiti }`;
         div.appendChild(a);
+        const del_button = document.createElement("button");
+        del_button.type = "button";
+        del_button.classList.add("btn", "btn-danger", "delete-button", "p-0");
+        const trash_icon = document.createElement("i");
+        trash_icon.classList.add("fa", "fa-trash-o", "m-0");
+        trash_icon.dataset.match = `${ match._id }`;
+        del_button.appendChild(trash_icon);
+        del_button.dataset.match = `${ match._id }`;
+        del_button.addEventListener("click", delete_btn_event);
+        div.appendChild(del_button);
         const img = document.createElement("img");
         img.src = `/api/grafitis/get-thumbnail/${ grafiti }`;
-        img.classList.add("w-100", "h-100", "img", "img-thumbnail");
+        img.classList.add("w-100", "h-100", "img", "img-thumbnail", "img-match");
+        if(!match.confirmed) {
+            img.classList.add("border-warning");
+            img.style = "opacity: 0.75;";
+        } else {
+            img.classList.add("border-success");
+        }
         a.appendChild(img);
         const div_caption = document.createElement("div");
         div_caption.classList.add("caption-inside-bottom-center");
-        div_caption.innerText = `${match.similarity}%`;
+        div_caption.innerText = `${match.similarity.toFixed(2)}%`;
         a.appendChild(div_caption);
         
         index++;
@@ -393,4 +410,54 @@ document.getElementById("sortSimilarity").addEventListener("click", (event) => {
         window.location.href = queryBuilder(queryParams.page, queryParams.docsppage, -1);
     }
     
+});
+
+const delete_match_btn = document.getElementById("delete-match-btn");
+// Manejador del botón de eliminación
+const delete_btn_event = event => {
+    const match_id = event.target.dataset.match;
+    delete_match_btn.dataset.match_id = match_id;
+    $("#modal_delete").modal();
+}
+
+delete_match_btn.addEventListener("click", async (event) => {
+    event.preventDefault();
+
+    document.getElementById("spinner-delete").classList.remove("d-none");
+
+    try {
+        
+        const match_id = delete_match_btn.dataset.match_id;
+        
+        // Enviamos la consulta POST a la api
+        const data = await fetch(`/api/grafitis/remove-match/${ match_id }`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+
+        const respuesta = await data.json();
+
+        document.getElementById("spinner-delete").classList.add("d-none");
+        $("#modal-delete").modal("hide");
+        // Comprobamos que no haya fallado
+        if (!respuesta.success) {
+            console.error("Fallo en respuesta: ", respuesta.message);
+
+            document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+            document.getElementById("contenido_adicional").innerText = respuesta.message;
+            $('#modal').modal();
+        } else {
+           location.reload();
+        }
+
+    } catch (error) {
+        console.error("Catch error: ", error);
+
+        document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
+        document.getElementById("contenido_adicional").innerText = respuesta.error;
+        $("#modal-delete").modal("hide");
+        $('#modal').modal();
+    }
 });

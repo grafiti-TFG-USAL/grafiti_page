@@ -12,19 +12,25 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="d-inline" id="matchesHeader">Matches <span id="numMatches"></span></h3>
-                        <div class="btn-group float-right">
-                            <button class="d-inline dropdown-toggle btn btn-secondary" type="button"
-                                data-toggle="dropdown">Ordenar <i class="fa fa-sort" aria-hidden="true"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item active text-white" type="button" id="sortSimilarity" data-toggle="modal" data-target="#filtro-similarity">por % de similitud <i class="fa fa-bullseye ml-1" aria-hidden="true"></i> <span class="ml-1 mb-1 badge badge-warning badge-pill" id="sortPill" data-toggle="tooltip" title="Invertir orden"> <i id="sortDataBadge" class="fa fa-sort-numeric-desc"></i></span>
-                                </a>
-                                <!--a class="dropdown-item" type="button" data-toggle="modal"
-                                    data-target="#filtro-distancia">por distancia <i class="fa fa-map-marker ml-1"
-                                        aria-hidden="true"></i>
-                                </a-->
+                        <div class="float-right">
+                            <!--button type="button" class="btn btn-danger" id="remove"
+                                data-toggle="tooltip" title="Seleccionar imágenes">
+                                    <div class="remove-icon"><i class="fa fa-trash-o" aria-hidden="true"></i></div>
+                            </button-->
+                            <div class="btn-group">
+                                <button class="d-inline dropdown-toggle btn btn-secondary" type="button"
+                                    data-toggle="dropdown">Ordenar <i class="fa fa-sort" aria-hidden="true"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item active text-white" type="button" id="sortSimilarity" data-toggle="modal" data-target="#filtro-similarity">por % de similitud <i class="fa fa-bullseye ml-1" aria-hidden="true"></i> <span class="ml-1 mb-1 badge badge-warning badge-pill" id="sortPill" data-toggle="tooltip" title="Invertir orden"> <i id="sortDataBadge" class="fa fa-sort-numeric-desc"></i></span>
+                                    </a>
+                                    <!--a class="dropdown-item" type="button" data-toggle="modal"
+                                        data-target="#filtro-distancia">por distancia <i class="fa fa-map-marker ml-1"
+                                            aria-hidden="true"></i>
+                                    </a-->
+                                </div>
                             </div>
-                        </div>
+                        </div>  
                     </div>
 
                     <div class="card-body" id="cardBody" data-grafiti="<%= grafiti %>">
@@ -44,7 +50,40 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal de eliminación -->
+    <div class="modal fade" id="modal_delete">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="content-delete">
+                
+                <div class="modal-header bg-danger">
+                    <h4 class="modal-title text-white">Eliminar match</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body container-fluid">
+                    <div class="row justify-content-center my-2">
+                        <h6 class="text">¿Está seguro de que desea eliminar el match?</h6>
+                    </div>
+                    
+                    <div class="row justify-content-around my-2">
 
+                        <button type="button" data-dismiss="modal"
+                            class="btn btn-outline-info col-12 col-sm-4">Cancelar</button>
+                        <button class="btn btn-danger col-12 col-sm-4" id="delete-match-btn">Eliminar <i
+                                class="fa fa-spinner d-none" id="spinner-delete"></i></button>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <!-- Fin modal de eliminación -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/js/userPages/matches.js"></script>
 
     <%- include("../templates/footer"); %>

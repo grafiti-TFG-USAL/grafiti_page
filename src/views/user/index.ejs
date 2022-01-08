@@ -37,17 +37,23 @@
 
                     <div class="card-body card-body-dark">
                         <div class="row">
-                            <strong class="col-8">Nº Grafitis: </strong><span class="col-4">
+                            <strong class="col-8">Grafitis: </strong><span class="col-4">
                                 <%= stats.nUserGrafitis %>
                             </span>
                         </div>
                         <div class="row">
-                            <strong class="col-8">Nº Grafitis con GPS: </strong><span class="col-4">
-                                <%= stats.nGPSUserGrafitis %> / <%= stats.nUserGrafitis %>
+                            <strong class="col-8">Matches: </strong><span class="col-4">
+                                <%= stats.nUserMatches %>
                             </span>
                         </div>
                         <div class="row">
-                            <strong class="col-8">Grafitis en la base: </strong><span class="col-4">
+                            <strong class="col-8">Imágenes ubicadas: </strong><span class="col-4">
+                                <%= stats.nGPSUserGrafitis %> / <%= stats.nUserGrafitis %>
+                            </span>
+                        </div>
+                        <div class="row my-1"></div>
+                        <div class="row">
+                            <strong class="col-8">Grafitis totales: </strong><span class="col-4">
                                 <%= stats.nGrafitis %>
                             </span>
                         </div>

@@ -19,7 +19,6 @@ const index = async (req, res) => {
     const images = await getIndexGrafitis(req.user._id, 12);
 
     const stats = await getIndexStats(req.user._id);
-    console.log("STATS: ", stats);
     res.render("user/index.ejs", { titulo: "Bienvenido", user: req.user, images, stats });
 
 };
@@ -430,7 +429,7 @@ const notifications = async (req, res) => {
 
     try {
 
-        return res.render("user/user-notifications.ejs", { titulo: "Notificaciones", user: req.user });
+        return res.render("user/user-notifications.ejs", { titulo: "Notificaciones", user: req.user, maps_key: process.env.GMAPS_API_KEY });
 
     } catch (error) {
         console.error("Error al recoger las notificaciones");
@@ -483,7 +482,6 @@ const switchAllNotificationsSeenState = async (req, res) => {
         const notification = await Notification.updateMany({ user: req.user._id }, {
             seen: true,
         });
-        //console.log("Notification: ", notification);
         if (!notification || notification.nModified < 1) {
             throw "No se ha modificado ninguna notificación";
         }

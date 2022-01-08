@@ -37,7 +37,15 @@ const matchSchema = mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    // El usuario secundario
+    otherUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+        ref: "User",
+    },
             
+}, { 
+    timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });
 
 

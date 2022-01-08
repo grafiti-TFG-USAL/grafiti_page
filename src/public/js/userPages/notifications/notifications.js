@@ -74,7 +74,6 @@ async function initList() {
     const data = await fetch(`/api/notifications/get/${userId}`, { method: "get" });
     const response = await data.json();
 
-    console.log(response.message);
     // Si algo ha fallado
     if (!response.success) {
         if (window.alert("Se ha producido un error al cargar la página\n" + response.message + "\n¿Quiere volver a intentarlo?")) {
@@ -121,19 +120,28 @@ async function initList() {
 
         // Creamos la celda del tipo de notificación
         const td_tipo = document.createElement("td");
-        const a_tipo = document.createElement("a");
-        const div_tipo = document.createElement("div");
-        a_tipo.href = "/usuario/grafiti/" + notificacion.grafiti + "?notification=true";
         td_tipo.style = "text-align: center; vertical-align: middle";
-        // Creamos la celda de previsualización de la imagen
-        const td_img = document.createElement("td");
-        const a_img = document.createElement("a");
-        const div_img = document.createElement("div");
-        a_img.href = "/usuario/grafiti/" + notificacion.grafiti + "?notification=true";
+        const div_tipo = document.createElement("div");
+        
+        let a_tipo;
+        let td_img;
+        let a_img;
+        let div_img;
+        
         // Rellenamos las dos celdas
         switch (notificacion.type) {
             // Notificación de tipo ubicación
             case "Ubicación no establecida":
+                
+                a_tipo = document.createElement("a");
+                a_tipo.href = "/usuario/grafiti/" + notificacion.grafiti + "?notification=true";
+                
+                // Creamos la celda de previsualización de la imagen
+                td_img = document.createElement("td");
+                a_img = document.createElement("a");
+                div_img = document.createElement("div");
+                a_img.href = "/usuario/grafiti/" + notificacion.grafiti + "?notification=true";
+                
                 const title_map = document.createElement("h5");
                 title_map.classList.add("text-danger", "m-0");
                 const icon_map = document.createElement("i");
@@ -158,20 +166,41 @@ async function initList() {
                 break;
             // Notificación de tipo similar hallado
             case "Grafiti similar detectado":
+                
+                a_tipo = document.createElement("a");
+                a_tipo.href = "#";
+                a_tipo.addEventListener("click", modalConfirmarMatch);
+                
+                // Creamos la celda de previsualización de la imagen
+                td_img = document.createElement("td");
+                a_img = document.createElement("a");
+                a_img.href = "#";
+                a_img.addEventListener("click", modalConfirmarMatch);
+                div_img = document.createElement("div");    
+            
+                const title_match = document.createElement("h5");
+                title_match.classList.add("text-success", "m-0");
                 const icon_match = document.createElement("i");
-                icon_match.classList.add("fa", "fa-bullseye", "text-success");
-                div_tipo.appendChild(icon_match);
+                icon_match.classList.add("fa", "fa-bullseye", "fa-lg", "mr-2");
+                title_match.appendChild(icon_match);
                 const span_match = document.createElement("span");
-                span_match.innerText = " Encontrada coincidencia";
-                div_tipo.appendChild(span_match);
+                span_match.innerText = " ¡Match detectado!";
+                
+                span_match.dataset.grafiti1 = notificacion.grafiti;
+                span_match.dataset.grafiti2 = notificacion.grafiti_2;
+                
+                title_match.appendChild(span_match);
+                div_tipo.appendChild(title_match);
                 a_tipo.appendChild(div_tipo);
                 td_tipo.appendChild(a_tipo);
                 tr.appendChild(td_tipo);
 
-                td_img.style = "text-align: center; vertical-align: middle";
+                td_img.style = "text-align: center; vertical-align: middle;";
                 const img_thmb_match = document.createElement("img");
                 img_thmb_match.style = "max-width: 100px; max-height:60px";
                 img_thmb_match.src = "/api/grafitis/get-thumbnail/" + notificacion.grafiti;
+                img_thmb_match.dataset.grafiti1 = notificacion.grafiti;
+                img_thmb_match.dataset.grafiti2 = notificacion.grafiti_2;
                 div_img.appendChild(img_thmb_match);
                 a_img.appendChild(div_img);
                 td_img.appendChild(a_img);
@@ -179,7 +208,6 @@ async function initList() {
                 break;
             default:
                 continue;
-                break;
         }
         tupla["td_tipo"] = td_tipo;
         tupla["td_img"] = td_img;
@@ -215,7 +243,6 @@ async function initList() {
 
                 // Si el post ha ido bien
                 if (response.success) {
-                    console.log(response.message);
                     // Cambiamos el estilo de la tupla
                     // Si estaba en "no visto" => poner a "visto"
                     if (icon_eye.classList.contains("fa-eye-slash")) {
@@ -312,3 +339,17 @@ btn_checkall.addEventListener("click", async (event) => {
         btn_checkall.removeAttribute("disabled");
     }
 });
+
+const modalConfirmarMatch = async (event) => {
+    
+    const a_source = event.target;
+    
+    const grafiti1_id = a_source.dataset.grafiti1;
+    const grafiti2_id = a_source.dataset.grafiti2;
+    
+    fillMatchModal(grafiti1_id, grafiti2_id);
+    
+    // Abrimos el modal
+    $('.match-modal').modal();
+    
+}

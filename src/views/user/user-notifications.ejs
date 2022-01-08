@@ -28,6 +28,83 @@
         </div>
     </div>
 
-    <script async src="/js/userPages/notifications.js"></script>
+    
+    <!-- CÓDIGO DEL MODAL DE MATCH -->
+    <div class="modal fade match-modal" id="match-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+              
+            <div class="modal-header">
+                <h4 class="modal-title">Confirmar match</h4>
+                <button type="button" class="close" id="match_modal_close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body pb-0 pt-2">
+                <div class="row">
+                    
+                    <!-- IMAGEN 1 -->
+                    <div id="image_box_1" class="col-12 mb-2 col-md-6">
+                        <div id="imagen_1" class="p-1 img-thumbnail mb-1">
+                            
+                        </div>
+                        
+                        <div id="mapa_1" class="img-thumbnail mx-auto" style="height: 180px; width: 90%;">
+                        </div>
+                    </div>
+                    
+                    <div id="division"></div>
+                    
+                    <!-- IMAGEN 2 -->
+                    <div id="image_box_2" class="col-12 mb-2 col-md-6">
+                        <div id="imagen_2" class="p-1 img-thumbnail mb-1">
+                            
+                        </div>
+                        <div id="mapa_2" class="img-thumbnail mx-auto" style="height: 180px; width: 90%;">
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                
+                <button id="cancelar_match" type="button" class="btn btn-outline-danger"><span id="cancelar_match_text">Eliminar</span> <i class="d-none fa fa-spinner fa-pulse" id="spinner_cancelar"></i>
+                </button>
+                
+                <button id="establecer_match" type="button" class="btn btn-success"><span id="establecer_match_text">Confirmar match</span> <i class="d-none fa fa-spinner fa-pulse" id="spinner_establecer"></i>
+                </button>
+                
+            </div>
+            
+          </div>
+        </div>
+    </div> 
+      
+    <!-- CÓDIGO DEL MODAL DE ERROR -->
+    <div class="modal" id="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Se ha producido un error</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="contenido"> </p>
+                    <p id="contenido_adicional" class="small text-danger"> </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script async src="/js/userPages/notifications/notifications.js"></script>
+    <script async src="/js/userPages/notifications/notifications-modal.js"></script>
+    <%# Script de la api de maps; debe ir tras la función initMap %>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&libraries=&v=weekly" async></script>
 
     <%- include("../templates/footer"); %>

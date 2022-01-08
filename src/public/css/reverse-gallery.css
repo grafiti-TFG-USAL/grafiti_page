@@ -2,6 +2,10 @@
     vertical-align: top;
 }
 
+#image_box_1 {
+    border-right: 1px dashed dimgray;
+}
+
 .selectable-icon {
     border-width: 3px;
     border-radius: 3px;
