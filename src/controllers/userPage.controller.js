@@ -5,8 +5,7 @@ const {
     getIndexGrafitis,
     getIndexStats,
     getGrafitiById,
-    getGrafitiPage,
-    getNumberOfPages,
+    execReverseSearch,
     getFilteredGrafitis,
     getBatch
 } = require("./grafiti.controller");
@@ -127,6 +126,12 @@ const reverseSearch = async (req, res) => {
             console.error("Not user");
             return res.render("../views/404", { title: "Página 404", user: req.user? req.user : null, index: 0 });
         } else {
+            
+            const response = await execReverseSearch(grafiti);
+            if(!response.success){
+                throw response.message;
+            }
+            
             // Renderizamos la página de búsqueda inversa de grafitis
             const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
             return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", timeAgo: time, grafiti: grafiti, grafitisFetchLimit: 25, user: req.user, maps_key: process.env.GMAPS_API_KEY });

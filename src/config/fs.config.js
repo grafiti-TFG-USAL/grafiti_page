@@ -5,6 +5,7 @@ const initFS = async () => {
     try {
         await initUploads();
         await initDownloads();
+        await initSearches();
     } catch (error) {
         errorcb();
     }
@@ -19,6 +20,10 @@ const initUploads = async () => {
 
 const initDownloads = async () => {
     await fs.ensureDir(path.resolve("src/tempfiles/downloads".toString()));
+}
+
+const initSearches = async () => {
+    await fs.ensureDir(path.resolve("src/tempfiles/searches".toString()));
 }
 
 const errorcb = err => {

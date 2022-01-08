@@ -61,6 +61,7 @@ app.use((req, res) => {
 
 // Comprobamos que no haya archivos temporales en el directorio de archivos temporales
 require("./controllers/grafiti.controller").removeTemporaryDownloadFiles();
+require("./controllers/grafiti.controller").removeTemporarySearchFiles();
 
 // Si el hosting no lo asigna, se usa la variable de entorno
 const port = process.env.PORT || 3000;

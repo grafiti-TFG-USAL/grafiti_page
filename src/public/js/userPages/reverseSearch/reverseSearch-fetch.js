@@ -82,7 +82,7 @@ async function fetchNextImageBatch(skip, limit) {
     };
     console.log("BODY: ", body)
     // Hacemos la consulta
-    const fetchURI = `/api/grafitis/get-grafiti-batch`;
+    const fetchURI = `/api/grafitis/get-search-batch`;
     const data = await fetch(fetchURI, {
         method: "POST",
         headers: {

@@ -1207,6 +1207,46 @@ const getMatches = async (req, res) => {
 };
 
 /**
+ * Ejecuta la búsqueda inversa y almacena los resultados
+ * @param {*} grafiti 
+ */
+const execReverseSearch = async (grafiti) => {
+    
+};
+
+/**
+ * Devuelve un lote de imágenes
+ */
+const getSearchBatch = async (req, res) => {
+    try {
+
+        // Recogemos los parámetros de la consulta
+        const body = req.body;
+        const { minDate, maxDate, searchZone, skip, limit } = body;
+        const userId = body.self ? req.user._id : null;
+        
+        // Obtenemos los grafitis
+        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, userId, skip, limit);
+        
+        // Devolvemos los resultados
+        return res.status(201).json({
+            success: true,
+            message: "Consulta exitosa",
+            images: grafitis.grafitis,
+            nGrafitis: grafitis.nGrafitis,
+            limitReached: grafitis.limitReached,
+        });
+
+    } catch (error) {
+        console.error("Error en getBatch: " + error);
+        return res.status(400).json({
+            success: false,
+            message: error,
+        });
+    }
+};
+
+/**
  * Devuelve un lote de imágenes
  */
 const getBatch = async (req, res) => {
@@ -1525,7 +1565,8 @@ const downloadBatch = (req, res) => {
     return res.download(path.resolve(filePath));
 };
 
-/** Función que devuelve el paquete creado para que el usuario lo descargue
+/** 
+ * Función que elimina los ficheros temporales de descargas
 */ 
 const removeTemporaryDownloadFiles = () => {
     const tmpDownloadDir = path.resolve("src/tempfiles/downloads/");
@@ -1539,6 +1580,26 @@ const removeTemporaryDownloadFiles = () => {
     
     for(const file of files) {
         const filePath = path.join(tmpDownloadDir, file);
+        console.log("=> Eliminando fichero temporal ", file, " ["+filePath+"]");
+        fs.removeSync(filePath);
+    }
+};
+
+/** 
+ * Función que elimina los ficheros temporales de búsqueda
+ */
+const removeTemporarySearchFiles = () => {
+    const tmpSearchesDir = path.resolve("src/tempfiles/searches/");
+    if (!fs.existsSync(tmpSearchesDir)){
+        if(!fs.existsSync(path.resolve("src/tempfiles/"))) {
+            fs.mkdirSync(path.resolve("src/tempfiles/"));
+        }
+        fs.mkdirSync(tmpSearchesDir);
+    }
+    const files = fs.readdirSync(tmpSearchesDir);
+    
+    for(const file of files) {
+        const filePath = path.join(tmpSearchesDir, file);
         console.log("=> Eliminando fichero temporal ", file, " ["+filePath+"]");
         fs.removeSync(filePath);
     }
@@ -1564,9 +1625,12 @@ module.exports = {
     confirmMatch,
     notConfirmMatch,
     removeMatch,
+    getSearchBatch,
+    execReverseSearch,
     getBatch,
     getFilteredGrafitis,
     prepareDownloadBatch,
     downloadBatch,
     removeTemporaryDownloadFiles,
+    removeTemporarySearchFiles
 };
