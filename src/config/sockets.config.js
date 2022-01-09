@@ -10,13 +10,13 @@ const init = (server, app) => {
         console.log(`Sockets       => OK`);
         app.io = io;
     } catch (error) {
-        console.log("Sockets       => Failed");
-        console.log("Error: ", error);
+        console.error("Sockets       => Failed");
+        console.error("Error: ", error);
         process.exit(1);
     }
 
     io.on("connection", socket => {
-        console.log("Usuario conectado", socket.id);
+        console.log("Sockets       => Usuario conectado:", socket.id);
         
         socket.on("upload:init", (data) => {
             connectedUsers[data.userId+":upload"] = socket;
@@ -35,7 +35,7 @@ const init = (server, app) => {
     });
     
     io.on("disconnect", () => {
-        console.log("Usuario desconectado");
+        console.log("Sockets       => Usuario desconectado");
     })
 
 };

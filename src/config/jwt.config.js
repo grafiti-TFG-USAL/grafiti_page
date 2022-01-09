@@ -16,7 +16,7 @@ const getTokenData = (token) => {
     
     jwt.verify(token, process.env.TOKEN_SECRET, (error, decoded) => {
         if(error) {
-            console.log("Error: no se pudo obtener los datos del token");
+            console.error("Error: no se pudo obtener los datos del token");
         }else{
             data = decoded;
         }

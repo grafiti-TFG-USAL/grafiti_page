@@ -66,7 +66,7 @@ function fillImage2(image, percentage) {
     if(mapa_2.classList.contains("d-none")){
         mapa_2.classList.remove("d-none");
     }
-    console.log(coordElem);
+    
     const coords = { 
         lat: coordElem.location.coordinates[1], 
         lng: coordElem.location.coordinates[0]
@@ -85,8 +85,6 @@ function fillImage2(image, percentage) {
 
 // Manejadora del evento de selección de un grafiti
 async function selectEventHandler(event) {
-    
-    console.log(event.target.id);
     
     try {
         
@@ -159,31 +157,19 @@ document.getElementById("establecer_match").addEventListener("click", async (eve
         $("#match-modal").modal("hide");
         // Comprobamos que no haya fallado
         if (!respuesta.success) {
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
 
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = respuesta.message;
             $('#modal').modal();
         } else {
-            
-            console.log(respuesta);
             document.getElementById("establecer_match_text").innerText = "Guardado";
-            /*
-            // Eliminamos el resultado de la búsqueda
-            const list_elem = document.getElementById("li_" + grafifi2_id);
-            while(list_elem.firstChild) {
-                list_elem.removeChild(list_elem.firstChild);
-            }
-            list_elem.remove();
-            
-            // Recargamos el carousel
-            getMatches(grafifi1_id);
-            */
-           location.reload();
+        
+            location.reload();
         }
 
     } catch (error) {
-        console.log("Catch error: ", error);
+        console.error("Catch error: ", error);
 
         document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
         document.getElementById("contenido_adicional").innerText = respuesta.error;

@@ -73,7 +73,7 @@
                 // Comprobamos que no haya fallado
                 if (!respuesta.success) {
 
-                    console.log("Fallo en respuesta: ", respuesta.message);
+                    console.error("Fallo en respuesta: ", respuesta.message);
 
                     document.getElementById("titulo_modal").innerText = "Ha ocurrido un error";
                     document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
@@ -82,8 +82,6 @@
                     $('#modal').modal();
 
                 } else {
-
-                    console.log(respuesta.message);
 
                     document.getElementById("titulo_modal").innerText = "Correo de recuperación enviado";
                     document.getElementById("contenido").innerText = "Acceda al enlace que le hemos proporcionado mediante email para restaurar su contraseña.";

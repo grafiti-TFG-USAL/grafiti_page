@@ -54,7 +54,7 @@ notificationSchema.post("save", async function (doc) {
             const updateInc = await User.findOneAndUpdate({ _id: doc.user }, {
                 $inc: { notifications: 1 },
             });
-            console.log("UpdateInc: ", updateInc);
+            
             if (!updateInc) {
                 throw "(inc) El update no se ha llegado a ejecutar";
             }
@@ -75,7 +75,7 @@ notificationSchema.pre("remove", async function (doc) {
             const updateDec = await User.findOneAndUpdate({ _id: doc.user }, {
                 $inc: { notifications: -1 },
             });
-            console.log("UpdateDec: ", updateDec);
+            
             if (!updateDec) {
                 throw "(dec by remove) El update no se ha llegado a ejecutar";
             }

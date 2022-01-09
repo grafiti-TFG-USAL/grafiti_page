@@ -80,9 +80,9 @@ const grafitiSchema = mongoose.Schema({
     deleted: {
         type: Boolean,
         default: false,
-    },
+    },/*
     // El mapa de características generado por la RNA
-    featureMap: [Number],
+    featureMap: [Number],*/
 
 });
 

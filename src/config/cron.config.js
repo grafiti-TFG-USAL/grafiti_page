@@ -5,7 +5,7 @@ function scheduleUnverifiedUsersRemover(comprobarUsuariosSinVerificar) {
     // Establecemos la ejecución de la tarea cada 15 minutos
     cron.schedule("0,15,30,45 * * * *", () => {
         comprobarUsuariosSinVerificar();
-        console.log("CRON - 15 min: Comprobación cuentas no verificadas");
+        console.log("Cron 15 mins  ==> Comprobación cuentas no verificadas");
     });
     // Y ejecutamos la tarea al inicio del programa
     comprobarUsuariosSinVerificar();

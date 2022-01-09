@@ -56,7 +56,7 @@ async function searchAddress(address, coords, map, geocoder, bounds, marker, cir
 
         } else {
             alert("No se ha encontrado la dirección");
-            console.log("Geocode failed due to: " + status);
+            console.error("Geocode failed due to: " + status);
         }
 
     });
@@ -71,11 +71,11 @@ function setAddress(geocoder, input, coords) {
                 input.value = results[0].formatted_address;
             } else {
                 window.alert("No se han podido localizar las coordenadas");
-                console.log("No se han podido localizar las coordenadas");
+                console.error("No se han podido localizar las coordenadas");
             }
         } else {
             window.alert("No se han podido localizar las coordenadas");
-            console.log("Geocoder failed due to: " + status);
+            console.error("Geocoder failed due to: " + status);
         }
     });
 
@@ -145,7 +145,7 @@ function initMap() {
         document.getElementById("spinner_zona").classList.remove("d-none"); 
         const urlSearchParams = new URLSearchParams(window.location.search);
         const params = Object.fromEntries(urlSearchParams.entries());
-        console.log("Params: ", params);
+        
         var query = `?`;
         var precedentes = false;
         if (params.page) {
@@ -185,7 +185,7 @@ document.getElementById("aplicar_filtro_fecha").addEventListener("click", (event
     document.getElementById("spinner_fecha").classList.remove("d-none");
     const urlSearchParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(urlSearchParams.entries());
-    console.log("Params: ", params);
+    
     var query = `?`;
     var precedentes = false;
     if (params.page) {

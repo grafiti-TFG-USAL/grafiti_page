@@ -29,7 +29,7 @@ document.getElementById("form_eliminacion").addEventListener("submit", async (ev
         // Si algo ha fallado
         if (!respuesta.success) {
 
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = "Error:\n > " + respuesta.message;
             $('#error_modal').modal();
@@ -145,7 +145,7 @@ form.addEventListener("submit", async (event) => {
         // Si algo ha fallado
         if (!respuesta.success) {
 
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = "Error:\n > " + respuesta.message;
             $('#error_modal').modal();
@@ -199,7 +199,6 @@ form_notifications.addEventListener("submit", async (event) => {
     
     try {
 
-        console.log("Ejecutandose")
         // Recogemos los cambios efectuados
         const chk_matches = matches.checked;
 
@@ -224,7 +223,7 @@ form_notifications.addEventListener("submit", async (event) => {
         // Si algo ha fallado
         if (!respuesta.success) {
 
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = "Error:\n > " + respuesta.message;
             $('#error_modal').modal();

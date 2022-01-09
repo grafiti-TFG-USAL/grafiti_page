@@ -12,7 +12,6 @@ var selectAll = false; // Esta indica si están TODAS seleccionadas
 var allSelected = false; // Esta indica si se han seleccionado todas anteriormente (para incluir las no cargadas)
 var nSelected = 0;
 var nGrafitis = null;
-console.log("imagespbatch: ", imagesPBatch)
 
 // Parámetros de la query
 const urlSearchParams = new URLSearchParams(window.location.search);
@@ -35,12 +34,10 @@ async function fillGallery() {
 
     ejecutando = true;
     if (limReached) {
-        console.log("Límite alcanzado");
         return;
     }
     
     if (!gallery) {
-        console.log("Sin imágenes");
         return;
     }
 
@@ -84,7 +81,7 @@ async function fetchNextImageBatch(skip, limit) {
         self: true, // Si devuelve grafitis propios o de toda la base
         minDate, maxDate, searchZone, // Filtros
     };
-    console.log("BODY: ", body)
+    
     // Hacemos la consulta
     const fetchURI = `/api/grafitis/get-grafiti-batch`;
     const data = await fetch(fetchURI, {

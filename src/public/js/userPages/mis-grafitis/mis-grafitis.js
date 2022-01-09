@@ -10,7 +10,7 @@ selectable_btn.addEventListener("click", (event) => {
     
     const urlSearchParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(urlSearchParams.entries());
-    console.log("Params: ", params);
+    
     var query = `?`;
     var precedentes = false;
     if (params.lat && params.lng && params.radio) {

@@ -8,7 +8,6 @@ const imagesPBatch = gallery? Number.parseInt(gallery.dataset.limit) : 0;
 var nImages = imagesPBatch * batch;
 var limReached = false;
 var nGrafitis = null;
-console.log("imagespbatch: ", imagesPBatch)
 
 // Parámetros de la query
 /*const urlSearchParams = new URLSearchParams(window.location.search);
@@ -31,12 +30,10 @@ async function fillGallery() {
 
     ejecutando = true;
     if (limReached) {
-        console.log("Límite alcanzado");
         return;
     }
     
     if (!gallery) {
-        console.log("Sin imágenes");
         return;
     }
 
@@ -80,7 +77,7 @@ async function fetchNextImageBatch(skip, limit) {
         self: false, // Si devuelve grafitis propios o de toda la base
         minDate: null, maxDate: null, searchZone: null, // Filtros
     };
-    console.log("BODY: ", body)
+    
     // Hacemos la consulta
     const fetchURI = `/api/grafitis/get-search-batch`;
     const data = await fetch(fetchURI, {

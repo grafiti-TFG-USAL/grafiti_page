@@ -10,7 +10,6 @@ const fs = require("fs-extra");
 if(!fs.existsSync(path.resolve("src/public/uploads/temp/"))){
     if(!fs.existsSync(path.resolve("src/public/uploads/"))){
         fs.mkdirSync(path.resolve("src/public/uploads/"));
-        console.log("Creada carpeta: ", path.resolve("src/public/uploads/"));
     }
     fs.mkdirSync(path.resolve("src/public/uploads/temp/"));
 }
@@ -40,8 +39,8 @@ const upload = multer({
         if(mimetype && extname){
             return cb(null, true);
         }
-        console.log("Mime: ", mimetype);
-        console.log("Ext : ", extname);
+        console.error("Mime: ", mimetype);
+        console.error("Ext : ", extname);
         cb("Error: Formato de archivo no soportado");
     }
 })

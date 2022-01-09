@@ -35,7 +35,6 @@ document.getElementById("desc_btn").addEventListener("click", async (event) => {
     try {
         const textarea = document.getElementById("description");
 
-        console.log("Preparado para enviar desc: ", textarea.value);
         // Enviamos la consulta POST a la api
         const data = await fetch(`/api/grafitis/update/${grafitiImg.dataset.grafiti}`, {
             method: "POST",
@@ -52,7 +51,7 @@ document.getElementById("desc_btn").addEventListener("click", async (event) => {
         document.getElementById("spinner_desc").classList.add("d-none");
         // Comprobamos que no haya fallado
         if (!respuesta.success) {
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
 
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = respuesta.message;
@@ -60,14 +59,13 @@ document.getElementById("desc_btn").addEventListener("click", async (event) => {
             $("#eliminacion").modal("hide");
             $('#modal').modal();
         } else {
-            console.log(respuesta)
             document.getElementById("check_desc").classList.remove("d-none");
             document.getElementById("desc_btn").classList.replace("btn-warning", "btn-success");
             document.getElementById("btn_text").innerText = "Guardado";
         }
 
     } catch (error) {
-        console.log("Catch error: ", error);
+        console.error("Catch error: ", error);
 
         document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
         document.getElementById("contenido_adicional").innerText = respuesta.error;
@@ -97,7 +95,7 @@ document.getElementById("remove_def").addEventListener("click", async (event) =>
 
         // Comprobamos que no haya fallado
         if (!respuesta.success) {
-            console.log("Fallo en respuesta: ", respuesta.message);
+            console.error("Fallo en respuesta: ", respuesta.message);
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = respuesta.message;
             $("#ubicacion").modal("hide");
@@ -111,7 +109,7 @@ document.getElementById("remove_def").addEventListener("click", async (event) =>
         }
 
     } catch (error) {
-        console.log("Catch error: ", error);
+        console.error("Catch error: ", error);
 
         document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
         document.getElementById("contenido_adicional").innerText = error;

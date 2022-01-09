@@ -106,8 +106,37 @@ const upload = async (req, res) => {
     var fileErr = [];
 
     const nFiles = files.length;
-    const step = 100.0 / nFiles;
+    
     const socketid = Sockets.connectedUsers[req.user.id+":upload"].id;
+    req.app.io.to(socketid).emit("upload:preprocessing");
+    
+    // Ejecutamos la búsqueda inversa
+    try {
+        console.log("Ejecutando python")
+        const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
+        for(const fimg of files) {
+            py_args.push(fimg.originalName)
+        }
+        // VERSIÓN SÍNCRONA
+        const spawn = require("child_process").spawnSync;
+        const pythonProcess = await spawn("conda", py_args);
+        //console.error(pythonProcess.stderr.toString());
+        console.log(pythonProcess.stdout.toString());
+        
+        console.log("Ejecutado python");
+    } catch (error) {
+        console.error("Error en la feature extraction:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Ha ocurrido un fallo al procesar las imágenes con la inteligencia artificial", 
+            errores: [error], 
+            fileErr: [] 
+        });
+    }
+    
+    req.app.io.to(socketid).emit("upload:processing");
+    
+    const step = 100.0 / nFiles;
     function emitStep(index) {
         req.app.io.to(socketid).emit("upload:step", { percentage: (index * step).toFixed(2) });
     }
@@ -811,6 +840,7 @@ const getGrafitisWithGPS = async (req, res) => {
             });
         } else {
             if (grafitis.length == 0) {
+                console.error("Se obtuvieron 0 grafitis en la consulta")
                 return res.status(400).json({
                     success: false,
                     message: "Se obtuvieron 0 grafitis en la consulta"
@@ -1168,10 +1198,7 @@ const getMatches = async (req, res) => {
         }
         
         if(!match.confirmed) {
-            console.log("Eliminamos la notificacion 0")
             // Eliminamos la notificación
-            console.log(match.grafiti_2);
-            console.log(match.grafiti_1);
             const removal = await Notification.deleteOne({
                 type: "Grafiti similar detectado",
                 grafiti: match.grafiti_2,
@@ -1180,14 +1207,11 @@ const getMatches = async (req, res) => {
             const decrement = await User.updateOne({ _id: user._id }, {
                 $inc: { notifications: -1 },
             });
-            console.log("Eliminada la notificacion 1");
             if (!removal ||
                 !decrement) {
                 console.error("NO SE HA ELIMINADO")
                 throw "No se ha podido eliminar la notificación";
             }
-            console.log(removal);
-            console.log(decrement);
         }
         
         console.error("Listo");
@@ -1425,7 +1449,6 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
 /** Función que empaqueta las imágenes seleccionadas y un archivo csv con sus datos y lo almacena temporalmente
 */ 
 const prepareDownloadBatch = async (req, res) => {
-    console.log("Prepara descarga");
     
     try {
     
@@ -1447,7 +1470,6 @@ const prepareDownloadBatch = async (req, res) => {
         const step = 90.0 / (ids.length); // Sumamos los pasos extra
         var index = 1;
         // Iniciamos el socket
-        console.log("USER: ", req.user);
         const socketid = Sockets.connectedUsers[req.user.id+":download-batch"].id;
         function emitStep(index, info = null) {
             req.app.io.to(socketid).emit("download-batch:step", 
@@ -1568,6 +1590,27 @@ const downloadBatch = (req, res) => {
 /** 
  * Función que elimina los ficheros temporales de descargas
 */ 
+const removeTemporaryUploadFiles = async () => {
+    const tmpUploadDir = path.resolve("src/public/uploads/temp");
+    if (!fs.existsSync(tmpUploadDir)){
+        if(!fs.existsSync(path.resolve("src/public/uploads/"))) {
+            await fs.mkdirSync(path.resolve("src/public/uploads/"));
+        }
+        await fs.mkdirSync(tmpUploadDir);
+    }
+    const files = await fs.readdirSync(tmpUploadDir);
+    
+    for(const file of files) {
+        const filePath = path.join(tmpUploadDir, file);
+        await fs.removeSync(filePath);
+    }
+    if(files.length > 0)
+        console.log("FS            => Eliminados "+files.length+" ficheros temporales");
+};
+
+/** 
+ * Función que elimina los ficheros temporales de descargas
+*/ 
 const removeTemporaryDownloadFiles = () => {
     const tmpDownloadDir = path.resolve("src/tempfiles/downloads/");
     if (!fs.existsSync(tmpDownloadDir)){
@@ -1580,7 +1623,7 @@ const removeTemporaryDownloadFiles = () => {
     
     for(const file of files) {
         const filePath = path.join(tmpDownloadDir, file);
-        console.log("=> Eliminando fichero temporal ", file, " ["+filePath+"]");
+        console.log("FS            => Eliminando fichero temporal ", file, " ["+filePath+"]");
         fs.removeSync(filePath);
     }
 };
@@ -1600,7 +1643,7 @@ const removeTemporarySearchFiles = () => {
     
     for(const file of files) {
         const filePath = path.join(tmpSearchesDir, file);
-        console.log("=> Eliminando fichero temporal ", file, " ["+filePath+"]");
+        console.log("FS            => Eliminando fichero temporal ", file, " ["+filePath+"]");
         fs.removeSync(filePath);
     }
 };
@@ -1631,6 +1674,7 @@ module.exports = {
     getFilteredGrafitis,
     prepareDownloadBatch,
     downloadBatch,
+    removeTemporaryUploadFiles,
     removeTemporaryDownloadFiles,
     removeTemporarySearchFiles
 };

@@ -40,7 +40,7 @@ async function getMatches(grafitiId) {
         for (const match of matches) {
             // Si se altera la consulta, que el límite se mantenga
             if(index >= matchLimit){
-                console.log("Broke lim matches");
+                console.error("Broke lim matches");
                 break;
             }
             

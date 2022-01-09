@@ -39,10 +39,11 @@ async function initMap() {
     const respuesta = await data.json();
     if (!respuesta) {
         window.location.href = "/usuario";
-    } else
+    } else {
         if (!respuesta.success) {
             window.location.href = "/usuario";
         }
+    }
 
     const grafitis = respuesta.grafitis;
 

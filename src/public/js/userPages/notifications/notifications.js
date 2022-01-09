@@ -317,9 +317,8 @@ btn_checkall.addEventListener("click", async (event) => {
         // Si el post ha ido bien
         if (response.success) {
             window.location.reload();
-            /* console.log("LISTA_TUPLAS: ", lista_tuplas);
+            /* 
             for(const tupla in lista_tuplas) {
-                console.log("TUPLA: ", tupla);
                 if(!tupla.notification.seen){
                     updateCardHeader(false);
                     tupla.seen_btn.setAttribute("title", "Marcar como \"No visto\"");

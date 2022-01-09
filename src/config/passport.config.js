@@ -33,7 +33,7 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
         
         const { error } = schemaLogin.validate({ email, password });
         if (error){
-            console.log("Error al validar los datos introducidos");
+            console.error("Error al validar los datos introducidos");
             return done(null, false, {
                 message: "Error al validar los datos introducidos"
             });
@@ -57,7 +57,7 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
 
         // Comprobar que el usuario esté verificado
         if(user.account_status !== "VERIFIED"){
-            console.log(`Error: el usuario ${user.email} aún no ha verificado su correo electrónico`);
+            console.error(`Error: el usuario ${user.email} aún no ha verificado su correo electrónico`);
             const caducidad = new Date(user.createdAt.getTime() + 1000*60*60*24* 2);
             return done(null, false, {
                 message: `Debe verificar su cuenta mediante el enlace que le hemos enviado a su correo <strong>${user.email}</strong> para poder iniciar sesión. El enlace caducará el ${caducidad.toLocaleString()}, para entonces deberá volver a registrarse en la página`
@@ -68,7 +68,7 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
         return done(null, user);
 
     } catch (error) {
-        console.log("Error en api/users/login: ", error);
+        console.error("Error en api/users/login: ", error);
         return done(null, false, {
             message: error
         });

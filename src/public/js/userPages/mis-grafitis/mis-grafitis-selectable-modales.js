@@ -75,8 +75,6 @@ download_images.addEventListener("click", async (event) => {
             throw "No se ha recuperado el identificador del archivo de descarga";
         }
         
-        console.log(result.message);
-        
         downloadFooter.classList.replace("d-block", "d-none");
         download(`/api/grafitis/download-batch/${result.fileId}`, "grafitis.zip");
         document.getElementById("download_close").click();
@@ -109,7 +107,6 @@ delete_images.addEventListener("click", async (event) => {
     const spinner_delete = document.getElementById("spinner-delete");
     try {
         
-        console.log(ids)
         spinner_delete.classList.remove("d-none");
         const fetchURI = `/api/grafitis/remove-batch`;
         const data = await fetch(fetchURI, { 
@@ -161,7 +158,6 @@ async function getSelected() {
     if (allSelected && !limReached) {
         while (!limReached) {
             // Recogemos las imágenes restantes
-            console.log("Recogemos las imágenes restantes");
             const images = await fetchNextImageBatch(nImages, 0);
             for (const image of images) {
                 ids.push(`${image._id}`);

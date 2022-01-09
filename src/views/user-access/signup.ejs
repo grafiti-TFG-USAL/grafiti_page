@@ -76,7 +76,7 @@
         const password2 = form.elements["password2"].value;
         if (password !== password2){
             error = true;
-            console.log("Las contraseñas no coinciden");
+            console.error("Las contraseñas no coinciden");
             form.elements["password"].classList.add("is-invalid");
             form.elements["password2"].classList.add("is-invalid");
         }
@@ -107,14 +107,13 @@
             if(!respuesta.success){
                 form.classList.remove("was-validated");
                 document.getElementById("spinner").classList.add("d-none");
-                console.log("Algo fue mal")
+                
                 switch(respuesta.errorOn){
                     case "email":
                         document.getElementById("email").classList.add("is-invalid"); //TODO: contrarestar al modificar
                     break;
                     case "general":
                     default:
-                        console.log("HOlu")
                         document.getElementById("errorGeneral").innerText = respuesta.message;
                         document.getElementById("alerta").classList.remove("d-none");
                         document.getElementById("alerta").classList.add("show");
@@ -128,7 +127,7 @@
 
         } catch (error) {
             // Si algo ha ido mal lo mostramos por consola
-                console.log(error); //TODO: cambiar comportamiento
+                console.error(error);
         }
 
     });

@@ -254,14 +254,26 @@ const spinner = document.getElementById("spinner");
 
 // Iniciamos el socket
 const socket = io();
+const preprocessing = document.getElementById("preprocessing");
+const preprocessing_text = document.getElementById("preprocessing_text");
 const progress = document.getElementById("progress");
 const progressbar = document.getElementById("progressbar");
 
+socket.on("upload:preprocessing", data => {
+    subir_text.innerText ="Analizando";
+    preprocessing.classList.remove("d-none");
+    progressbar.innerText = `${data.percentage}%`;
+    progressbar.style.width = `${data.percentage}%`;
+});
+
+socket.on("upload:processing", data => {
+    preprocessing.classList.add("d-none");
+    progress.classList.remove("d-none");
+    subir_text.innerText ="Procesando";
+    progressbar.innerText = `${data.percentage}%`;
+});
+
 socket.on("upload:step", data => {
-    if(progress.classList.contains("d-none")) {
-        progress.classList.remove("d-none");
-        subir_text.innerText ="Procesando";
-    }
     progressbar.innerText = `${data.percentage}%`;
     progressbar.style.width = `${data.percentage}%`;
 });
@@ -304,7 +316,7 @@ form.addEventListener("submit", async (event) => {
 
         // Si ha habido algun fallo, lo mostramos
         if (!respuesta.success) {
-            console.log("Error en la subida: ", respuesta.message);
+            console.error("Error en la subida: ", respuesta.message);
 
             var mensajeError;
             if (respuesta.errores.length < 1) {
@@ -335,7 +347,8 @@ form.addEventListener("submit", async (event) => {
 
     } catch (error) {
         // Si algo falla en el proceso mostramos el mensaje de error
-        console.log("Error en la subida: ", error);
+        console.error
+        ("Error en la subida: ", error);
 
         document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
         document.getElementById("contenido_adicional").innerText = error;

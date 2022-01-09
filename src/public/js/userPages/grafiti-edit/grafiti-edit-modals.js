@@ -7,7 +7,6 @@ document.getElementById("direccion").addEventListener("keyup", function (event) 
     if (event.key === "Enter") {
         // Cancel the default action, if needed
         event.preventDefault();
-        console.log("Buscando...");
         // Trigger the button element with a click
         document.getElementById("buscar_direccion").click();
     }
@@ -49,7 +48,6 @@ function initMap() {
         geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
             if (status === "OK") {
                 // Ajustamos el mapa a los resultados
-                console.log("Aqui da fallo?", results)
                 resultsMap.fitBounds(results[0].geometry.viewport);
                 //Guardamos las coordenadas
                 coords.lat = await results[0].geometry.location.lat();
@@ -91,7 +89,7 @@ function initMap() {
 
             coords.lat = await modalmarker.getPosition().lat();
             coords.lng = await modalmarker.getPosition().lng();
-            console.log("Preparado para enviar coords: ", coords)
+            
             // Enviamos la consulta POST a la api
             const data = await fetch(`/api/grafitis/update/${grafitiId}`, {
                 method: "POST",
@@ -108,7 +106,7 @@ function initMap() {
             document.getElementById("spinner").classList.add("d-none");
             // Comprobamos que no haya fallado
             if (!respuesta.success) {
-                console.log("Fallo en respuesta: ", respuesta.message);
+                console.error("Fallo en respuesta: ", respuesta.message);
 
                 document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
                 document.getElementById("contenido_adicional").innerText = respuesta.message;
@@ -116,7 +114,6 @@ function initMap() {
                 $("#eliminacion").modal("hide");
                 $('#modal').modal();
             } else {
-                console.log(respuesta);
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams) {
                     const notification = urlParams.get("notification");
@@ -131,7 +128,7 @@ function initMap() {
             }
 
         } catch (error) {
-            console.log("Catch error: ", error);
+            console.error("Catch error: ", error);
 
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = error;
@@ -166,7 +163,7 @@ function initMap() {
             document.getElementById("spinner").classList.add("d-none");
             // Comprobamos que no haya fallado
             if (!respuesta.success) {
-                console.log("Fallo en respuesta: ", respuesta.message);
+                console.error("Fallo en respuesta: ", respuesta.message);
 
                 document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
                 document.getElementById("contenido_adicional").innerText = respuesta.message;
@@ -174,12 +171,15 @@ function initMap() {
                 $("#eliminacion").modal("hide");
                 $('#modal').modal();
             } else {
-                console.log(respuesta)
                 document.location.reload();
             }
 
         } catch (error) {
-            console.log("Catch error: ", error);
+            console.error
+            
+            
+            
+        ("Catch error: ", error);
 
             document.getElementById("contenido").innerText = "Vuelva a intentarlo y si el problema persiste contacte con soporte.";
             document.getElementById("contenido_adicional").innerText = error;

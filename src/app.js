@@ -31,7 +31,14 @@ passportSessions(app, session);
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser
 
+const { 
+    removeTemporaryUploadFiles, 
+    removeTemporaryDownloadFiles, 
+    removeTemporarySearchFiles 
+} = require("./controllers/grafiti.controller");
+
 // Conexión con la base de datos MongoDB
+removeTemporaryUploadFiles("src/public/uploads/temp");
 const { connectDB } = require("./config/db.config.js");
 connectDB();
 
@@ -60,8 +67,8 @@ app.use((req, res) => {
 });
 
 // Comprobamos que no haya archivos temporales en el directorio de archivos temporales
-require("./controllers/grafiti.controller").removeTemporaryDownloadFiles();
-require("./controllers/grafiti.controller").removeTemporarySearchFiles();
+removeTemporaryDownloadFiles();
+removeTemporarySearchFiles();
 
 // Si el hosting no lo asigna, se usa la variable de entorno
 const port = process.env.PORT || 3000;

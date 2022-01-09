@@ -74,7 +74,7 @@ userSchema.methods.encryptPassword = async (password) => {
     try {
         return await bcrypt.hash(password, bcrypt.genSaltSync(10));
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return false;
     }
 };
@@ -83,7 +83,7 @@ userSchema.methods.comparePassword = async (password) => {
     try {
         return await bcrypt.compare(password, this.password);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return false;
     }
 };

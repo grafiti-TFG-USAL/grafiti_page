@@ -28,7 +28,6 @@ socket.on("download-batch:step", data => {
     if(data.info) {
         downloadInfo.innerText = `${data.info}`;
     }
-    console.log(data.info);
 });
 
 // Descarga de imágenes
@@ -74,8 +73,6 @@ download_images.addEventListener("click", async (event) => {
             throw "No se ha recuperado el identificador del archivo de descarga";
         }
         
-        console.log(result.message);
-        
         downloadFooter.classList.replace("d-block", "d-none");
         spinner_download.classList.add("d-none");
         download(`/api/grafitis/download-batch/${result.fileId}`, "grafitis.zip");
@@ -116,7 +113,6 @@ async function getSelected() {
     if (allSelected && !limReached) {
         while (!limReached) {
             // Recogemos las imágenes restantes
-            console.log("Recogemos las imágenes restantes");
             const images = await fetchNextImageBatch(nImages, 0);
             for (const image of images) {
                 ids.push(`${image._id}`);

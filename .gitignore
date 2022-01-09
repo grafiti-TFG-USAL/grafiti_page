@@ -1,5 +1,8 @@
 node_modules
 .env
+src/config/tf/*
+src/models/ML/*
+src/controllers/python/*
 src/public/uploads/*
 !src/public/uploads
 !src/public/uploads/temp

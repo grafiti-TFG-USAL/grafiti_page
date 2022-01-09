@@ -11,7 +11,6 @@ const Jimp = require("jimp");
 const rotate = (image, quality = null) => {
 
     try {
-        //console.log(image)
         const options = {
             quality,
             jpegjsMaxMemoryUsageInMB: 200,
@@ -23,18 +22,15 @@ const rotate = (image, quality = null) => {
         jo.rotate(image, options, (error, buffer, orientation, dimensions, quality) => {
             if (error) {
                 if(error.code !== jo.errors.correct_orientation){
-                    console.log('Error al rotar la imagen: ' + error.message);
+                    console.error('Error al rotar la imagen: ' + error.message);
                 }
                 return retorno = null;
             }
-            //console.log(`Orientation was ${orientation}`);
-            //console.log(`Dimensions after rotation: ${dimensions.width}x${dimensions.height}`);
-            //console.log(`Quality: ${quality}`);
             return retorno = buffer;
         });
 
     } catch (error) {
-        console.log("Error en el helper rotate: ", error);
+        console.errir("Error en el helper rotate: ", error);
         return null;
     }
 
@@ -47,42 +43,24 @@ const rotate = (image, quality = null) => {
  */
 const generateThumbnail = async (image) => {
 
-    console.log("Generando thumbnail --------------------------------------")
     try {
 
         const options = {
-            //width: 100,
-            //height: 100,
             responseType: "buffer",
             percentage: 15
         }
 
         const response = await imageThumbnail(image, options);
         if (response) {
-
-            /*const buf = Buffer.from(response, 'base64');
-            const img = await Jimp.read(buf);
-            var rotated = null;
-
-            img.rotate(90).getBase64(Jimp.MIME_JPEG, (err, src) => {
-                if (!err) {
-                    rotated = Buffer.from(src, 'base64');
-                } else {
-                    console.log("Error al rotar el thumbnail: ", err);
-                    rotated = null;
-                    return null;
-                }
-            });
-            return rotated;*/
             return response;
 
         } else {
-            console.log("Error al generar el thumbnail: no se ha obtenido respuesta de imageThumbnail")
+            console.error("Error al generar el thumbnail: no se ha obtenido respuesta de imageThumbnail")
             return null;
         }
 
     } catch (error) {
-        console.log("Error en generateThumbnail: ", error);
+        console.error("Error en generateThumbnail: ", error);
         return null;
     }
 
