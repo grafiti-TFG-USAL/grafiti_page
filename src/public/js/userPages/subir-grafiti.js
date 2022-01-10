@@ -256,26 +256,32 @@ const spinner = document.getElementById("spinner");
 const socket = io();
 const preprocessing = document.getElementById("preprocessing");
 const preprocessing_text = document.getElementById("preprocessing_text");
+const preprocessing_subtext = document.getElementById("preprocessing_subtext");
 const progress = document.getElementById("progress");
 const progressbar = document.getElementById("progressbar");
 
 socket.on("upload:preprocessing", data => {
-    subir_text.innerText ="Analizando";
-    preprocessing.classList.remove("d-none");
-    progressbar.innerText = `${data.percentage}%`;
-    progressbar.style.width = `${data.percentage}%`;
-});
-
-socket.on("upload:processing", data => {
-    preprocessing.classList.add("d-none");
+    subir_text.innerText ="Guardando";
     progress.classList.remove("d-none");
-    subir_text.innerText ="Procesando";
-    progressbar.innerText = `${data.percentage}%`;
+    preprocessing.classList.remove("d-none");
 });
 
 socket.on("upload:step", data => {
     progressbar.innerText = `${data.percentage}%`;
     progressbar.style.width = `${data.percentage}%`;
+});
+
+socket.on("upload:processing", data => {
+    subir_text.innerText ="Procesando";
+    preprocessing_text.innerText = "Analizando imágenes con Inteligencia Artificial";
+    preprocessing_subtext.classList.remove("d-none");
+});
+
+socket.on("upload:processed", data => {
+    progressbar.innerText = `100%`;
+    progressbar.style.width = `100%`;
+    preprocessing.classList.add("d-none");
+    subir_text.innerText ="Listo";
 });
 
 form.addEventListener("submit", async (event) => {

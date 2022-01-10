@@ -108,35 +108,10 @@ const upload = async (req, res) => {
     const nFiles = files.length;
     
     const socketid = Sockets.connectedUsers[req.user.id+":upload"].id;
+    
     req.app.io.to(socketid).emit("upload:preprocessing");
     
-    // Ejecutamos la búsqueda inversa
-    try {
-        console.log("Ejecutando python")
-        const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
-        for(const fimg of files) {
-            py_args.push(fimg.originalName)
-        }
-        // VERSIÓN SÍNCRONA
-        const spawn = require("child_process").spawnSync;
-        const pythonProcess = await spawn("conda", py_args);
-        //console.error(pythonProcess.stderr.toString());
-        console.log(pythonProcess.stdout.toString());
-        
-        console.log("Ejecutado python");
-    } catch (error) {
-        console.error("Error en la feature extraction:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: "Ha ocurrido un fallo al procesar las imágenes con la inteligencia artificial", 
-            errores: [error], 
-            fileErr: [] 
-        });
-    }
-    
-    req.app.io.to(socketid).emit("upload:processing");
-    
-    const step = 100.0 / nFiles;
+    const step = 70.0 / nFiles;
     function emitStep(index) {
         req.app.io.to(socketid).emit("upload:step", { percentage: (index * step).toFixed(2) });
     }
@@ -144,6 +119,7 @@ const upload = async (req, res) => {
         req.app.io.to(socketid).emit("upload:step", { percentage: ((index - 1) * step + percentage * step).toFixed(2) });
     }
 
+    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
     var index = 0;
     for (const file of files) {
         index++;
@@ -186,23 +162,8 @@ const upload = async (req, res) => {
                 const rotated = thumbnails.rotate(buffer, stats.size > 1024 * 1024 ? 20 : 80);
                 if (rotated) {
                     buffer = rotated;
-                } else {
-                    //console.error("no rotado");
-                }
+                } 
                 emitSemiStep(index, 0.5);
-                /*const thumbnail_response = await thumbnails.generateThumbnail(buffer);
-                if (!thumbnail_response) {
-                    console.log("!thumbnail response")
-                    const jpgTypes = /jpeg|jpg/;
-                    if (jpgTypes.test(file.mimetype) || jpgTypes.test(imgExt)) {
-                        console.log("is JPEG");
-                        const rotated = thumbnails.rotate(buffer);
-                        if (rotated){
-                            console.log("Rotated")
-                            buffer = rotated;
-                        }
-                    }
-                }*/
 
                 var meta = await exifr.parse(buffer, true);
                 var description = "";
@@ -257,9 +218,8 @@ const upload = async (req, res) => {
                     orientation,
                     rotation,
                     thumbnail,
-                    //metadata: meta,
-                    dateTimeOriginal,
-                    featureMap: RNA.grafitiFeatureExtraction(imgRelativePath)
+                    uploadedAt: new Date(),
+                    dateTimeOriginal
                 });
 
                 const imageSaved = await image.save();
@@ -347,9 +307,32 @@ const upload = async (req, res) => {
             continue;
         }
         emitStep(index);
+        
+        py_args.push(imgUniqueName + imgExt);
 
     } // Hasta aquí el for()
 
+    await req.app.io.to(socketid).emit("upload:processing");
+        
+    // Ejecutamos la extracción de características
+    try {
+        // VERSIÓN SÍNCRONA
+        const spawn = require("child_process").spawnSync;
+        const pythonProcess = await spawn("conda", py_args);
+        console.error(pythonProcess.stderr.toString());
+        //console.log(pythonProcess.stdout.toString());
+    } catch (error) {
+        console.error("Error en la feature extraction:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Ha ocurrido un fallo al procesar las imágenes con la inteligencia artificial", 
+            errores: [error], 
+            fileErr: [] 
+        });
+    }
+    
+    req.app.io.to(socketid).emit("upload:processed");
+    
     return res.status(success ? 200 : 400).json({ success, message, errores, fileErr });
 
 };
@@ -921,13 +904,12 @@ const getMatches = async (req, res) => {
  * Crea un match entre dos grafitis
  */
  const setMatch = async (req, res) => {
-
+    
+    var match_status = true;
     try {
         
         const user = req.user;
-        const { grafiti_1, grafiti_2/*, percentage*/ } = req.body;
-        //TODO usar percentage original
-        const percentage = Math.random() * 100;
+        const { grafiti_1, grafiti_2, percentage } = req.body;
         
         if(!user || !grafiti_1 || !grafiti_2 || !percentage) {
             throw "Error: el formato recibido es incorrecto";
@@ -965,11 +947,12 @@ const getMatches = async (req, res) => {
             const create = new Match({
                 grafiti_1: grafiti1._id,
                 grafiti_2: grafiti2._id,
-                similarity: percentage.toFixed(2),
+                similarity: percentage,
                 sameUser: true,
                 establishedBy: user1,
                 confirmed: true,
             });
+            match_status = true;
             
             const matchSaved = await create.save();
             if(!matchSaved) {
@@ -987,6 +970,7 @@ const getMatches = async (req, res) => {
                 establishedBy: user1,
                 confirmed: false,
             })
+            match_status = false;
             
             const matchSaved = await createMatch.save();
             if(!matchSaved) {
@@ -1012,6 +996,7 @@ const getMatches = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Se ha creado el match exitosamente",
+            match_status
         });
         
     } catch (error) {
@@ -1085,7 +1070,7 @@ const getMatches = async (req, res) => {
         });
         
     } catch (error) {
-        console.error("Error en setMatch: " + error);
+        console.error("Error en confirmMatch: " + error);
         return res.status(400).json({
             success: false,
             message: error,
@@ -1236,33 +1221,88 @@ const getMatches = async (req, res) => {
  */
 const execReverseSearch = async (grafiti) => {
     
+    // Ejecutamos la búsqueda inversa
+    try {
+        const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/reverse-search.py", grafiti.serverName];
+        
+        // VERSIÓN SÍNCRONA
+        const spawn = require("child_process").spawnSync;
+        const pythonProcess = await spawn("conda", py_args);
+        console.error(pythonProcess.stderr.toString());
+        //console.log(pythonProcess.stdout.toString());
+        if(pythonProcess.status == 1){
+            throw "fallo en la IA"
+        }
+        return {
+            success: true,
+            csv: path.parse(grafiti.serverName).name
+        }
+        
+    } catch (error) {
+        console.error("Error en reverse search:", error);
+        return {
+            success: false,
+            message: "Error en reverse search:", error,
+        };
+    }
+    
 };
 
 /**
  * Devuelve un lote de imágenes
  */
+const fse = require("fs-extra");
+const csv = require("csv-parser")
 const getSearchBatch = async (req, res) => {
     try {
 
         // Recogemos los parámetros de la consulta
-        const body = req.body;
-        const { minDate, maxDate, searchZone, skip, limit } = body;
-        const userId = body.self ? req.user._id : null;
+        const { id: grafiti_id, skip, limit } = req.body;
         
-        // Obtenemos los grafitis
-        const grafitis = await getFilteredGrafitis(minDate, maxDate, searchZone, userId, skip, limit);
+        const grafiti = await Grafiti.findOne({ _id: grafiti_id, deleted: false });
+        if(!grafiti) {
+            throw "No se ha encontrado el grafiti del id especificado"
+        }
+        
+        const serverName = path.parse(grafiti.serverName).name;
+        csv_path = path.resolve("src/tempfiles/searches/" + serverName + ".csv");
+        if(!fse.existsSync(csv_path)) {
+            throw "No se puede recuperar el archivo con los resultados de la búsqueda - "+csv_path;
+        }
+        
+        const lines = fse.readFileSync(csv_path, 'utf-8').split('\r\n').filter(Boolean);
+        
+        const grafitis = [];
+        for(let i=skip; (i < skip+limit) && (i < lines.length); i++) {
+            const line = lines[i].split(",");
+            const servName = line[0];
+            const grafitiSearch = await Grafiti.findOne({ deleted: false, serverName: servName },
+                { _id:1 });
+            if(!grafitiSearch) {
+                throw "No se pudo recuperar un grafiti, intente realizar de nuevo la búsqueda";
+            }
+            var grafitiLine = { _id: grafitiSearch._id };
+            grafitiLine["percentage"] = line[1];
+            const match1 = await Match.findOne({ grafiti_1: grafitiLine._id, grafiti_2: grafiti._id });
+            const match2 = await Match.findOne({ grafiti_1: grafiti._id, grafiti_2: grafitiLine._id });
+            const match = match1?match1:(match2?match2:null);
+            if(match) {
+                grafitiLine["match"] = match.similarity;
+                grafitiLine["match_status"] = match.confirmed;
+            }
+            grafitis.push(grafitiLine);
+        }
         
         // Devolvemos los resultados
         return res.status(201).json({
             success: true,
             message: "Consulta exitosa",
-            images: grafitis.grafitis,
-            nGrafitis: grafitis.nGrafitis,
-            limitReached: grafitis.limitReached,
+            images: grafitis,
+            nGrafitis: lines.length,
         });
 
     } catch (error) {
-        console.error("Error en getBatch: " + error);
+        console.error("Error en getSearchBatch: " + error);
         return res.status(400).json({
             success: false,
             message: error,
@@ -1591,12 +1631,15 @@ const downloadBatch = (req, res) => {
  * Función que elimina los ficheros temporales de descargas
 */ 
 const removeTemporaryUploadFiles = async () => {
+    
     const tmpUploadDir = path.resolve("src/public/uploads/temp");
     if (!fs.existsSync(tmpUploadDir)){
-        if(!fs.existsSync(path.resolve("src/public/uploads/"))) {
-            await fs.mkdirSync(path.resolve("src/public/uploads/"));
+        if(!fs.existsSync(path.resolve("src/public/uploads"))) {
+            await fs.mkdirSync(path.resolve("src/public/uploads"));
         }
-        await fs.mkdirSync(tmpUploadDir);
+        if(!fs.existsSync(tmpUploadDir)) {
+            await fs.mkdirSync(tmpUploadDir);
+        }
     }
     const files = await fs.readdirSync(tmpUploadDir);
     

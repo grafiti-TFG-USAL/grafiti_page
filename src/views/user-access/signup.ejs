@@ -97,7 +97,7 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                    name, surname, email, password //TODO: investigar si mandar por aqui la pass no supone un riesgo de seguridad
+                    name, surname, email, password
                 })
             });
 
@@ -110,7 +110,7 @@
                 
                 switch(respuesta.errorOn){
                     case "email":
-                        document.getElementById("email").classList.add("is-invalid"); //TODO: contrarestar al modificar
+                        document.getElementById("email").classList.add("is-invalid");
                     break;
                     case "general":
                     default:

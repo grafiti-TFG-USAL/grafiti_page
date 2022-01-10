@@ -90,7 +90,7 @@ async function selectEventHandler(event) {
         
         // Guardamos el id del grafiti candidato
         const candidateId = event.target.id;
-        const percentage = Number.parseFloat(event.target.alt);
+        const percentage = event.target.title;
         
         // Solicitamos al servidor los datos del grafiti
         const fetchURI = "/api/grafitis/get-info/" + candidateId;
@@ -137,6 +137,7 @@ document.getElementById("establecer_match").addEventListener("click", async (eve
         
         const grafifi1_id = document.getElementById("first_image").dataset.id;
         const grafifi2_id = document.getElementById("second_image").dataset.id;
+        const percentage = document.getElementById("second_image").dataset.percentage;
         
         // Enviamos la consulta POST a la api
         const data = await fetch(`/api/grafitis/set-match`, {
@@ -147,7 +148,7 @@ document.getElementById("establecer_match").addEventListener("click", async (eve
             body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
                 grafiti_1: grafifi1_id, 
                 grafiti_2: grafifi2_id,
-                percentage: Number.parseFloat(document.getElementById("second_image").dataset.percentage),
+                percentage: percentage,
             })
         });
 
@@ -164,8 +165,15 @@ document.getElementById("establecer_match").addEventListener("click", async (eve
             $('#modal').modal();
         } else {
             document.getElementById("establecer_match_text").innerText = "Guardado";
-        
-            location.reload();
+            const input = document.getElementById(grafifi2_id);
+            input.removeEventListener("click", selectEventHandler);
+            input.addEventListener("click", redirectEventHandler);
+            if(respuesta.match_status) {
+                input.classList.add("matched", "match-confirmed");
+            } else {
+                input.classList.add("matched", "match-pending");
+            }
+            getMatches(grafifi1_id);
         }
 
     } catch (error) {

@@ -33,6 +33,13 @@ async function getMatches(grafitiId) {
         const indicators = document.getElementById("matchCarouselIndicators");
         const inner = document.getElementById("matchCarouselInner");
 
+        while(indicators.firstChild) {
+            indicators.removeChild(indicators.firstChild);
+        }
+        while(inner.firstChild) {
+            inner.removeChild(inner.firstChild);
+        }
+        
         // Rellenamos los campos con los datos recibidos
         const matches = result.matches;
         var index = 0;

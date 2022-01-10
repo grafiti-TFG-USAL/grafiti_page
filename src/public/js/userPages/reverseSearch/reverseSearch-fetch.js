@@ -9,21 +9,6 @@ var nImages = imagesPBatch * batch;
 var limReached = false;
 var nGrafitis = null;
 
-// Parámetros de la query
-/*const urlSearchParams = new URLSearchParams(window.location.search);
-const params = Object.fromEntries(urlSearchParams.entries());
-const minDate = params.minDate ? params.minDate : null;
-const maxDate = params.maxDate ? params.maxDate : null;
-var searchZone_ = null;
-if (params.lat && params.lng && params.radio) {
-    searchZone_ = {
-        lng: Number.parseFloat(params.lng),
-        lat: Number.parseFloat(params.lat),
-        radio: Number.parseFloat(params.radio),
-    }
-}
-const searchZone = searchZone_;*/
-
 // Rellena la galería
 var ejecutando = false;
 async function fillGallery() {
@@ -72,10 +57,9 @@ async function fetchNextImageBatch(skip, limit) {
 
     // Parámetros de la consulta
     const body = {
+        id: grafitiPpalId, // id del grafiti que recuperar
         skip, // Cuantos grafitis tenemos ya
         limit, // Cuantos grafitis tiene que devolver
-        self: false, // Si devuelve grafitis propios o de toda la base
-        minDate: null, maxDate: null, searchZone: null, // Filtros
     };
     
     // Hacemos la consulta
@@ -161,21 +145,35 @@ function addImagesToGallery(images) {
         
         const input = document.createElement("img");
         input.classList.add("gallery-img");
-        input.addEventListener("click", selectEventHandler);
         input.id = `${image._id}`;
         
         const label = document.createElement("label");
         label.setAttribute("for", `${image._id}`);
         label.classList.add("percentage");
+        label.textContent = `${Number.parseFloat(image.percentage).toFixed(2)}`;
         li.appendChild(label);
         input.loading = "lazy";
         input.classList.add("gallery-img");
         input.src = `/api/grafitis/get/${image._id}`;
-        //TODO poner aqui la puntuación
-        input.alt = `${image.description}`;
-        label.appendChild(input);
+        input.title = `${Number.parseFloat(image.percentage).toFixed(2)}`;
+        if(image.match) {
+            if(image.match_status) {
+                input.classList.add("matched", "match-confirmed");
+            } else {
+                input.classList.add("matched", "match-pending");
+            }
+            input.addEventListener("click", redirectEventHandler);
+        } else {
+            input.addEventListener("click", selectEventHandler);
+        }
+        li.appendChild(input);
     }
 
+}
+
+async function redirectEventHandler(event) {
+    const candidateId = event.target.id;
+    window.location.href = "/usuario/grafiti/"+candidateId;
 }
 
 // Cuando el usuario esté cerca del límite cargamos

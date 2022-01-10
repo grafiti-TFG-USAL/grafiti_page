@@ -64,6 +64,19 @@ const inicializarBase = async () => {
             } else {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
+            
+            //TODO borrar lo de abajo console.log()
+            const bcrypt2 = require("bcrypt");
+            const salt2 = await bcrypt2.genSalt(10);
+            const password2 = await bcrypt2.hash("holaholahola", salt);
+            const antoni = new User({
+                name: "Antoni",
+                surname: "Tur",
+                email: "lluquino@gmail.com",
+                password: password2,
+                account_status: "VERIFIED"
+            });
+            const creado2 = await antoni.save();
         }
         
         const Grafiti = require("../models/grafiti.model");
@@ -84,6 +97,7 @@ const inicializarBase = async () => {
 };
 
 const Grafiti = require("../models/grafiti.model");
+const Location = require("../models/location.model");
 const User = require("../models/user.model");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
@@ -107,11 +121,13 @@ const initUpload = async () => {
     if(fs.existsSync(path.resolve("src/models/ML/pca.pkl"))) {
         await fs.removeSync("src/models/ML/pca.pkl");
     }
+    if(fs.existsSync(path.resolve("src/models/ML/pca_features.pkl"))) {
+        await fs.removeSync("src/models/ML/pca_features.pkl");
+    }
     
     const files_fs = fs.readdirSync("src/models/ML/firstInstances");
     const files = [];
-    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
-    var index = 0;
+    
     for(const file of files_fs) {
         files.push({
             mimetype: "image/jpeg",
@@ -119,23 +135,9 @@ const initUpload = async () => {
             path: "src/public/uploads/temp/" + file,
         });
         await fs.copyFileSync("src/models/ML/firstInstances/" + file, "src/public/uploads/temp/" + file);
-        py_args.push(file);
-        index++;
-    }
-    const nFiles = index;
-
-    try {
-        // VERSIÓN SÍNCRONA
-        const spawn = require("child_process").spawnSync;
-        const pythonProcess = await spawn("conda", py_args);
-        console.error(pythonProcess.stderr.toString());
-        //console.log(pythonProcess.stdout.toString());
-        console.log("Base de Datos => IA lista");
-    } catch (error) {
-        console.error(error);
-        process.exit(1);
     }
     
+    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
     var index = 0;
     for (const file of files) {
         index++;
@@ -255,6 +257,8 @@ const initUpload = async () => {
                         break;
                     }
                 }
+                
+                py_args.push(imgUniqueName + imgExt);
 
             } else {
                 message = "Solo puede subir imágenes del tipo especificado";
@@ -271,6 +275,18 @@ const initUpload = async () => {
         }
     } // Hasta aquí el for()
 
+    try {
+        // VERSIÓN SÍNCRONA
+        const spawn = require("child_process").spawnSync;
+        const pythonProcess = await spawn("conda", py_args);
+        console.error(pythonProcess.stderr.toString());
+        //console.log(pythonProcess.stdout.toString());
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
+    console.log("Base de Datos => IA lista");
+    
 };
 
 module.exports = {

@@ -22,7 +22,7 @@ const rotate = (image, quality = null) => {
         jo.rotate(image, options, (error, buffer, orientation, dimensions, quality) => {
             if (error) {
                 if(error.code !== jo.errors.correct_orientation){
-                    console.error('Error al rotar la imagen: ' + error.message);
+                    //console.error('Error al rotar la imagen: ' + error.message);
                 }
                 return retorno = null;
             }

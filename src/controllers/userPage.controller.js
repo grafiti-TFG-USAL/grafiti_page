@@ -106,6 +106,8 @@ const showGrafiti = async (req, res) => {
 /**
 * Si hay un grafiti_id en req.params, busca que el grafiti se corresponda con el usuario que tiene la sesión loggeada.
 */
+const fs = require("fs-extra");
+const path = require("path");
 const reverseSearch = async (req, res) => {
     
     try {
@@ -132,14 +134,29 @@ const reverseSearch = async (req, res) => {
                 throw response.message;
             }
             
+            csv_path = path.resolve("src/tempfiles/searches/" + response.csv + ".csv");
+            if(!fs.existsSync(csv_path)) {
+                throw {
+                    message: "No se puede recuperar el archivo con los resultados de la búsqueda - "+csv_path,
+                    response
+                }
+            }
+            
+            // Establecemos el temporizador para eliminar los archivos temporales
+            const timeOutHrs = 0.5; // Media horas
+            setTimeout(() => {
+                console.log(`FS + Cron     => Fichero temporal ${csv_path} eliminado tras ${timeOutHrs} horas`)
+                fs.removeSync(csv_path);
+            }, (1000 * 3600 * timeOutHrs));
+            
             // Renderizamos la página de búsqueda inversa de grafitis
             const time = timeAgo(grafiti.uploadedAt < grafiti.dateTimeOriginal ? grafiti.uploadedAt : grafiti.dateTimeOriginal);
             return res.status(200).render("user/reverseSearch.ejs", { titulo: "Grafiti Reverse Search", timeAgo: time, grafiti: grafiti, grafitisFetchLimit: 25, user: req.user, maps_key: process.env.GMAPS_API_KEY });
         }
         
     } catch (error) {
-        console.error("Error en image reverse search: ", error);
-        return null;
+        console.error("Error en image reverse search: ", error.message);
+        return res.status(200).json(error.response);
     }
 
 }

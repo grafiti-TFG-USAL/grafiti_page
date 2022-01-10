@@ -46,6 +46,36 @@ li {
     user-select: none;
 }
 
+.percentage {
+    position: relative;
+    display: inline; 
+    top: 40px;
+    left: 22px;
+    z-index: 1;
+    text-shadow: 0px 0px 3px #ffffff
+}
+
+.matched {
+    transform: scale(0.9);
+    box-shadow: 0 0 5px rgb(51, 51, 51);
+    border-radius: 15px;
+    /*Cursor:text !important; Text-Decoration: None !important;*/
+}
+
+.matched img {
+    transform: scale(0.7);
+    box-shadow: 0 0 5px rgb(51, 51, 51);
+    border-radius: 15px;
+}
+
+.match-confirmed {
+    border: 4px solid rgb(33, 170, 51);
+}
+
+.match-pending {
+    border: 4px solid rgb(224, 187, 64);
+}
+
 @media (max-width: 600px) {
     .gallery-img {
         height: 125px;
