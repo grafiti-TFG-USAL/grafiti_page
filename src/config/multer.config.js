@@ -16,12 +16,9 @@ if(!fs.existsSync(path.resolve("src/public/uploads/temp/"))){
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
-        // Los archivos se subirán a la carpeta temporal
         cb(null, "src/public/uploads/temp");
     },
     filename: function (req, file, cb) {
-        // Creamos un identificador único para el nombre del archivo
-        //const uniquePreffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const uniquePreffix = uuidv4();
         cb(null, uniquePreffix + '--' +  file.originalname.toLowerCase());
     }

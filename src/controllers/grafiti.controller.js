@@ -13,7 +13,6 @@ const User = require("../models/user.model");
 const Match = require("../models/match.model");
 
 const Sockets = require("../config/sockets.config");
-const RNA = require("../config/neuralnet.config");
 
 /**
  * Devuelve el archivo del grafiti indicado, para la API
@@ -221,7 +220,6 @@ const upload = async (req, res) => {
                     uploadedAt: new Date(),
                     dateTimeOriginal
                 });
-
                 const imageSaved = await image.save();
 
                 if (!imageSaved) {
@@ -311,9 +309,7 @@ const upload = async (req, res) => {
         py_args.push(imgUniqueName + imgExt);
 
     } // Hasta aquí el for()
-
     await req.app.io.to(socketid).emit("upload:processing");
-        
     // Ejecutamos la extracción de características
     try {
         // VERSIÓN SÍNCRONA
@@ -813,7 +809,7 @@ const getGrafitisWithGPS = async (req, res) => {
             gps: { $ne: null }
         },
             { gps: 1, user: 1 })
-            .populate("gps", { location: 1 });
+        .populate("gps", { location: 1 });
 
         if (!grafitis) {
             console.error("Error al consultar el número de grafitis");
