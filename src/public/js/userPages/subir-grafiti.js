@@ -261,23 +261,27 @@ const progress = document.getElementById("progress");
 const progressbar = document.getElementById("progressbar");
 
 socket.on("upload:preprocessing", data => {
+    console.log("Preprocessing")
     subir_text.innerText ="Guardando";
     progress.classList.remove("d-none");
     preprocessing.classList.remove("d-none");
 });
 
 socket.on("upload:step", data => {
+    console.log("Step")
     progressbar.innerText = `${data.percentage}%`;
     progressbar.style.width = `${data.percentage}%`;
 });
 
 socket.on("upload:processing", data => {
+    console.log("Processing")
     subir_text.innerText ="Procesando";
     preprocessing_text.innerText = "Analizando imágenes con Inteligencia Artificial";
     preprocessing_subtext.classList.remove("d-none");
 });
 
 socket.on("upload:processed", data => {
+    console.log("Processed")
     progressbar.innerText = `100%`;
     progressbar.style.width = `100%`;
     preprocessing.classList.add("d-none");

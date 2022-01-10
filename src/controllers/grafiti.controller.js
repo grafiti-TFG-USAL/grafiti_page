@@ -110,7 +110,7 @@ const upload = async (req, res) => {
     
     req.app.io.to(socketid).emit("upload:preprocessing");
     
-    const step = 70.0 / nFiles;
+    const step = 80.0 / nFiles;
     function emitStep(index) {
         req.app.io.to(socketid).emit("upload:step", { percentage: (index * step).toFixed(2) });
     }
@@ -123,6 +123,9 @@ const upload = async (req, res) => {
     for (const file of files) {
         index++;
         try {
+            
+            if(file == files[nFiles-1])
+                req.app.io.to(socketid).emit("upload:processing");
 
             var images, imgTempPath, imgExt, imgUniqueName, imgTargetPath, imgRelativePath;
             do {
@@ -177,10 +180,14 @@ const upload = async (req, res) => {
                 if (!gps) {
                     gps = null;
                 } else {
-                    gps = {
-                        type: "Point",
-                        coordinates: [gps.longitude, gps.latitude],
-                    };
+                    if(!gps.longitude || !gps.latitude) {
+                        gps = {
+                            type: "Point",
+                            coordinates: [gps.longitude, gps.latitude],
+                        };
+                    } else {
+                        gps = null;
+                    }
                 }
                 var orientation = await exifr.orientation(buffer);
                 if (!orientation) {
@@ -234,7 +241,8 @@ const upload = async (req, res) => {
                 }
                 emitSemiStep(index, 0.9);
 
-                if (gps) {
+                if (gps && gps.latitude && gps.longitude) {
+                    
                     const location = new Location({
                         grafiti: imageSaved._id,
                         location: gps,
@@ -262,6 +270,7 @@ const upload = async (req, res) => {
                         emitStep(index);
                         continue;
                     }
+                
                 } else {
                     const notificacion = new Notification({
                         user: req.user._id,
@@ -309,14 +318,18 @@ const upload = async (req, res) => {
         py_args.push(imgUniqueName + imgExt);
 
     } // Hasta aquí el for()
-    await req.app.io.to(socketid).emit("upload:processing");
     // Ejecutamos la extracción de características
     try {
         // VERSIÓN SÍNCRONA
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
-        console.error(pythonProcess.stderr.toString());
-        //console.log(pythonProcess.stdout.toString());
+        
+        if(pythonProcess.status == 1){
+            console.error(pythonProcess.stderr.toString());
+            console.log(pythonProcess.stdout.toString());
+            throw "fallo en la IA"
+        }
+        
     } catch (error) {
         console.error("Error en la feature extraction:", error);
         return res.status(500).json({ 
@@ -1224,9 +1237,9 @@ const execReverseSearch = async (grafiti) => {
         // VERSIÓN SÍNCRONA
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
-        console.error(pythonProcess.stderr.toString());
-        //console.log(pythonProcess.stdout.toString());
         if(pythonProcess.status == 1){
+            console.error(pythonProcess.stderr.toString());
+            console.log(pythonProcess.stdout.toString());
             throw "fallo en la IA"
         }
         return {
@@ -1272,11 +1285,14 @@ const getSearchBatch = async (req, res) => {
         for(let i=skip; (i < skip+limit) && (i < lines.length); i++) {
             const line = lines[i].split(",");
             const servName = line[0];
-            const grafitiSearch = await Grafiti.findOne({ deleted: false, serverName: servName },
-                { _id:1 });
+            const grafitiSearch = await Grafiti.findOne({ serverName: servName },
+                { _id: 1, deleted: 1 });
+                
             if(!grafitiSearch) {
                 throw "No se pudo recuperar un grafiti, intente realizar de nuevo la búsqueda";
             }
+            if(grafitiSearch.deleted) continue;
+            
             var grafitiLine = { _id: grafitiSearch._id };
             grafitiLine["percentage"] = line[1];
             const match1 = await Match.findOne({ grafiti_1: grafitiLine._id, grafiti_2: grafiti._id });

@@ -45,6 +45,7 @@ function initMap() {
 
     // Convierte una dirección en una coordenada y apunta en el mapa a ella
     function geocodeAddress(geocoder, resultsMap, address) {
+        console.log(address)
         geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
             if (status === "OK") {
                 // Ajustamos el mapa a los resultados
@@ -217,15 +218,18 @@ function initMap() {
         });
     } else {
         coords = { lat: grafiti[1], lng: grafiti[0] };
+        
         geocoder.geocode({ location: coords }, (results, status) => {
             if (status === "OK") {
                 if (results[0]) {
                     document.getElementById("direccion").value = results[0].formatted_address;
                 } else {
-                    window.alert("No results found");
+                    mapData.classList.add("d-none");
+                    //window.alert("No results found");
                 }
             } else {
-                window.alert("Geocoder failed due to: " + status);
+                mapData.classList.add("d-none");
+                //window.alert("Geocoder failed due to: " + status);
             }
         });
         // The modalmap, centered at grafiti coords

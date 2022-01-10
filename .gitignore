@@ -2,8 +2,9 @@ node_modules
 .env
 src/config/tf/*
 src/models/ML/*
-src/controllers/python/*
-src/public/uploads/*
-!src/public/uploads
-!src/public/uploads/temp
+!src/models/ML/firstInstances
+src/public/uploads
+src/public/uploads/temp
+src/public/uploads/temp/*
 src/tempfiles/downloads/*
+src/tempfiles/searches/*

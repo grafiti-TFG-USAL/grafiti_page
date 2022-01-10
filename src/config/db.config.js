@@ -76,15 +76,17 @@ const inicializarBase = async () => {
                 password: password2,
                 account_status: "VERIFIED"
             });
-            const creado2 = await antoni.save();
+            await antoni.save();
         }
         
         const Grafiti = require("../models/grafiti.model");
 
         const nGrafitis = await Grafiti.countDocuments();
         if (nGrafitis<200) {
-            console.log("Base de Datos => Hay " + nGrafitis + " grafitis en la base de datos, iniciamos las muestras");
+            console.log("Base de Datos => Hay " + nGrafitis + " grafitis en la base de datos");
+            console.log("Base de Datos => Cargando primeras instancias...");
             await initUpload();
+            console.log("Base de Datos => Primeras instacias cargadas");
         }
         
 
@@ -279,13 +281,15 @@ const initUpload = async () => {
         // VERSIÓN SÍNCRONA
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
-        console.error(pythonProcess.stderr.toString());
-        //console.log(pythonProcess.stdout.toString());
+        if(pythonProcess.status == 1){
+            console.error(pythonProcess.stderr.toString());
+            console.log(pythonProcess.stdout.toString());
+            throw "fallo en la IA, compruebe que existe el fichero vgg16.h5 con el modelo ImageNet"
+        }
     } catch (error) {
         console.error(error);
         process.exit(1);
     }
-    console.log("Base de Datos => IA lista");
     
 };
 
