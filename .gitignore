@@ -3,6 +3,7 @@ node_modules
 src/config/tf/*
 src/models/ML/*
 !src/models/ML/firstInstances
+src/models/ML/firstInstances/*
 src/public/uploads
 src/public/uploads/temp
 src/public/uploads/temp/*

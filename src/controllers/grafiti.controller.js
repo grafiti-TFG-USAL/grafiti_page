@@ -18,7 +18,7 @@ const Sockets = require("../config/sockets.config");
  * Devuelve el archivo del grafiti indicado, para la API
  */
 const get = async (req, res) => {
-
+    console.log(process.env)
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
     const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { absolutePath: 1 });
@@ -110,7 +110,9 @@ const upload = async (req, res) => {
     
     req.app.io.to(socketid).emit("upload:preprocessing");
     
-    const step = 80.0 / nFiles;
+    // A partir de un porcentaje entre 50 y 65, el progreso se detiene por la ejecución del script
+    const ia_mark = Math.random() * 15 + 50;
+    const step =  ia_mark / nFiles;
     function emitStep(index) {
         req.app.io.to(socketid).emit("upload:step", { percentage: (index * step).toFixed(2) });
     }

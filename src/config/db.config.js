@@ -82,8 +82,10 @@ const inicializarBase = async () => {
         const Grafiti = require("../models/grafiti.model");
 
         const nGrafitis = await Grafiti.countDocuments();
-        if (nGrafitis<200) {
-            console.log("Base de Datos => Hay " + nGrafitis + " grafitis en la base de datos");
+        console.log("Base de Datos => Hay " + nGrafitis + " grafitis en la base de datos");
+        
+        // Comprobación necesaria para el funcionamiento del PCA
+        if (nGrafitis<50) {
             console.log("Base de Datos => Cargando primeras instancias...");
             await initUpload();
             console.log("Base de Datos => Primeras instacias cargadas");
