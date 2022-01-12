@@ -46,6 +46,10 @@ async function initMap() {
     }
 
     const grafitis = respuesta.grafitis;
+    if(grafitis.length<1){
+        document.getElementById("no-grafitis-with-gps").classList.remove("d-none");
+        document.getElementById("map-container").classList.add("d-none");
+    }
 
     grafitis.forEach(grafiti => {
 

@@ -64,19 +64,6 @@ const inicializarBase = async () => {
             } else {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
-            
-            //TODO borrar lo de abajo console.log()
-            const bcrypt2 = require("bcrypt");
-            const salt2 = await bcrypt2.genSalt(10);
-            const password2 = await bcrypt2.hash("holaholahola", salt2);
-            const antoni = new User({
-                name: "Antoni",
-                surname: "Tur",
-                email: "lluquino@gmail.com",
-                password: password2,
-                account_status: "VERIFIED"
-            });
-            await antoni.save();
         }
         
         const Grafiti = require("../models/grafiti.model");
@@ -189,10 +176,14 @@ const initUpload = async () => {
                 if (!gps) {
                     gps = null;
                 } else {
-                    gps = {
-                        type: "Point",
-                        coordinates: [gps.longitude, gps.latitude],
-                    };
+                    if(gps.longitude && gps.latitude) {
+                        gps = {
+                            type: "Point",
+                            coordinates: [gps.longitude, gps.latitude],
+                        };
+                    } else {
+                        gps = null;
+                    }
                 }
                 var orientation = await exifr.orientation(buffer);
                 if (!orientation) {

@@ -181,7 +181,7 @@ const upload = async (req, res) => {
                 if (!gps) {
                     gps = null;
                 } else {
-                    if(!gps.longitude || !gps.latitude) {
+                    if(gps.longitude && gps.latitude) {
                         gps = {
                             type: "Point",
                             coordinates: [gps.longitude, gps.latitude],
@@ -242,8 +242,7 @@ const upload = async (req, res) => {
                 }
                 emitSemiStep(index, 0.9);
 
-                if (gps && gps.latitude && gps.longitude) {
-                    
+                if (gps) {
                     const location = new Location({
                         grafiti: imageSaved._id,
                         location: gps,
@@ -1002,7 +1001,6 @@ const getMatches = async (req, res) => {
             
         }
         
-        console.error("Listo");
         return res.status(200).json({
             success: true,
             message: "Se ha creado el match exitosamente",
@@ -1143,7 +1141,6 @@ const getMatches = async (req, res) => {
             console.error("No se ha podido eliminar la notificación");
         }
         
-        console.error("Listo");
         return res.status(200).json({
             success: true,
             message: "Se ha eliminado el match exitosamente",
@@ -1209,7 +1206,6 @@ const getMatches = async (req, res) => {
             }
         }
         
-        console.error("Listo");
         return res.status(200).json({
             success: true,
             message: "Se ha eliminado el match exitosamente",

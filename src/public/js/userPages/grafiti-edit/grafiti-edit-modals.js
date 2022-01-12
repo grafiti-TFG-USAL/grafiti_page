@@ -45,7 +45,6 @@ function initMap() {
 
     // Convierte una dirección en una coordenada y apunta en el mapa a ella
     function geocodeAddress(geocoder, resultsMap, address) {
-        console.log(address)
         geocoder.geocode({ address, bounds: resultsMap.getBounds() }, async (results, status) => {
             if (status === "OK") {
                 // Ajustamos el mapa a los resultados

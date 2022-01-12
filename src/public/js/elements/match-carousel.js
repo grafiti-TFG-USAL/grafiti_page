@@ -48,7 +48,7 @@ async function getMatches(grafitiId) {
             // Si se altera la consulta, que el límite se mantenga
             if(index >= matchLimit){
                 console.error("Broke lim matches");
-                break;
+                continue;
             }
             
             // Vemos qué grafiti es el otro
@@ -97,22 +97,56 @@ async function getMatches(grafitiId) {
         if (index == 0) {
             const matchesHeader = document.getElementById("matchesHeader");
             matchesHeader.classList.replace("text-success", "text-danger");
-            while(matchesHeader.firstChild){
-                matchesHeader.removeChild(matchesHeader.firstChild);
+            if(!document.getElementById("matchIcon").classList.contains("d-none")) {
+                document.getElementById("matchIcon").classList.add("d-none");
+            }
+            if(!document.getElementById("nMatches").classList.contains("d-none")) {
+                document.getElementById("nMatches").classList.add("d-none");
+            }
+            if(!document.getElementById("isMatches").classList.contains("d-none")) {
+                document.getElementById("isMatches").classList.add("d-none");
             }
             const noMatchIcon = document.createElement("i");
             noMatchIcon.classList.add("fa", "fa-times");
+            noMatchIcon.id = "noMatchIcon";
             matchesHeader.appendChild(noMatchIcon);
             const noMatchSpan = document.createElement("span");
-            noMatchSpan.innerText = " No Matches";
+            noMatchSpan.innerText = " Sin coincidencias";
+            noMatchSpan.id = "noMatchSpan";
             matchesHeader.appendChild(noMatchSpan);
-            document.getElementById("matchesCardBody").remove();
+            if (!document.getElementById("matchesCardBody").classList.contains("d-none")) {
+                document.getElementById("matchesCardBody").classList.add("d-none");
+            }
             linkToMatches.removeAttribute("href");
         } 
         // Si hay matches 
         else {
+            const matchesHeader = document.getElementById("matchesHeader");
+            if(matchesHeader.classList.contains("text-danger")){
+                matchesHeader.classList.replace("text-danger", "text-success");
+            }
+            if(document.getElementById("noMatchIcon")) {
+                document.getElementById("noMatchIcon").remove();
+            }
+            if(document.getElementById("matchIcon").classList.contains("d-none")) {
+                document.getElementById("matchIcon").classList.remove("d-none");
+            }
+            if(document.getElementById("isMatches").classList.contains("d-none")) {
+                document.getElementById("isMatches").classList.remove("d-none");
+            }
+            if(document.getElementById("nMatches").classList.contains("d-none")) {
+                document.getElementById("nMatches").classList.remove("d-none");
+            }
+            if(document.getElementById("noMatchSpan")) {
+                document.getElementById("noMatchSpan").remove();
+            }
+            if (document.getElementById("matchesCardBody").classList.contains("d-none")) {
+                document.getElementById("matchesCardBody").classList.remove("d-none");
+            }
             linkToMatches.href = `/usuario/matches/${grafitiID}`;
-            document.getElementById("nMatches").innerText = ` (${index})`;
+            if(document.getElementById("nMatches")) {
+                document.getElementById("nMatches").innerText = ` (${result.nMatches})`;
+            }
         }
         
         document.getElementById("carouselContainer").classList.remove("d-none");

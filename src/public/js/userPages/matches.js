@@ -36,7 +36,7 @@ async function initMatches() {
         const matches = results.matches;
         const nMatches = results.nMatches;
         if(nMatches < 1) {
-            throw "El grafiti al que intenta acceder no tiene ningún match que consultar";
+            window.location.href = "/usuario/grafiti/"+grafitiId;
         }
         
         // Mostramos info en el header

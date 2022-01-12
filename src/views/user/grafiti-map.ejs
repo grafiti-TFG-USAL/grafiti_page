@@ -1,12 +1,14 @@
 <%- include("../templates/header.ejs", { tipoNavbar: "logged" , tituloPestana: "Mapa de grafitis" , user,
     index: 3, cssFiles: [] }) %>
-
-    <div class="container-fluid p-0 m-0">
+    <div class="container-fluid d-none" id="no-grafitis-with-gps">
+        <h3 class="display-4 text-center justify-content-center text-secondary">Aún no existe ninguna imagen con la ubicación GPS establecida</h3>
+    </div>
+    <div class="container-fluid p-0 m-0" id="map-container">
         <div class="" id="map" style="height: 600px; width: auto;"></div>
     </div>
 
-    <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
     <script async src="/js/userPages/grafiti-map.js"></script>
+    <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
     <%# Script de la api de maps; debe ir tras la función initMap %>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= maps_key %>&callback=initMap&libraries=&v=weekly" async></script>
 
