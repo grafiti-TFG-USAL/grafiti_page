@@ -62,6 +62,56 @@ const getConfirmTemplate = (name, token, host) => {
         </div>`;
 }
 
+const { envBoolean } = require("../helpers/env-bool.js");
+const getAdminConfirmTemplate = (user, token, host) => {
+    
+    let template = `
+        <div>
+            <!--img src="" alt=""-->
+            <h4>Solicita crear una cuenta de usuario en el sistema</h4>
+            <br>
+            <p>Nombre: ${user.name}</p>
+            <p>Apellidos: ${user.surname}</p>
+            <p>Email: ${user.email}</p>`;
+
+    if(envBoolean("PIN_REQUIRED")) {
+            template += `
+                <br>
+                <p>Código: ${user.PIN}</p>`;
+    }
+    
+    template += `
+            <br><br>
+            <a href="http://${host}/api/users/admin-refuse/${token}" style="color: red; padding: 3px; border: 1px solid red;">
+            Rechazar solicitud</a>
+            <a href="http://${host}/api/users/admin-confirm/${token}" style="color: green; padding: 3px; border: 1px solid green; margin-left: 5px;">
+            Permitir acceso al sistema</a>
+        </div>`;
+    
+    return template;
+}
+
+const getAdminConfirmedTemplate = (name, userConfirmed, host) => {
+    
+    let template = `
+        <div>
+            <!--img src="" alt=""-->
+            <h4>Hola, ${name}</h4>
+            <p>Te informamos de que un administrador ha verificado tus credenciales.</p>`;
+            
+    if(userConfirmed) {
+        
+        template += `<p>Como ya has verificado tu cuenta de correo electrónico, desde este momento puedes <a href="http://${host}/login">acceder al sistema</a>.</p>`
+        
+    } else {
+        
+        template += `<p>Parece que todavía no has validado tu dirección de correo electrónico. Hasta que no verifiques tu cuenta, no podrás acceder al sistema. Disculpe las molestias.</p>`
+        
+    }
+    
+    return template + `    </div>`;
+}
+
 const getRecoverTemplate = (name, token, host) => {
     return `
         <div>
@@ -90,6 +140,8 @@ const getMatchNotificationTemplate = (name, grafitiID, host) => {
 module.exports = {
     sendEmail,
     getConfirmTemplate,
+    getAdminConfirmTemplate,
+    getAdminConfirmedTemplate,
     getRecoverTemplate,
     getMatchNotificationTemplate
 }

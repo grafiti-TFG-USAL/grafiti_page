@@ -57,11 +57,16 @@ passport.use("local", new LocalStrategy({ usernameField: "email" }, async (email
 
         // Comprobar que el usuario esté verificado
         if(user.account_status !== "VERIFIED"){
-            console.error(`Error: el usuario ${user.email} aún no ha verificado su correo electrónico`);
             const caducidad = new Date(user.createdAt.getTime() + 1000*60*60*24* 2);
-            return done(null, false, {
-                message: `Debe verificar su cuenta mediante el enlace que le hemos enviado a su correo <strong>${user.email}</strong> para poder iniciar sesión. El enlace caducará el ${caducidad.toLocaleString()}, para entonces deberá volver a registrarse en la página`
-            });
+            if(user.account_status === "ONLY_USER") {
+                return done(null, false, {
+                    message: `Debe esperar a que un administrador verifique las credenciales que proporcionó en el formulario de registro cuando solicitó registrarse en el sistema.<br>Disculpe las molestias`
+                });
+            } else {
+                return done(null, false, {
+                    message: `Debe verificar su cuenta mediante el enlace que le hemos enviado a su correo <strong>${user.email}</strong> para poder iniciar sesión. El enlace caducará el ${caducidad.toLocaleString()}, para entonces deberá volver a registrarse en la página`
+                });
+            }
         }
 
         // Si llega hasta aquí es el usuario

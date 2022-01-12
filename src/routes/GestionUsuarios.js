@@ -16,6 +16,12 @@ router.post("/register", UserController.signUp);
 // CONFIRMAR USUARIO (<host>/api/users/confirm/:token)
 router.get("/confirm/:token", UserController.confirmUser);
 
+// CONFIRMAR USUARIO (<host>/api/users/admin-confirm/:token)
+router.get("/admin-confirm/:token", UserController.adminConfirm);
+
+// CONFIRMAR USUARIO (<host>/api/users/admin-refuse/:token)
+router.get("/admin-refuse/:token", UserController.adminRefuse);
+
 // RECUPERAR CONTRASEÑA (<host>/api/users/recoverPassword)
 router.post("/recoverPassword", UserController.recoverMail);
 

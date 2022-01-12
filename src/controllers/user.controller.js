@@ -15,7 +15,8 @@ const passport = require("passport");
 
 // Importamos la lógica del controlador
 const { getToken, getTokenData } = require("../config/jwt.config.js");
-const { sendEmail, getConfirmTemplate, getRecoverTemplate } = require("../config/mail.config");
+const { sendEmail, getConfirmTemplate, getAdminConfirmTemplate, getAdminConfirmedTemplate, getRecoverTemplate } = require("../config/mail.config");
+const { envBoolean } = require("../helpers/env-bool");
 
 // Cargamos el modelo del usuario
 const User = require("../models/user.model");
@@ -23,12 +24,17 @@ const User = require("../models/user.model");
 const Notification = require("../models/notification.model");
 
 // schemas Joi para almacenar y comprobar los datos introducidos
-const schemaRegister = Joi.object({
+const schemaRegister_ = {
     name: Joi.string().min(2).max(20).required(),
     surname: Joi.string().min(2).max(50).required(),
     email: Joi.string().min(6).max(50).required().email(), // email() realiza las comprobaciones del formato de un email
     password: Joi.string().min(10).max(50).required()
-});
+};
+if(envBoolean("PIN_REQUIRED")) {
+    schemaRegister_["PIN"] = Joi.string().required(); // TODO: Abierto a comprobaciones de formato
+}
+
+const schemaRegister = Joi.object(schemaRegister_);
 
 // Lógica del registro de usuarios
 const signUp = async (req, res) => {
@@ -38,6 +44,21 @@ const signUp = async (req, res) => {
         // Comprobamos los errores en la info de registro recibida con validate
         const { error } = schemaRegister.validate(req.body);
         if (error) {
+            if(error.details[0].context.key) {
+                if(0==("PIN").localeCompare(error.details[0].context.key)) {
+                    return res.status(400).json({
+                        success: false,
+                        errorOn: "PIN",
+                        message: error.details[0].message
+                    });
+                } else {
+                    return res.status(400).json({
+                        success: false,
+                        errorOn: "general",
+                        message: error.details[0].message
+                    });
+                }
+            }
             return res.status(400).json({
                 success: false,
                 errorOn: "general",
@@ -57,7 +78,14 @@ const signUp = async (req, res) => {
 
         // Generamos el código de verificación de email
         const code = uuidv4();
-
+        
+        // Código para el Admin
+        let adminCode = null;
+        if(envBoolean("PIN_REQUIRED") || envBoolean("CONFIRM_USERS")) {
+            // Generamos el código de verificación de la cuenta para el admin
+            adminCode = uuidv4();
+        }
+        
         // Hasheamos la contraseña para almacenarla de forma segura
         const saltos = await bcrypt.genSalt(10); //los saltos añaden seguridad y evitan ataques rainbow table
         const password = await bcrypt.hash(req.body.password, saltos);
@@ -71,31 +99,27 @@ const signUp = async (req, res) => {
         }
         
         // Creamos el nuevo usuario
-        const user = new User({
+        const userPrev = {
             name: req.body.name,
             surname: req.body.surname,
             email: req.body.email,
             password,
             code,
             email_notifications: [],
-        });
+        };
+        if(envBoolean("PIN_REQUIRED")) {
+            userPrev["PIN"] = req.body.PIN;
+        }
+        if(adminCode) {
+            userPrev["adminCode"] = adminCode;
+        }
+        const user = new User(userPrev);
 
         // Generamos el token
         const token = getToken({
             email: user.email,
             code: user.code
         }, "2d"); //Que dure dos días
-
-        // Almacenamos el usuario en la base de datos
-        const userDB = await user.save();
-        if (!userDB) {
-            console.error("Ha habido un error al almacenar al usuario en la base de datos");
-            return res.status(400).json({
-                success: false,
-                errorOn: "general",
-                message: "Ha habido un error al almacenar al usuario en la base de datos"
-            });
-        }
         
         // Obtenemos el template
         const template = getConfirmTemplate(req.body.name, token, req.headers.host)
@@ -106,6 +130,37 @@ const signUp = async (req, res) => {
             "Confirme su cuenta",
             template
         );
+        
+        // Si hay que enviar correo al admin
+        if(adminCode) {
+            // Generamos el token para la confirmación
+            const adminToken = getToken({
+                email: user.email,
+                code: user.adminCode
+            });
+        
+            // Obtenemos el template
+            const adminConfirmTemplate = getAdminConfirmTemplate(userPrev, adminToken, req.headers.host)
+    
+            // Enviamos el email
+            await sendEmail(
+                envBoolean("ADMIN_MAIL")? process.env.ADMIN_MAIL : process.env.MAIL_USER,
+                "Solicitud de registro",
+                adminConfirmTemplate
+            );
+            
+        }
+            
+        // Almacenamos el usuario en la base de datos
+        const userDB = await user.save();
+        if (!userDB) {
+            console.error("Ha habido un error al almacenar al usuario en la base de datos");
+            return res.status(400).json({
+                success: false,
+                errorOn: "general",
+                message: "Ha habido un error al almacenar al usuario en la base de datos"
+            });
+        }
 
         return res.status(200).json({
             success: true,
@@ -153,15 +208,27 @@ const confirmUser = async (req, res) => {
             });
         }
 
+        let newStatus = null;
         // Comprobar el status actual de la cuenta
         if (user.account_status === "VERIFIED") {
-            console.error("El usuario ya estaba verificado");
             return res.status(200).redirect("../../../login");
+        }
+        if (user.account_status === "ONLY_USER") {
+            return res.status(200).redirect("../../../login?admin-left=true");
+        }
+        if (user.account_status === "UNVERIFIED") {
+            if(envBoolean("CONFIRM_USERS")) {
+                newStatus = "ONLY_USER";
+            } else {
+                newStatus = "VERIFIED";
+            }
+        }
+        if (user.account_status === "ONLY_ADMIN") {
+            newStatus = "VERIFIED";
         }
 
         // Verificar el código
         if (code !== user.code) {
-            console.error("El código no coincide con el almacenado");
             return res.status(400).json({
                 success: false,
                 message: "El código no coincide con el almacenado",
@@ -169,7 +236,7 @@ const confirmUser = async (req, res) => {
         }
 
         // Actualizamos el estado de la cuenta a verificado y eliminamos el atributo code
-        userDB = await User.updateOne({ email }, { $set: { account_status: "VERIFIED" }, $unset: { code: 1 } });
+        const userDB = await User.updateOne({ email }, { $set: { account_status: newStatus }, $unset: { code: 1 } });
         if (!userDB) {
             console.error("El usuario no se ha podido verificar por un problema con la base de datos");
             return res.status(400).json({
@@ -179,7 +246,181 @@ const confirmUser = async (req, res) => {
         }
 
         // Redireccionar a la página de confirmación
-        return res.status(200).redirect(`../../../user-confirmed/${email}`);
+        if(user.account_status === "UNVERIFIED") {
+            return res.status(200).redirect(`../../../user-confirmed/${email}?admin-left=true`);
+        }
+        if(user.account_status === "ONLY_ADMIN") {
+            return res.status(200).redirect(`../../../user-confirmed/${email}`);
+        }
+
+    } catch (error) {
+        console.error("Error al confirmar usuario => ", error);
+        return res.status(400).json({
+            success: false,
+            message: "Error al confirmar usuario => " + error,
+        });
+    }
+
+};
+
+// Aceptación del usuario que solicitó registrarse en el sistema por parte del admin
+const adminConfirm = async (req, res) => {
+
+    try {
+
+        // Obtenemos el token
+        const { token } = req.params;
+
+        // Comprobar y extraer los datos
+        const tokenData = await getTokenData(token);
+        if (!tokenData) {
+            console.error("Error al obtener los datos del token");
+            return res.status(400).json({
+                success: false,
+                message: "Error al obtener los datos del token",
+            });
+        }
+        const { email, code: adminCode } = tokenData.data;
+
+        // Verificar que el usuario existe
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario",
+            });
+        }
+
+        // Comprobar el status actual de la cuenta
+        if (user.account_status === "VERIFIED") {
+            return res.status(200).json({
+                success: true,
+                message: "El usuario ya estaba verificado completamente"
+            });
+        }
+        if (user.account_status === "ONLY_ADMIN") {
+            return res.status(200).json({
+                success: true,
+                message: "El usuario ya habia sido confirmado por un administrador. Falta que verifique su correo electrónico."
+            });
+        }
+        let newStatus = null;
+        if (user.account_status === "UNVERIFIED") {
+            newStatus = "ONLY_ADMIN";
+        }
+        if (user.account_status === "ONLY_USER") {
+            newStatus = "VERIFIED";
+        }
+
+        // Verificar el código
+        if (adminCode !== user.adminCode) {
+            console.error("El código no coincide con el almacenado");
+            return res.status(400).json({
+                success: false,
+                message: "El código no coincide con el almacenado",
+            });
+        }
+
+        // Actualizamos el estado de la cuenta a verificado y eliminamos el atributo adminCode
+        const userDB = await User.updateOne({ email }, { $set: { account_status: newStatus }, $unset: { adminCode: 1 } });
+        if (!userDB) {
+            console.error("El usuario no se ha podido verificar por un problema con la base de datos");
+            return res.status(400).json({
+                success: false,
+                message: "El usuario no se ha podido verificar por un problema con la base de datos",
+            });
+        }
+        
+        // Obtenemos el template
+        const adminConfirmedTemplate = getAdminConfirmedTemplate(user.name, user.account_status==="ONLY_USER", req.headers.host)
+
+        // Enviamos el email de notificación
+        await sendEmail(
+            user.email,
+            "¡Cuenta verificada!",
+            adminConfirmedTemplate
+        );
+
+        // Responder
+        return res.status(200).json({
+            success: true,
+            message: `El estado del usuario cambió satisfactoriamente a ${newStatus}`
+        });
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Error al aceptar al usuario => " + error,
+        });
+    }
+
+};
+
+// Eliminación del usuario que solicitó registrarse en la base de datos
+const adminRefuse = async (req, res) => {
+
+    try {
+
+        // Obtener el token
+        const { token } = req.params;
+
+        // Comprobar y extraer los datos
+        const tokenData = await getTokenData(token);
+        if (!tokenData) {
+            console.error("Error al obtener los datos del token");
+            return res.status(400).json({
+                success: false,
+                message: "Error al obtener los datos del token",
+            });
+        }
+        const { email, code: adminCode } = tokenData.data;
+
+        // Verificar que el usuario existe
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "El usuario a confirmar no existe en la base de datos o no se ha podido acceder a la información del usuario",
+            });
+        }
+
+        // Comprobar el status actual de la cuenta
+        if (user.account_status === "VERIFIED") {
+            return res.status(400).json({
+                success: false,
+                message: "El usuario no puede cancelarse porque ya estaba verificado"
+            });
+        }
+        if (user.account_status === "ONLY_ADMIN") {
+            return res.status(400).json({
+                success: false,
+                message: "El usuario no puede cancelarse porque ya ha sido validado por un administrador"
+            });
+        }
+
+        // Verificar el código
+        if (adminCode !== user.adminCode) {
+            return res.status(400).json({
+                success: false,
+                message: "El código del token no coincide con el almacenado",
+            });
+        }
+
+        // Eliminamos la cuenta
+        const removal = await User.deleteOne({ _id: user._id, email });
+        if (!removal) {
+            console.error("El usuario no se ha podido eliminar por un problema con la base de datos");
+            return res.status(400).json({
+                success: false,
+                message: "El usuario no se ha podido eliminar por un problema con la base de datos",
+            });
+        }
+
+        // Redireccionar a la página de confirmación
+        return res.status(200).json({
+            success: true,
+            message: "Usuario eliminado"
+        });
 
     } catch (error) {
         console.error("Error al confirmar usuario => ", error);
@@ -520,13 +761,13 @@ const logIn = async (req, res, next) => {
         // Comprobamos si ha habido algún error
         if (err) {
             console.error("Error 1 en la autenticacion passport: ", info.message);
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: info.message
             });
         }
         if (!user) {
-            console.error("Error 2 en la autenticacion passport: ", info.message);
+            //console.error("Error 2 en la autenticacion passport: ", info.message);
             return res.status(400).json({
                 success: false,
                 message: info.message
@@ -665,7 +906,9 @@ const eliminarUsuariosSinVerificar = async () => {
 
         // Eliminamos de la base de datos de usuarios a los no verificados que exceden el plazo
         const users = await User.deleteMany({
-            account_status: "UNVERIFIED", createdAt: {
+            $or: [{ account_status: "UNVERIFIED" },  
+                { account_status: "ONLY_ADMIN" }],
+            createdAt: {
                 $lte: Date.now() - 1000 * 60 * 60 * 24 * 2 // 2 días en milisegundos
             }
         });
@@ -758,6 +1001,8 @@ const getUserNotifications = async (req, res) => {
 module.exports = {
     signUp,
     confirmUser,
+    adminRefuse,
+    adminConfirm,
     recoverMail,
     restorePassword,
     resetPassword,

@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const { envBoolean } = require("../helpers/env-bool.js");
 
-const userSchema  = mongoose.Schema({
+const userSchema_ = {
     // Nombre del usuario
     name: {
         type: String,
@@ -63,9 +64,32 @@ const userSchema  = mongoose.Schema({
         }],
         default: [],
         index: false,
-    }
-    ,
-}, { 
+    },
+};
+    
+if(envBoolean("PIN_REQUIRED")) {
+    // Código de miembro de las autoridades
+    userSchema_["PIN"] = {
+        type: String, // TODO: abierto a restricciones
+        required: true,
+    };
+    // Código para la confirmación del administrador
+    userSchema_["adminCode"] = {
+        type: String,
+    };
+}
+
+if(envBoolean("CONFIRM_USERS")) {
+    
+    // Código para la confirmación del administrador
+    userSchema_["adminCode"] = {
+        type: String,
+    };
+    
+}
+
+
+const userSchema  = mongoose.Schema(userSchema_, { 
     timestamps: true // Incluye la fecha de creación y de última modificación del elemento
 });
 

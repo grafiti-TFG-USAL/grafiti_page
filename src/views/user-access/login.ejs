@@ -7,6 +7,14 @@
         <div class="alert alert-warning alert-dismissible fade d-none mt-4" role="alert" id="alerta">
             <h4 class="alert-heading">Aviso</h4>
             <p>Debes validar tu cuenta mediante el email que te hemos enviado para poder iniciar sesión.</p>
+            <% if(ADMIN_CONFIRM) { %><p>Además, debes esperar a que un administrador valide los datos que proporcionaste durante el registro.</p><% } %>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+
+        <div class="alert alert-info alert-dismissible d-none mt-4" role="alert" id="alerta-admin">
+            <h4 class="alert-heading">Aviso</h4>
+            <p>Ya has validado tu correo electrónico, tu cuenta está pendiente de que un administrador la revise y acepte.</p>
+            <p>Disculpe las molestias.</p>
             <button type="button" class="close" data-dismiss="alert">&times;</button>
         </div>
 
@@ -143,6 +151,14 @@
         }
         emailInput.addEventListener("input", eliminarAdvertencia);
         passwordInput.addEventListener("input", eliminarAdvertencia);
+        
+        // Parámetros de la query
+        const urlSearchParams = new URLSearchParams(window.location.search);
+        const params = Object.fromEntries(urlSearchParams.entries());
+        
+        if(params["admin-left"]) {
+            document.getElementById("alerta-admin").classList.remove("d-none");
+        }
         
     </script>
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { restorePassword } = require("../controllers/user.controller");
+const { envBoolean } = require("../helpers/env-bool");
 
 // RUTA RAIZ "/"
 
@@ -33,7 +34,7 @@ router.get("/servicios", (req, res) => {
 
 // Página de registro (<host>/registro)
 router.get("/registro", (req, res) => {
-    res.render("user-access/signup.ejs", { titulo: "Formulario de Registro", isSignUp: true });
+    res.render("user-access/signup.ejs", { titulo: "Formulario de Registro", isSignUp: true, PIN: envBoolean("PIN_REQUIRED") });
 });
 
 // Página de confirmación de cuenta (<host>/user-confirmed/:email)
@@ -47,7 +48,7 @@ router.get("/login", (req, res) => {
     // Si se ha intentado acceder a zona restringida a usuarios y se ha redirigido al login, mostramos aviso
     const attempted = req.query.attempt ? true : false;
     
-    res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false, attempted });
+    res.render("user-access/login.ejs", { titulo: "Inicie Sesión", isSignUp: false, attempted, ADMIN_CONFIRM: process.env.ADMIN_CONFIRM });
 });
 
 // Página de recuperación de contraseña (<host>/recover)

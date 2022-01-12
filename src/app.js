@@ -24,9 +24,12 @@ dotenv.config();
 const passportSessions = require("./config/sessions.config.js");
 passportSessions(app, session);
 
+const { envBoolean } = require("./helpers/env-bool");
 // Visualización de peticiones
-//if(process.env.MORGAN)
-//  app.use(morgan("dev"));
+if(envBoolean("MORGAN")){
+    console.log("Morgan        => ON")
+    app.use(morgan("dev"));
+}
 
 // Parsea application/json
 app.use(express.json()) // Lo que antes se hacía con body-parser

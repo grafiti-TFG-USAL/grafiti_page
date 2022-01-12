@@ -68,7 +68,7 @@ const inicializarBase = async () => {
             //TODO borrar lo de abajo console.log()
             const bcrypt2 = require("bcrypt");
             const salt2 = await bcrypt2.genSalt(10);
-            const password2 = await bcrypt2.hash("holaholahola", salt);
+            const password2 = await bcrypt2.hash("holaholahola", salt2);
             const antoni = new User({
                 name: "Antoni",
                 surname: "Tur",

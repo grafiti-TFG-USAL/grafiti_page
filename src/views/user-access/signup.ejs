@@ -25,7 +25,25 @@
                 <label for="surname">Apellidos</label>
                 <input class="form-control col-md-7 col-lg-6" type="text" required="required" minlength="2" maxlength="50" name="surname" id="surname" placeholder="Apellidos">
             </div>
-
+            <!-- 
+            <div class="form-group">
+                <label for="authority">Apellidos</label>
+                <select class="form-control col-md-7 col-lg-6" id="authority" required="required" name="authority">
+                    <option>Policía Local</option>
+                    <option>Policía Nacional</option>
+                    <option>Guardia Civil</option>
+                    <option>Investigador</option>
+                    <option>Colaborador</option>
+                </select>
+            </div>
+            -->
+            <% if(PIN) { %>
+            <div class="form-group">
+                <label for="PIN">Código de identificación</label>
+                <input class="form-control col-md-7 col-lg-6" type="text" required="required" minlength="2" maxlength="50" name="PIN" id="PIN" placeholder="Número de autoridad" data-toggle="tooltip" title="Código de agente necesario para identificarse como autoridad">
+                <div id="failure_PIN" class="invalid-feedback"></div>
+            </div>
+            <% } %>
             <div class="form-group">
                 <label for="email">Email</label>
                 <input class="form-control col-md-7 col-lg-6" type="email" required="required" minlength="6" maxlength="50" name="email" id="email" placeholder="Email">
@@ -97,7 +115,11 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ // Enviamos los datos a la api en formato JSON
-                    name, surname, email, password
+                    name, 
+                    surname, 
+                    email, 
+                    password,
+                    <% if(PIN) { %>PIN: form.elements["PIN"].value<% } %>
                 })
             });
 
@@ -112,6 +134,10 @@
                     case "email":
                         document.getElementById("email").classList.add("is-invalid");
                     break;
+                    <% if(PIN) { %>case "PIN":
+                        document.getElementById("failure_PIN").innerText = respuesta.message;
+                        document.getElementById("PIN").classList.add("is-invalid");
+                    break;<% } %>
                     case "general":
                     default:
                         document.getElementById("errorGeneral").innerText = respuesta.message;
@@ -138,6 +164,13 @@
             emailForm.classList.remove("is-invalid");
         }
     });
+
+    <% if(PIN) { %>const pinForm = document.getElementById("PIN");
+    pinForm.addEventListener("input", (event) => {
+        if(pinForm.classList.contains("is-invalid")){
+            pinForm.classList.remove("is-invalid");
+        }
+    });<% } %>
     
     // Eliminamos la advertencia de la contraseña si se modifica
     const passForm = document.getElementById("password");
