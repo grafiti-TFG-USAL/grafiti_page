@@ -117,6 +117,9 @@ const initUpload = async () => {
     }
     
     const files_fs = fs.readdirSync("src/models/ML/firstInstances");
+    if(files_fs.length < 50) {
+        throw "Debe depositar al menos 50 imágenes en la carpeta \"src/models/ML/firstInstances\" para que los modelos se inicien correctamente";
+    }
     const files = [];
     
     for(const file of files_fs) {
