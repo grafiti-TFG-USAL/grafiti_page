@@ -3,6 +3,9 @@ import sys
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
 import numpy as np
+import time
+
+init_time = time.time()
 
 def checkFileExistance(filePath):
     try:
@@ -54,3 +57,5 @@ df = pd.DataFrame({"Servername": servernames, "Similarity": percentages})
 path_csv = os.path.abspath(os.path.join("src", "tempfiles", "searches", os.path.splitext(sys.argv[1])[0])+".csv")
 
 df.to_csv(path_or_buf=path_csv, header=False, index=False)
+
+print("Duración total de la búsqueda " + images[idx] + ": " + str(time.time()-init_time) + " s")

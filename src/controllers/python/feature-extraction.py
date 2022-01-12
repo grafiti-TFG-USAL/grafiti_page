@@ -5,15 +5,15 @@ import tensorflow.keras as keras
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
 from tensorflow.keras.models import Model
+import time
 
-print("TF VERSION")
-print(tf.version.VERSION)
+init_time = time.time()
 
+print("TF VERSION: "+ tf.version.VERSION)
 if tf.test.gpu_device_name(): 
-    print('Default GPU Device:{}'.format(tf.test.gpu_device_name()))
-
+    print('Dispositivo GPU (por defecto): {}\n'.format(tf.test.gpu_device_name()))
 else:
-    print("Please install GPU version of TF")
+    print("Instale y configure una versión de TensorFlow GPU compatible para mejorar sustancialmente el rendimiento")
 
 def checkFileExistance(filePath):
     try:
@@ -23,14 +23,25 @@ def checkFileExistance(filePath):
         return False
     except IOError as e:
         return False
-
-#model = keras.applications.VGG16(weights="imagenet", include_top=True)
+    
+feature_extractor_path = os.path.abspath(os.path.join("src", "models", "ML", "feature-extractor-"+sys.argv[1]+".h5"))
 model_path = os.path.abspath(os.path.join("src", "models", "ML", sys.argv[1]+".h5"))
-model = keras.models.load_model(model_path)
-feature_extractor = Model(inputs=model.input, outputs=model.get_layer("fc2").output, name="feature_extractor")
-
-print("INPUT")
-print(model.input_shape[1:3])
+if not checkFileExistance(feature_extractor_path):
+    if not checkFileExistance(model_path):
+        print("No existe el modelo base, se descarga")
+        model = keras.applications.VGG16(weights="imagenet", include_top=True)
+        model.save(model_path)
+    else:
+        print("Cargando el modelo base")
+        model = keras.models.load_model(model_path)
+    print("No existe el extractor de caracteristicas, se crea")
+    feature_extractor = Model(inputs=model.input, outputs=model.get_layer("fc2").output, name="feature_extractor")
+    feature_extractor.save(feature_extractor_path)
+else:
+    print("Cargando el extractor de caracteristicas")
+    feature_extractor = keras.models.load_model(feature_extractor_path)
+    
+print("Duración de la carga: " + str(time.time()-init_time) + " s")
 
 from PIL import Image, ExifTags
 def correct_exif_orientation(image_path):
@@ -56,7 +67,7 @@ def correct_exif_orientation(image_path):
 
 import numpy as np
 def load_image(path):
-    img = image.load_img(path, target_size=model.input_shape[1:3])
+    img = image.load_img(path, target_size=(224, 224)) # En ImageNet siempre es 224, 224, 1
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
@@ -144,4 +155,6 @@ else:
     images_wb = open(images_path, 'wb')
     pk.dump(images, images_wb)
     images_wb.close()
-    print("Creado modelo")
+    print("Creados los modelos")
+
+print("Duración total del proceso %s" % (time.time() - init_time))

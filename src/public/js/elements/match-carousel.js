@@ -34,7 +34,6 @@ async function getMatches(grafitiId) {
         const inner = document.getElementById("matchCarouselInner");
 
         while(indicators.firstChild) {
-            console.log(111)
             indicators.removeChild(indicators.firstChild);
         }
         while(inner.firstChild) {

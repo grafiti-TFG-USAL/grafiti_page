@@ -283,7 +283,7 @@ const initUpload = async () => {
         // VERSIÓN SÍNCRONA
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
-        if(pythonProcess.status == 1){
+        if(pythonProcess.status != 0){
             console.error(pythonProcess.stderr.toString());
             console.log(pythonProcess.stdout.toString());
             throw "fallo en la IA, compruebe que existe el fichero vgg16.h5 con el modelo ImageNet"

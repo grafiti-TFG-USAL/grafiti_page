@@ -18,7 +18,6 @@ const Sockets = require("../config/sockets.config");
  * Devuelve el archivo del grafiti indicado, para la API
  */
 const get = async (req, res) => {
-    console.log(process.env)
     // Buscamos el grafiti indicado en la base de datos
     const { grafiti_id } = req.params;
     const image = await Grafiti.findOne({ _id: grafiti_id, deleted: false }, { absolutePath: 1 });
@@ -326,7 +325,7 @@ const upload = async (req, res) => {
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
         
-        if(pythonProcess.status == 1){
+        if(pythonProcess.status != 0){
             console.error(pythonProcess.stderr.toString());
             console.log(pythonProcess.stdout.toString());
             throw "fallo en la IA"
@@ -1239,7 +1238,8 @@ const execReverseSearch = async (grafiti) => {
         // VERSIÓN SÍNCRONA
         const spawn = require("child_process").spawnSync;
         const pythonProcess = await spawn("conda", py_args);
-        if(pythonProcess.status == 1){
+        
+        if(pythonProcess.status != 0){
             console.error(pythonProcess.stderr.toString());
             console.log(pythonProcess.stdout.toString());
             throw "fallo en la IA"
