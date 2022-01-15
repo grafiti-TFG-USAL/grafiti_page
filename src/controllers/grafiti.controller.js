@@ -5,6 +5,8 @@ const archiver = require("archiver");
 const exifr = require("exifr");
 const imageThumbnail = require("image-thumbnail");
 const ObjectsToCsv = require("objects-to-csv");
+const thumbnails = require("../helpers/thumbnail");
+const { Mongoose } = require("mongoose");
 
 const Grafiti = require("../models/grafiti.model");
 const Location = require("../models/location.model");
@@ -87,10 +89,6 @@ const getInfo = async (req, res) => {
     }
 };
 
-const thumbnails = require("../helpers/thumbnail");
-const { Mongoose } = require("mongoose");
-const { random } = require("faker");
-const { findOneAndDelete } = require("../models/user.model");
 /**
  * Subida de un conjunto de imágenes al servidor
  */
@@ -1258,8 +1256,6 @@ const execReverseSearch = async (grafiti) => {
 /**
  * Devuelve un lote de imágenes
  */
-const fse = require("fs-extra");
-const csv = require("csv-parser")
 const getSearchBatch = async (req, res) => {
     try {
 
@@ -1273,11 +1269,11 @@ const getSearchBatch = async (req, res) => {
         
         const serverName = path.parse(grafiti.serverName).name;
         csv_path = path.resolve("src/tempfiles/searches/" + serverName + ".csv");
-        if(!fse.existsSync(csv_path)) {
+        if(!fs.existsSync(csv_path)) {
             throw "No se puede recuperar el archivo con los resultados de la búsqueda - "+csv_path;
         }
         
-        const lines = fse.readFileSync(csv_path, 'utf-8').split('\r\n').filter(Boolean);
+        const lines = fs.readFileSync(csv_path, 'utf-8').split('\r\n').filter(Boolean);
         
         const grafitis = [];
         for(let i=skip; (i < skip+limit) && (i < lines.length); i++) {
@@ -1379,14 +1375,14 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
         }
         // Si se filtra por fecha minima
         if(minDate) {
-            match_filter["$match"]["uploadedAt"] = { $gte: new Date(minDate) };
+            match_filter["$match"]["dateTimeOriginal"] = { $gte: new Date(minDate) };
         }
         // Si se filtra por fecha máxima
         if(maxDate) {
-            if(match_filter["$match"]["uploadedAt"]) {
-                match_filter["$match"]["uploadedAt"]["$lt"] = new Date(maxDate);
+            if(match_filter["$match"]["dateTimeOriginal"]) {
+                match_filter["$match"]["dateTimeOriginal"]["$lt"] = new Date(maxDate);
             } else {
-                match_filter["$match"]["uploadedAt"] = { $lt: new Date(maxDate) };
+                match_filter["$match"]["dateTimeOriginal"] = { $lt: new Date(maxDate) };
             }
         }
         // Añadimos los filtros
@@ -1458,7 +1454,7 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
         
         // Ordenamos por fecha de captura/subida
         pipeline.push({ 
-            "$sort" : { "dateTimeOriginal" : -1 }
+            "$sort" : { "uploadedAt" : -1 }
         });
         
         const skip_limit = [{ "$skip": skip }];
@@ -1498,6 +1494,187 @@ const getFilteredGrafitis = async (minDate, maxDate, searchZone, userId, skp, li
 
 /** Función que empaqueta las imágenes seleccionadas y un archivo csv con sus datos y lo almacena temporalmente
 */ 
+const prepareMatchesDownload = async (req, res) => {
+    
+    try {
+    
+        // Comprobamos la información recibida
+        const body = req.body;
+        if(!body) {
+            throw "Falta el cuerpo del mensaje";
+        }
+        if(!body.id) {
+            throw "No se ha especificado la imagen de los matches a descargar";
+        }
+        const { id: grafitiPpal_id, pending, csv } = body;
+        
+        // Comprobamos que exista el grafiti principal
+        const grafPpal = await Grafiti.findOne({ _id: grafitiPpal_id});
+        if(!grafPpal) {
+            throw "El grafiti principal no existe";
+        }
+        
+        // Iniciamos el socket
+        const socketid = Sockets.connectedUsers[req.user.id+":download-matches"].id;
+        function emitPercentage(percentage, info = null) {
+            req.app.io.to(socketid).emit("download-matches:step", 
+            { 
+                percentage: (percentage).toFixed(2),
+                info,
+            });
+        }
+        
+        emitPercentage(5, "Recopilando información");
+        
+        var query = {
+            $or: [{ grafiti_1: grafitiPpal_id }, { grafiti_2: grafitiPpal_id }],
+        };
+        if(!pending){
+            query["confirmed"] = true;
+        }
+        
+        // Aquí recogemos los matches
+        const matches = await Match.find(query).populate("grafiti_1").populate("grafiti_2");
+        if(!matches) {
+            throw "No se pudo recuperar ningún match";
+        }
+        
+        // Preparamos las variables del socket
+        const prevPerc = Math.random()*10+10.0; // Número en R[10,20)
+        const step = (100.0 - prevPerc) / (matches.length+(csv?2:1)); // Sumamos los pasos extra
+        var index = 1;
+        function emitStep(index, info = null) {
+            req.app.io.to(socketid).emit("download-matches:step", 
+            { 
+                percentage: ((index * step)+prevPerc).toFixed(2),
+                info
+            });
+        }
+        
+        // Creamos un nombre temporal para el archivo
+        var fileName, filePath;
+        do {
+            fileName = uuidv4();
+            filePath = path.resolve(`src/tempfiles/downloads/${fileName}.zip`);
+            // Comprobamos que sean únicos
+        } while (fs.existsSync(filePath));
+        
+        // Iniciamos los objetos de compresión
+        var output = fs.createWriteStream(filePath);
+        var archive = archiver("zip", {
+            gzip: true,
+            zlib: { level: 9 } // Nivel de compresión
+        });
+        archive.on("error", function(error) {
+            output.end();
+            fs.removeSync(filePath);
+            throw error;
+        });
+        const promise = new Promise((resolve, reject) => {
+            output.on("close", (data) => {
+                resolve();
+            });
+        });
+        // Conectamos la entrada al fichero de salida
+        archive.pipe(output);
+        
+        // Cuando un archivo se agregue notificamos al usuario
+        emitPercentage(prevPerc, "Comprimiendo archivos");
+        archive.on("entry", (entry) => {
+            emitStep(index, `Comprimiendo imagen ${index}/${csv? matches.length+2 : matches.length+1}`);
+            index++;
+        });
+        
+        const csvFiles = [];
+        
+        if(csv) { 
+            const fileInfo = {
+                filename: grafPpal.serverName,
+                captured: grafPpal.dateTimeOriginal.toLocaleString('es-ES'),
+            }
+            let gps = null;
+            if(grafPpal.gps) {
+                gps = await Location.findById(grafPpal.gps);
+            }
+            if(gps) {
+                fileInfo["latitude"] = gps.location.coordinates[1];
+                fileInfo["longitude"] = gps.location.coordinates[0];
+            } else {
+                fileInfo["latitude"] = "null";
+                fileInfo["longitude"] = "null";
+            }
+            fileInfo["description"] = grafPpal.description? grafPpal.description : "null";
+            csvFiles.push(fileInfo);
+        }
+        archive.file(grafPpal.absolutePath, { name: grafPpal.serverName });
+        // Metemos todos los archivos en el paquete
+        for(const match of matches) {
+            const file = match.grafiti_1._id == grafPpal._id ? match.grafiti_1 : match.grafiti_2;
+            
+            if(csv) { 
+                const fileInfo = {
+                    filename: file.serverName,
+                    captured: file.dateTimeOriginal.toLocaleString('es-ES'),
+                }
+                let gps = null;
+                if(file.gps) {
+                    gps = await Location.findById(file.gps);
+                }
+                if(gps) {
+                    fileInfo["latitude"] = gps.location.coordinates[1];
+                    fileInfo["longitude"] = gps.location.coordinates[0];
+                } else {
+                    fileInfo["latitude"] = "null";
+                    fileInfo["longitude"] = "null";
+                }
+                fileInfo["description"] = file.description? file.description : "null";
+                csvFiles.push(fileInfo); 
+            }
+            
+            archive.file(file.absolutePath, { name: file.serverName });
+        }
+        
+        if(csv) {
+            // Añadimos el CSV con la información de los grafitis descargados
+            const csv = new ObjectsToCsv(csvFiles);
+            archive.append(await csv.toString(), { name: "info.csv" });
+        }
+        
+        // Indicamos al flujo de datos que no espere más archivos
+        await archive.finalize();
+        // Esperamos a que la compresión acabe
+        await promise;
+        
+        // Establecemos el temporizador para eliminar los archivos temporales
+        const timeOutHrs = 2; // Dos horas
+        setTimeout(() => {
+            if(fs.existsSync(filePath)) {
+                console.log(`FS + Cron     => Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
+                fs.removeSync(filePath);
+            }
+        }, (1000 * 3600 * timeOutHrs));
+        
+        emitPercentage(100, "Finalizado");
+        
+        // Devolvemos el id del archivo generado
+        return res.status(200).json({
+            success: true,
+            message: "Archivo listo",
+            fileId: fileName,
+        });
+    
+    } catch (error) {
+        const message = `Error preparando la descarga de matches: ` + error;
+        console.error(message);
+        return res.status(400).json({
+            success: false,
+            message,
+        });
+    }
+};
+
+/** Función que empaqueta las imágenes seleccionadas y un archivo csv con sus datos y lo almacena temporalmente
+*/ 
 const prepareDownloadBatch = async (req, res) => {
     
     try {
@@ -1528,13 +1705,7 @@ const prepareDownloadBatch = async (req, res) => {
                 info
             });
         }
-        function emitSemiStep(index, percentage, info = null) {
-            req.app.io.to(socketid).emit("download-batch:step", 
-            { 
-                percentage: (((index - 1) * step + percentage * step)+prevPerc).toFixed(2),
-                info,
-            });
-        }
+        
         function emitPercentage(percentage, info = null) {
             req.app.io.to(socketid).emit("download-batch:step", 
             { 
@@ -1558,10 +1729,9 @@ const prepareDownloadBatch = async (req, res) => {
         var fileName, fileTmpPath, filePath;
         do {
             fileName = uuidv4();
-            fileTmpPath = path.resolve(`src/tempfiles/downloads/temp/${fileName}`);
             filePath = path.resolve(`src/tempfiles/downloads/${fileName}.zip`);
             // Comprobamos que sea único
-        } while (fs.existsSync(filePath) || fs.existsSync(fileTmpPath));
+        } while (fs.existsSync(filePath));
         
         // Iniciamos los objetos de compresión
         var output = fs.createWriteStream(filePath);
@@ -1574,6 +1744,12 @@ const prepareDownloadBatch = async (req, res) => {
             fs.removeSync(filePath);
             throw error;
         });
+        const promise = new Promise((resolve, reject) => {
+            output.on("close", (data) => {
+                resolve();
+            });
+        });
+        
         // Conectamos la entrada al fichero de salida
         archive.pipe(output);
         
@@ -1597,12 +1773,15 @@ const prepareDownloadBatch = async (req, res) => {
         
         // Esperamos a que la compresión acabe
         await archive.finalize();
+        await promise;
         
         // Establecemos el temporizador para eliminar los archivos temporales
         const timeOutHrs = 2; // Dos horas
         setTimeout(() => {
-            console.log(`FS + Cron     => Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
-            fs.removeSync(filePath);
+            if(fs.existsSync(filePath)) {
+                console.log(`FS + Cron     => Fichero temporal ${fileName}.zip eliminado tras ${timeOutHrs} horas`)
+                fs.removeSync(filePath);
+            }
         }, (1000 * 3600 * timeOutHrs));
         
         emitPercentage(100, "Finalizado");
@@ -1725,6 +1904,7 @@ module.exports = {
     execReverseSearch,
     getBatch,
     getFilteredGrafitis,
+    prepareMatchesDownload,
     prepareDownloadBatch,
     downloadBatch,
     removeTemporaryUploadFiles,

@@ -59,6 +59,9 @@ router.post("/get-grafiti-batch", grafitiController.getBatch);
 // Devuelve un lote de imágenes de la imagen que se busca (<host>/api/grafitis/get-search-batch)
 router.post("/get-search-batch", grafitiController.getSearchBatch);
 
+// Prepara un paquete para su descarga (<host>/api/grafitis/prepare-matches-download)
+router.post("/prepare-matches-download", estaAutenticado, grafitiController.prepareMatchesDownload);
+
 // Prepara un paquete para su descarga (<host>/api/grafitis/prepare-download-batch)
 router.post("/prepare-download-batch", estaAutenticado, grafitiController.prepareDownloadBatch);
 

@@ -13,6 +13,8 @@ const params = Object.fromEntries(urlSearchParams.entries());
 // Para indicar el número de grafitis
 const matchesHeader = document.getElementById("matchesHeader");
 const numMatches = document.getElementById("numMatches");
+const spanTitleDownload = document.getElementById("span-title-download");
+const spanSubtitleDownload = document.getElementById("span-subtitle-download");
 
 // Para insertar los thumnail de los matches
 const matchesBody = document.getElementById("matchesBody");
@@ -110,6 +112,8 @@ function adaptHeader(nMatches, order) {
     
     // Indicamos el número total de matches en el header
     numMatches.innerText = ` (${nMatches})`;
+    spanTitleDownload.innerText = `grafitis`;
+    spanSubtitleDownload.innerText = `los grafitis`;
     
     // Adaptamos el botón ordenar a la búsqueda
     if(order == 1) {
@@ -461,3 +465,90 @@ delete_match_btn.addEventListener("click", async (event) => {
         $('#modal').modal();
     }
 });
+
+// Iniciamos el socket
+const socket = io();
+const download_images = document.getElementById("download-btn");
+const userId = download_images.dataset.user;
+const downloadProgressBar = document.getElementById("download-progress-bar");
+const downloadFooter = document.getElementById("download-footer");
+const downloadInfo = document.getElementById("download-info");
+const pending = document.getElementById("pending");
+const csv = document.getElementById("csv");
+
+// Actualizar la barra de progreso al llegar el mensaje
+socket.on("download-matches:step", data => {
+    downloadProgressBar.innerText = `${data.percentage}%`;
+    downloadProgressBar.style.width = `${data.percentage}%`;
+    if(data.info) {
+        downloadInfo.innerText = `${data.info}`;
+    }
+});
+
+// Descarga de imágenes
+download_images.addEventListener("click", async (event) => {
+    event.preventDefault();
+    
+    const spinner_download = document.getElementById("spinner-download");
+    try {
+        
+        spinner_download.classList.remove("d-none");
+        
+        socket.emit("download-matches:init", { userId });
+        
+        downloadProgressBar.style.width = "0%";
+        downloadInfo.innerText = "Iniciando";
+        downloadFooter.classList.replace("d-none", "d-block");
+        
+        const fetchURI = `/api/grafitis/prepare-matches-download`;
+        const data = await fetch(fetchURI, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: grafitiId,
+                pending: pending.checked,
+                csv: csv.checked,
+            }),
+        });
+        
+        socket.emit("download-matches:finish", { userId });
+        
+        if (!data) {
+            throw "No se ha recibido respuesta a la consulta";
+        }
+        const result = await data.json();
+        if (!result) {
+            throw "No se puede interpretar la respuesta del servidor";
+        }
+        if (!result.success) {
+            throw result.message;
+        }
+        if(!result.fileId) {
+            throw "No se ha recuperado el identificador del archivo de descarga";
+        }
+        
+        downloadFooter.classList.replace("d-block", "d-none");
+        download(`/api/grafitis/download-batch/${result.fileId}`, "matches.zip");
+        document.getElementById("download_close").click();
+        
+    } catch (error) {
+        spinner_download.classList.add("d-none");
+        socket.emit("download-matches:finish", { userId });
+        downloadFooter.classList.replace("d-block", "d-none");
+        console.error("Fallo al descargar: "+error);
+        window.alert("Fallo al descargar: "+error);
+    }
+    
+});
+
+// Descarga un archivo
+function download(fileUrl, fileName) {
+    document.getElementById("spinner-download").classList.add("d-none");
+    const a = document.createElement("a");
+    a.download = fileName;
+    a.href = fileUrl;
+    a.target = "_blank";
+    a.click();
+}

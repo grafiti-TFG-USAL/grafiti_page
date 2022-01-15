@@ -825,8 +825,6 @@ const comprobarUsuario = async (userId) => {
 };
 
 const { countOf, deleteUserGrafitis } = require("./grafiti.controller");
-const { Mongoose } = require("mongoose");
-const { findById } = require("../models/user.model");
 // Finalizar la sesión
 const removeUser = async (req, res) => {
 

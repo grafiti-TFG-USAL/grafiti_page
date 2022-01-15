@@ -32,6 +32,13 @@ const init = (server, app) => {
             delete connectedUsers[data.userId+":download-batch"];
         });
         
+        socket.on("download-matches:init", (data) => {
+            connectedUsers[data.userId+":download-matches"] = socket;
+        });
+        socket.on("download-matches:finish", (data) => {
+            delete connectedUsers[data.userId+":download-matches"];
+        });
+        
     });
     
     io.on("disconnect", () => {

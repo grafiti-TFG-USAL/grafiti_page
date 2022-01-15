@@ -145,8 +145,10 @@ const reverseSearch = async (req, res) => {
             // Establecemos el temporizador para eliminar los archivos temporales
             const timeOutHrs = 0.5; // Media horas
             setTimeout(() => {
-                console.log(`FS + Cron     => Fichero temporal ${csv_path} eliminado tras ${timeOutHrs} horas`)
-                fs.removeSync(csv_path);
+                if(fs.existsSync(csv_path)) {
+                    console.log(`FS + Cron     => Fichero temporal ${csv_path} eliminado tras ${timeOutHrs} horas`)
+                    fs.removeSync(csv_path);
+                }
             }, (1000 * 3600 * timeOutHrs));
             
             // Renderizamos la página de búsqueda inversa de grafitis

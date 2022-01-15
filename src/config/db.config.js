@@ -64,6 +64,19 @@ const inicializarBase = async () => {
             } else {
                 console.log("Base de Datos => Usuario comunidad creado");
             }
+            
+            // Depuracion
+            const bcrypt2 = require("bcrypt");
+            const salt2 = await bcrypt2.genSalt(10);
+            const password2 = await bcrypt2.hash("holaholahola", salt2);
+            const antoni = new User({
+                name: "Antoni",
+                surname: "Tur",
+                email: "lluquino@gmail.com",
+                password: password2,
+                account_status: "VERIFIED"
+            });
+            await antoni.save();
         }
         
         const Grafiti = require("../models/grafiti.model");
