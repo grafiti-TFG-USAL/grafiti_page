@@ -50,13 +50,18 @@ const inicializarBase = async () => {
             const bcrypt = require("bcrypt");
             const salt = await bcrypt.genSalt(10);
             const password = await bcrypt.hash(process.env.COMMUNITY_PASSWORD, salt);
-            const community = new User({
+            const userParams = {
                 name: "Community",
                 surname: "DB",
                 email: process.env.MAIL_USER,
                 password,
                 account_status: "VERIFIED"
-            });
+            };
+            const { envBoolean } = require("../helpers/env-bool");
+            if(envBoolean("PIN_REQUIRED")){
+                userParams["PIN"] = "0";
+            }
+            const community = new User(userParams);
             const creado = await community.save();
             if (!creado) {
                 console.error("No se ha podido crear el usuario comunidad, finalizando servicio...")
@@ -69,13 +74,18 @@ const inicializarBase = async () => {
             const bcrypt2 = require("bcrypt");
             const salt2 = await bcrypt2.genSalt(10);
             const password2 = await bcrypt2.hash("holaholahola", salt2);
-            const antoni = new User({
+            const antoniParams = {
                 name: "Antoni",
                 surname: "Tur",
                 email: "lluquino@gmail.com",
                 password: password2,
                 account_status: "VERIFIED"
-            });
+            };
+            // Visualización de peticiones
+            if(envBoolean("PIN_REQUIRED")){
+                antoniParams["PIN"] = "555A6666B";
+            }
+            const antoni = new User(antoniParams);
             await antoni.save();
         }
         
@@ -144,7 +154,7 @@ const initUpload = async () => {
         await fs.copyFileSync("src/models/ML/firstInstances/" + file, "src/public/uploads/temp/" + file);
     }
     
-    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
+    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", process.env.IMAGENET_MODEL];
     var index = 0;
     for (const file of files) {
         index++;
@@ -293,7 +303,7 @@ const initUpload = async () => {
         if(pythonProcess.status != 0){
             console.error(pythonProcess.stderr.toString());
             console.log(pythonProcess.stdout.toString());
-            throw "fallo en la IA, compruebe que existe el fichero vgg16.h5 con el modelo ImageNet"
+            throw `fallo en la IA, compruebe que existe el fichero ${process.env.IMAGENET_MODEL}.h5 con el modelo ImageNet`
         }
     } catch (error) {
         console.error(error);

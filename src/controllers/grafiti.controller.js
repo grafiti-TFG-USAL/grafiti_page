@@ -117,7 +117,7 @@ const upload = async (req, res) => {
         req.app.io.to(socketid).emit("upload:step", { percentage: ((index - 1) * step + percentage * step).toFixed(2) });
     }
 
-    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", "vgg16"];
+    const py_args = ["run", "-n", process.env.CONDA_ENV, "python", "src/controllers/python/feature-extraction.py", process.env.IMAGENET_MODEL];
     var index = 0;
     for (const file of files) {
         index++;

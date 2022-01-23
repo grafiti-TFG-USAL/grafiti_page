@@ -35,7 +35,8 @@ img = image.load_img(img_path)
 
 from scipy.spatial import distance
 
-similar_idx = [distance.cosine(features[idx], feat) for feat in features]
+img_features = features[idx]
+similar_idx = [distance.euclidean(img_features, feat) for feat in features]
 idx_closest = sorted(range(len(similar_idx)), key=lambda k : similar_idx[k])[1:]
 
 min_dist = min(similar_idx)

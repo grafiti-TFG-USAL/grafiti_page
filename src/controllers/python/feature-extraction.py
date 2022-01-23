@@ -116,19 +116,26 @@ if checkFileExistance(pca_path) and checkFileExistance(features_path) and checkF
     pca_features = pca.fit_transform(new_features)
     old_images.extend(images)
     
-    
+    if os.path.exists(pca_path):
+        os.remove(pca_path)
     pca_wf = open(pca_path, 'wb')
     pk.dump(pca, pca_wf)
     pca_wf.close()
     
+    if os.path.exists(features_path):
+        os.remove(features_path)
     new_feat_wf = open(features_path, 'wb')
     pk.dump(new_features, new_feat_wf)
     new_feat_wf.close()
     
+    if os.path.exists(pca_features_path):
+        os.remove(pca_features_path)
     new_pca_feat_wf = open(pca_features_path, 'wb')
     pk.dump(pca_features, new_pca_feat_wf)
-    new_feat_wf.close()
+    new_pca_feat_wf.close()
     
+    if os.path.exists(images_path):
+        os.remove(images_path)
     new_images_wf = open(images_path, 'wb')
     pk.dump(old_images, new_images_wf)
     new_images_wf.close()
